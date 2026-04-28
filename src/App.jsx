@@ -782,10 +782,10 @@ const RelatorioViewModal = ({ registro, onClose }) => {
             )}
 
             {registro.imagens && registro.imagens.length > 0 && (
-              <div className="mb-6 mt-6 print:mt-3 break-inside-avoid">
-                <div className="bg-[#ED7D31] text-white text-center py-1.5 mb-2 print-bg-orange"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                <div className="grid grid-cols-2 print:grid-cols-4 gap-2">
-                  {registro.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-48 print:h-32 object-cover border border-gray-200 rounded" />)}
+              <div className="mb-6 mt-6 print:mt-4">
+                <div className="bg-[#ED7D31] text-white text-center py-1.5 mb-3 print-bg-orange break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                  {registro.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />)}
                 </div>
               </div>
             )}
@@ -793,8 +793,8 @@ const RelatorioViewModal = ({ registro, onClose }) => {
             {/* --- CONTINUAÇÃO DO RELATÓRIO (FLUXO NATURAL) --- */}
             <div className="print:pt-4">
               {registro.consideracoes && (
-                <div className="mb-6 mt-6 print:mt-0 break-inside-avoid w-full overflow-hidden">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
                 </div>
               )}
@@ -1279,26 +1279,30 @@ export default function App() {
               </div>
             </div>
 
-            <div className="mb-5 print:mb-3 w-full overflow-hidden">
-              <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
-              <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
-            </div>
+            {formData.descricao && (
+              <div className="mb-5 print:mb-3 w-full overflow-hidden">
+                <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
+                <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+              </div>
+            )}
 
             {formData.imagens.length > 0 && (
-              <div className="mb-6 mt-6 print:mt-3 break-inside-avoid">
-                <div className="bg-[#ED7D31] text-white text-center py-1.5 mb-2 print-bg-orange"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                <div className="grid grid-cols-2 print:grid-cols-4 gap-2">
-                  {formData.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-48 print:h-32 object-cover border border-gray-200 rounded" />)}
+              <div className="mb-6 mt-6 print:mt-4">
+                <div className="bg-[#ED7D31] text-white text-center py-1.5 mb-3 print-bg-orange break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                  {formData.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />)}
                 </div>
               </div>
             )}
 
             {/* --- CONTINUAÇÃO DO RELATÓRIO (FLUXO NATURAL) --- */}
             <div className="print:pt-4">
-              <div className="mb-6 mt-6 print:mt-0 break-inside-avoid w-full overflow-hidden">
-                <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
-                <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
-              </div>
+              {formData.consideracoes && (
+                <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
+                  <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                </div>
+              )}
 
               <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p>{formData.localData}</p></div>
 
