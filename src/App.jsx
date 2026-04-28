@@ -120,16 +120,15 @@ const Eye = (p) => <SvgIcon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11
 const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-5M7 10l5 5 5-5M12 15V3"/></SvgIcon>;
 const Filter = (p) => <SvgIcon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></SvgIcon>;
 const RefreshCw = (p) => <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></SvgIcon>;
+const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></SvgIcon>;
 
-// --- COMPONENTE DE TEXTO RICO ---
-const RichTextEditor = ({ value, onChange, placeholder, maxLength = 1000 }) => {
+// --- COMPONENTE DE TEXTO RICO (SEM LIMITES DE CARACTERES) ---
+const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
-  const [charCount, setCharCount] = useState(0);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value || '';
-      setCharCount(editorRef.current.textContent.length);
     }
   }, [value]);
 
@@ -137,14 +136,6 @@ const RichTextEditor = ({ value, onChange, placeholder, maxLength = 1000 }) => {
     let html = editorRef.current.innerHTML;
     if (html === '<br>' || html === '<div><br></div>') html = '';
     onChange(html);
-    setCharCount(editorRef.current.textContent.length);
-  };
-
-  const handleKeyDown = (e) => {
-    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'];
-    if (editorRef.current.textContent.length >= maxLength && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-    }
   };
 
   const execCommand = (command) => {
@@ -162,16 +153,12 @@ const RichTextEditor = ({ value, onChange, placeholder, maxLength = 1000 }) => {
             <button type="button" onClick={(e) => { e.preventDefault(); execCommand('italic'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Itálico (Ctrl+I)"><ItalicIcon size={18} /></button>
             <button type="button" onClick={(e) => { e.preventDefault(); execCommand('underline'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Sublinhado (Ctrl+U)"><UnderlineIcon size={18} /></button>
           </div>
-          <span className={`text-xs font-bold px-2 ${charCount >= maxLength ? 'text-red-500' : 'text-gray-400'}`}>
-            {charCount}/{maxLength}
-          </span>
         </div>
         <div
           ref={editorRef}
           contentEditable
           onInput={handleInput}
           onBlur={handleInput}
-          onKeyDown={handleKeyDown}
           className="p-3 min-h-[100px] outline-none cursor-text rich-text-content"
           data-placeholder={placeholder}
         />
@@ -180,7 +167,7 @@ const RichTextEditor = ({ value, onChange, placeholder, maxLength = 1000 }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
+// --- COMPONENTE DE EDIÇÃO DE IMAGEM (COM FERRAMENTA CROP) ---
 const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
@@ -189,6 +176,7 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
   const [textInput, setTextInput] = useState(null);
   const [forceRender, setForceRender] = useState(0); 
+  const [cropRect, setCropRect] = useState(null);
   
   const shapesRef = useRef([]);
   const imageRef = useRef(null);
@@ -283,6 +271,25 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
     ctx.stroke(); ctx.setLineDash([]); 
   };
 
+  const drawCropOverlay = (ctx, start, current) => {
+    const minX = Math.min(start.x, current.x);
+    const minY = Math.min(start.y, current.y);
+    const w = Math.abs(current.x - start.x);
+    const h = Math.abs(current.y - start.y);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, canvasRef.current.width, minY);
+    ctx.fillRect(0, minY, minX, h);
+    ctx.fillRect(minX + w, minY, canvasRef.current.width - (minX + w), h);
+    ctx.fillRect(0, minY + h, canvasRef.current.width, canvasRef.current.height - (minY + h));
+
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(minX, minY, w, h);
+    ctx.setLineDash([]);
+  };
+
   const redraw = (overrideSelectedIndex) => {
     if (!canvasRef.current || !imageRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
@@ -312,9 +319,15 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
       ctx.restore();
     });
     
-    if (isDrawing.current && tool !== 'move' && tool !== 'text') {
+    if (isDrawing.current && tool !== 'move' && tool !== 'text' && tool !== 'crop') {
       if (tool === 'arrow') drawArrow(ctx, startPos.current.x, startPos.current.y, currentPos.current.x, currentPos.current.y, color);
       else if (tool === 'circle') drawCircle(ctx, startPos.current.x, startPos.current.y, currentPos.current.x, currentPos.current.y, color);
+    }
+
+    if (tool === 'crop' && isDrawing.current) {
+      drawCropOverlay(ctx, startPos.current, currentPos.current);
+    } else if (cropRect) {
+      drawCropOverlay(ctx, {x: cropRect.x, y: cropRect.y}, {x: cropRect.x + cropRect.w, y: cropRect.y + cropRect.h});
     }
   };
 
@@ -369,6 +382,13 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
       return;
     }
 
+    if (tool === 'crop') {
+      isDrawing.current = true;
+      setCropRect(null);
+      redraw(null);
+      return;
+    }
+
     if (tool === 'move') {
       let foundIndex = null;
       for (let i = shapesRef.current.length - 1; i >= 0; i--) {
@@ -386,6 +406,11 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
     const pos = getPointerPos(e);
     currentPos.current = pos;
 
+    if (tool === 'crop' && isDrawing.current) {
+      redraw(null);
+      return;
+    }
+
     if (tool === 'move' && draggedShapeIndex.current !== null) {
       const shape = shapesRef.current[draggedShapeIndex.current];
       const dx = pos.x - lastMousePos.current.x, dy = pos.y - lastMousePos.current.y;
@@ -401,6 +426,21 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
 
   const handlePointerUp = () => {
     if (textInput) return;
+
+    if (tool === 'crop' && isDrawing.current) {
+      isDrawing.current = false;
+      const w = Math.abs(currentPos.current.x - startPos.current.x);
+      const h = Math.abs(currentPos.current.y - startPos.current.y);
+      if (w > 20 && h > 20) {
+        setCropRect({
+          x: Math.min(startPos.current.x, currentPos.current.x),
+          y: Math.min(startPos.current.y, currentPos.current.y),
+          w, h
+        });
+      }
+      redraw(null);
+      return;
+    }
 
     if (tool === 'move') {
       draggedShapeIndex.current = null;
@@ -439,13 +479,43 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
     setTextInput(null);
   };
 
+  const applyCrop = () => {
+    if (!cropRect) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = cropRect.w;
+    canvas.height = cropRect.h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imageRef.current, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
+
+    const newImageSrc = canvas.toDataURL('image/jpeg', 0.95);
+    const img = new Image();
+    img.src = newImageSrc;
+    img.onload = () => {
+      imageRef.current = img;
+      canvasRef.current.width = img.width;
+      canvasRef.current.height = img.height;
+      // Atualiza a posição dos desenhos já feitos
+      shapesRef.current = shapesRef.current.map(s => {
+        if (s.type === 'circle' || s.type === 'arrow') {
+          return { ...s, x1: s.x1 - cropRect.x, y1: s.y1 - cropRect.y, x2: s.x2 - cropRect.x, y2: s.y2 - cropRect.y };
+        } else if (s.type === 'text') {
+          return { ...s, x: s.x - cropRect.x, y: s.y - cropRect.y };
+        }
+        return s;
+      });
+      setCropRect(null);
+      setTool('arrow');
+      redraw(null);
+    };
+  };
+
   const handleUndo = () => { shapesRef.current.pop(); setSelectedShapeIndex(null); redraw(null); };
   const handleDeleteSelected = () => {
     if (selectedShapeIndex !== null) { shapesRef.current.splice(selectedShapeIndex, 1); setSelectedShapeIndex(null); redraw(null); }
   };
 
   const handleSave = () => {
-    setSelectedShapeIndex(null); setTextInput(null); redraw(null);
+    setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);
     setTimeout(() => { onSave(canvasRef.current.toDataURL('image/jpeg', 0.95)); }, 50);
   };
 
@@ -455,12 +525,20 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4 bg-gray-800 p-3 rounded-lg">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex bg-gray-700 p-1 rounded-lg">
-              <button onClick={() => {setTool('move'); setSelectedShapeIndex(null); setTextInput(null); redraw(null);}} className={`p-2 rounded flex items-center gap-1 ${tool === 'move' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Mover Seleção"><Move size={20} strokeWidth={3} /></button>
+              <button onClick={() => {setTool('move'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded flex items-center gap-1 ${tool === 'move' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Mover Seleção"><Move size={20} strokeWidth={3} /></button>
               <div className="w-px bg-gray-500 mx-1"></div>
-              <button onClick={() => {setTool('arrow'); setSelectedShapeIndex(null); setTextInput(null); redraw(null);}} className={`p-2 rounded ${tool === 'arrow' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Seta"><ArrowUpRight size={20} strokeWidth={3} /></button>
-              <button onClick={() => {setTool('circle'); setSelectedShapeIndex(null); setTextInput(null); redraw(null);}} className={`p-2 rounded ${tool === 'circle' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Círculo"><Circle size={20} strokeWidth={3} /></button>
-              <button onClick={() => {setTool('text'); setSelectedShapeIndex(null); redraw(null);}} className={`p-2 rounded ${tool === 'text' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Escrever Texto"><TypeIcon size={20} strokeWidth={3} /></button>
+              <button onClick={() => {setTool('crop'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'crop' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Cortar Imagem"><Scissors size={20} strokeWidth={3} /></button>
+              <div className="w-px bg-gray-500 mx-1"></div>
+              <button onClick={() => {setTool('arrow'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'arrow' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Seta"><ArrowUpRight size={20} strokeWidth={3} /></button>
+              <button onClick={() => {setTool('circle'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'circle' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Círculo"><Circle size={20} strokeWidth={3} /></button>
+              <button onClick={() => {setTool('text'); setSelectedShapeIndex(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'text' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Escrever Texto"><TypeIcon size={20} strokeWidth={3} /></button>
             </div>
+
+            {cropRect && (
+              <button onClick={applyCrop} className="ml-2 px-3 py-1.5 bg-green-500 text-white font-bold rounded hover:bg-green-600 transition flex items-center gap-1 animate-pulse">
+                <Check size={16}/> Aplicar Corte
+              </button>
+            )}
 
             {tool === 'text' && (
               <div className="flex items-center gap-2 bg-gray-700 px-2 py-1.5 rounded-lg border border-gray-600">
@@ -494,7 +572,7 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
         </div>
 
         <div className="flex-1 overflow-hidden flex items-center justify-center bg-black/50 rounded-lg relative border border-gray-700">
-          <canvas ref={canvasRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerOut={handlePointerUp} onWheel={handleWheel} className={`max-w-full max-h-full object-contain shadow-md ${tool === 'move' ? 'cursor-move' : (tool === 'text' ? 'cursor-text' : 'cursor-crosshair')}`} style={{ touchAction: 'none' }} />
+          <canvas ref={canvasRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerOut={handlePointerUp} onWheel={handleWheel} className={`max-w-full max-h-full object-contain shadow-md ${tool === 'move' ? 'cursor-move' : (tool === 'text' ? 'cursor-text' : (tool === 'crop' ? 'cursor-crosshair' : 'cursor-crosshair'))}`} style={{ touchAction: 'none' }} />
           {textInput && (
             <div style={{ position: 'fixed', top: textInput.screenY - 20, left: textInput.screenX, zIndex: 60 }} className="flex items-center gap-2 bg-gray-800 p-2 rounded shadow-2xl border border-gray-600">
               <input autoFocus type="text" id="floating-text-input" placeholder="Escreva a anotação..." className="px-2 py-1.5 rounded text-black font-bold outline-none min-w-[200px] border-2 focus:border-[#F4B41A]" onKeyDown={(e) => { if (e.key === 'Enter') confirmText(); if (e.key === 'Escape') setTextInput(null); }} />
@@ -1312,13 +1390,13 @@ export default function App() {
               <div className="mb-1">
                 <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
               </div>
-              <RichTextEditor value={formData.descricao} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} maxLength={850} />
+              <RichTextEditor value={formData.descricao} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
             </div>
             <div>
               <div className="mb-1">
                 <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
               </div>
-              <RichTextEditor value={formData.consideracoes} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} maxLength={650} />
+              <RichTextEditor value={formData.consideracoes} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
             </div>
           </div>
 
@@ -1328,7 +1406,7 @@ export default function App() {
               <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
                 <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
                 <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode editar com setas e textos</span>
+                <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
                 <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
             </div>
@@ -1338,7 +1416,7 @@ export default function App() {
                   <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
                     <img src={img} alt="Preview" className="w-full h-32 object-cover" />
                     <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                    <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar Imagem"><PenTool size={16} /></button>
+                    <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
                   </div>
                 ))}
               </div>
