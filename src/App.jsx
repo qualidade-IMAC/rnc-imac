@@ -13,12 +13,12 @@ if (typeof __firebase_config !== 'undefined') {
 } else {
   // Chaves originais restauradas para conectar todos os computadores
   firebaseConfig = {
-    apiKey: "AIzaSyBY4QKYASFglPpLFt4CgUsrXsy1mrf28w4",
-    authDomain: "rnc-imac.firebaseapp.com",
-    projectId: "rnc-imac",
-    storageBucket: "rnc-imac.firebasestorage.app",
-    messagingSenderId: "815248770345",
-    appId: "1:815248770345:web:5d0aaaadb547cb17cca338"
+    apiKey: "AIzaSyAomEpViVLeoDdILS88SjjozJNr4BtjjNU",
+    authDomain: "rnc-imac-51124.firebaseapp.com",
+    projectId: "rnc-imac-51124",
+    storageBucket: "rnc-imac-51124.firebasestorage.app",
+    messagingSenderId: "858158161408",
+    appId: "1:858158161408:web:68df68b9aafe57e4b142e5"
   };
   
   if (firebaseConfig.apiKey !== "") {
