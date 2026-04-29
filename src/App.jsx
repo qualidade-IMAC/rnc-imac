@@ -11,6 +11,7 @@ if (typeof __firebase_config !== 'undefined') {
   firebaseConfig = JSON.parse(__firebase_config);
   isConfigured = true;
 } else {
+  // Chaves originais restauradas para conectar todos os computadores
   firebaseConfig = {
     apiKey: "AIzaSyBY4QKYASFglPpLFt4CgUsrXsy1mrf28w4",
     authDomain: "rnc-imac.firebaseapp.com",
