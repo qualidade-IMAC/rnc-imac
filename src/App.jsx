@@ -121,6 +121,8 @@ const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 0
 const Filter = (p) => <SvgIcon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></SvgIcon>;
 const RefreshCw = (p) => <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></SvgIcon>;
 const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></SvgIcon>;
+const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
+const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
 
 // --- COMPONENTE DE TEXTO RICO (SEM LIMITES DE CARACTERES) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
@@ -709,6 +711,50 @@ const PieChartComponent = ({ data, title }) => {
   );
 };
 
+// --- MODAL DE AVALIAÇÃO DE STATUS ---
+const StatusModal = ({ registro, onClose, onSave }) => {
+  const [status, setStatus] = useState(registro.status || 'Pendente');
+  const [obs, setObs] = useState(registro.observacoesStatus || '');
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
+        <h3 className="text-xl font-black text-gray-900 mb-1">Avaliar RNC</h3>
+        <p className="text-gray-500 text-sm mb-6 font-medium">Controle de qualidade e liberação do relatório.</p>
+        
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Situação do Relatório</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
+              <option value="Pendente">⏳ Aguardando / Pendente</option>
+              <option value="Liberado">✅ Liberado (Aprovado)</option>
+              <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
+            </select>
+          </div>
+          
+          {status === 'Não Liberado' && (
+            <div className="animate-fade-in-up">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Motivo / Observações para Correção</label>
+              <textarea 
+                rows="4" 
+                value={obs} 
+                onChange={(e) => setObs(e.target.value)} 
+                placeholder="Explique o que o emissor precisa corrigir ou adicionar no relatório..."
+                className="w-full border border-red-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-y text-sm bg-red-50 shadow-sm"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 mt-8">
+          <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
+          <button onClick={() => onSave(registro.id, status, status === 'Não Liberado' ? obs : '')} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Avaliação</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- MODAL DE VISUALIZAÇÃO DO RELATÓRIO ---
 const RelatorioViewModal = ({ registro, onClose }) => {
   if (!registro) return null;
@@ -854,6 +900,7 @@ export default function App() {
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
   const [registroToView, setRegistroToView] = useState(null);
+  const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
   
   // NOVO ESTADO: Guarda o ID do relatório que está sendo editado
   const [editingReportId, setEditingReportId] = useState(null);
@@ -1036,6 +1083,31 @@ export default function App() {
     setView('dashboard');
   };
 
+  const handleUpdateStatus = async (id, newStatus, newObs) => {
+    const payload = { status: newStatus, observacoesStatus: newObs, dataModificacao: new Date().toISOString() };
+    
+    setRegistros(prev => {
+      const updatedList = prev.map(r => r.id === id ? { ...r, ...payload } : r);
+      localStorage.setItem('imac_registros', JSON.stringify(updatedList));
+      return updatedList;
+    });
+
+    if (user && db && isConfigured && id.length > 15) {
+      try {
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id), payload);
+        setAppMessage("✅ Avaliação salva com sucesso!");
+      } catch (error) { 
+        console.error('Erro ao atualizar status:', error); 
+        setAppMessage("💾 Avaliação salva localmente (offline)"); 
+      }
+    } else { 
+      setAppMessage("💾 Avaliação salva localmente"); 
+    }
+    
+    setEvaluatingRegistro(null);
+    setTimeout(() => setAppMessage(null), 3000);
+  };
+
   const handleSaveReport = async () => {
     const registroData = {
       tipoRelatorio: formData.tipoRelatorio,
@@ -1161,6 +1233,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
+        {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} />}
         {registroToDelete && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
             <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full border-t-4 border-red-500">
@@ -1206,9 +1279,9 @@ export default function App() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Fornecedor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
+                <thead className="bg-gray-50 text-gray-500"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Fornecedor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredRecords.length === 0 ? <tr><td colSpan="6" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
+                  {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
                     filteredRecords.map(reg => (
                       <tr key={reg.id} className="hover:bg-gray-50 transition">
                         <td className="px-4 py-3 whitespace-nowrap text-xs">{new Date(reg.dataCriacao).toLocaleDateString('pt-BR')}</td>
@@ -1216,8 +1289,18 @@ export default function App() {
                         <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto}>{reg.produto}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate" title={reg.fornecedor}>{reg.fornecedor || '-'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia}>{reg.ocorrencia}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1.5 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
+                            (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                            reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
+                            'bg-red-50 text-red-700 border-red-200'
+                          }`}>
+                            {reg.status || 'Pendente'}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Liberar"><CheckCircle size={16} /></button>
                             <button onClick={() => setRegistroToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar"><Eye size={16} /></button>
                             <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
                             <button onClick={() => setRegistroToDelete(reg.id)} className="text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition" title="Apagar"><Trash2 size={16} /></button>
@@ -1322,6 +1405,8 @@ export default function App() {
   }
 
   // ==================== FORMULÁRIO PRINCIPAL ====================
+  const editingReport = editingReportId ? registros.find(r => r.id === editingReportId) : null;
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
       {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
@@ -1349,6 +1434,18 @@ export default function App() {
         </div>
 
         <div className="p-6 md:p-8 space-y-8">
+          {editingReport && editingReport.status === 'Não Liberado' && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm animate-fade-in-up">
+              <div className="flex items-start">
+                <AlertCircle className="text-red-500 mr-3 shrink-0 mt-0.5" size={24} />
+                <div>
+                  <h3 className="text-red-800 font-bold text-sm">Relatório não liberado (Com Pendências)</h3>
+                  <p className="text-red-700 text-sm mt-1 whitespace-pre-wrap">{editingReport.observacoesStatus}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
               <h2 className="text-lg font-bold text-[#5C3A21]">Configurações do Relatório</h2>
