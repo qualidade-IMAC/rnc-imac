@@ -964,13 +964,13 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!user || !db || !isConfigured) return;
+    if (!db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { setFornecedores(data); localStorage.setItem('imac_fornecedores', JSON.stringify(data)); }
     }, (error) => console.error('Erro na nuvem:', error));
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     const savedLocal = localStorage.getItem('imac_registros');
@@ -984,7 +984,7 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!user || !db || !isConfigured) return;
+    if (!db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRegistros(prev => {
@@ -1000,14 +1000,14 @@ export default function App() {
       if (error.code === 'permission-denied') setDbError(true);
     });
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!fornecedores.includes(nomeLimpo)) {
       setFornecedores(prev => { const newList = [...prev, nomeLimpo]; localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); return newList; });
     }
-    if (user && db && isConfigured) {
+    if (db && isConfigured) {
       try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }); } catch (error) {}
     }
   };
@@ -1093,7 +1093,7 @@ export default function App() {
       return updatedList;
     });
 
-    if (user && db && isConfigured && id.length > 15) {
+    if (db && isConfigured && id.length > 15) {
       try {
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id), payload);
         setAppMessage("✅ Avaliação salva com sucesso!");
@@ -1135,7 +1135,7 @@ export default function App() {
         return updatedList;
       });
 
-      if (user && db && isConfigured && editingReportId.length > 15) {
+      if (db && isConfigured && editingReportId.length > 15) {
         try {
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId), payloadEdicao);
           setAppMessage("✅ Relatório editado com sucesso!");
@@ -1148,7 +1148,7 @@ export default function App() {
       const novoRegistro = { ...registroData, id: Date.now().toString(), dataCriacao: new Date().toISOString() };
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
-      if (user && db && isConfigured) {
+      if (db && isConfigured) {
         try {
           const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), novoRegistro);
           setRegistros(prev => {
@@ -1172,7 +1172,7 @@ export default function App() {
   };
 
   const confirmDeleteRegistro = async (id) => {
-    if (user && db && isConfigured && id.length > 15) {
+    if (db && isConfigured && id.length > 15) {
       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) {}
     } else {
       setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
