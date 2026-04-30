@@ -910,7 +910,6 @@ export default function App() {
   const [fornecedores, setFornecedores] = useState([]);
   
   const [appMessage, setAppMessage] = useState(null);
-  const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
 
   const defaultAssinaturas = [
@@ -933,20 +932,6 @@ export default function App() {
   const [formData, setFormData] = useState(getEmptyForm());
 
   useEffect(() => {
-    if (!auth) return;
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else { await signInAnonymously(auth); }
-      } catch (error) { console.error("Erro de Autenticação.", error); }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const savedFornecedores = localStorage.getItem('imac_fornecedores');
     if (!savedFornecedores) {
       const defaultFornecedores = ['Aurora Alimentos', 'Brasil Foods', 'Seara', 'JBS', 'Marfrig'];
@@ -964,13 +949,13 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!user || !db || !isConfigured) return;
+    if (!db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { setFornecedores(data); localStorage.setItem('imac_fornecedores', JSON.stringify(data)); }
     }, (error) => console.error('Erro na nuvem:', error));
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     const savedLocal = localStorage.getItem('imac_registros');
@@ -984,7 +969,7 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!user || !db || !isConfigured) return;
+    if (!db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
@@ -1001,14 +986,14 @@ export default function App() {
       console.error('Erro na nuvem:', error);
     });
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!fornecedores.includes(nomeLimpo)) {
       setFornecedores(prev => { const newList = [...prev, nomeLimpo]; localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); return newList; });
     }
-    if (user && db && isConfigured) {
+    if (db && isConfigured) {
       try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }); } catch (error) {}
     }
   };
@@ -1094,7 +1079,7 @@ export default function App() {
       return updatedList;
     });
 
-    if (user && db && isConfigured && id.length > 15) {
+    if (db && isConfigured && id.length > 15) {
       try {
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id), payload);
         setAppMessage("✅ Avaliação salva com sucesso!");
@@ -1122,7 +1107,7 @@ export default function App() {
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
       imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
-      userId: user?.uid || 'anonimo'
+      userId: 'anonimo'
     };
 
     if (editingReportId) {
@@ -1136,7 +1121,7 @@ export default function App() {
         return updatedList;
       });
 
-      if (user && db && isConfigured && editingReportId.length > 15) {
+      if (db && isConfigured && editingReportId.length > 15) {
         try {
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId), payloadEdicao);
           setAppMessage("✅ Relatório editado com sucesso!");
@@ -1149,7 +1134,7 @@ export default function App() {
       const novoRegistro = { ...registroData, id: Date.now().toString(), dataCriacao: new Date().toISOString() };
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
-      if (user && db && isConfigured) {
+      if (db && isConfigured) {
         try {
           const { id, ...registroParaNuvem } = novoRegistro; // Remove o ID local antes de enviar
           const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), registroParaNuvem);
@@ -1178,7 +1163,7 @@ export default function App() {
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
     
     // 2. Apaga definitivamente da nuvem para sumir dos outros computadores
-    if (user && db && isConfigured && id.length > 15) {
+    if (db && isConfigured && id.length > 15) {
       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) { console.error(error); }
     }
     setRegistroToDelete(null);
@@ -1327,7 +1312,7 @@ export default function App() {
   // ==================== PREVIEW DO DOCUMENTO ====================
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
     if (formData.tipoRelatorio === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (formData.tipoRelatorio === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (formData.tipoRelatorio.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
