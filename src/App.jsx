@@ -63,7 +63,7 @@ if (typeof document !== 'undefined') {
     }
 
     @media print {
-      @page { margin: 10mm 15mm 10mm 15mm !important; size: A4; }
+      @page { margin: 10mm 10mm 10mm 10mm !important; size: A4; }
       body, html { height: auto !important; overflow: visible !important; background-color: white !important; }
       
       .modal-overlay-print {
@@ -822,7 +822,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
 
         <div className="text-black text-[15px] leading-relaxed">
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
-          <div className="px-[20mm] py-[10mm] print:px-[15mm] print:py-[10mm]">
+          <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm]">
             
             {/* --- PÁGINA 1: CABEÇALHO, DESCRIÇÃO E IMAGENS --- */}
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
@@ -838,7 +838,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
 
             <div className="mb-5 print:mb-3 break-inside-avoid">
               <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
-              <div className="grid grid-cols-2 print:grid-cols-2 gap-2 print:gap-1.5 ml-1">
+              <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                 <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
                 <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
                 {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
@@ -861,7 +861,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
 
             {registro.imagens && registro.imagens.length > 0 && (
               <div className="mb-6 mt-6 print:mt-4">
-                <div className="bg-[#ED7D31] text-white text-center py-1.5 mb-3 print-bg-orange break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                 <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
                   {registro.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />)}
                 </div>
@@ -1401,7 +1401,7 @@ export default function App() {
 
         <div className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
-          <div className="px-[20mm] py-[10mm] print:px-[15mm] print:py-[10mm] print-no-padding flex-1">
+          <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
             
             {/* --- PÁGINA 1: CABEÇALHO, DESCRIÇÃO E IMAGENS --- */}
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
@@ -1411,7 +1411,7 @@ export default function App() {
 
             <div className="mb-5 print:mb-3 break-inside-avoid">
               <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2 print:gap-1.5 ml-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                 <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
                 {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
                 {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
@@ -1433,7 +1433,7 @@ export default function App() {
 
             {formData.imagens.length > 0 && (
               <div className="mb-6 mt-6 print:mt-4">
-                <div className="bg-[#ED7D31] text-white text-center py-1.5 mb-3 print-bg-orange break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                 <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
                   {formData.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />)}
                 </div>
