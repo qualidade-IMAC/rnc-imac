@@ -964,8 +964,6 @@ export default function App() {
   const [formData, setFormData] = useState(getEmptyForm());
 
   // === SOLUÇÃO DE AUTENTICAÇÃO ===
-  // Modificado para forçar a criação de um usuário local "falso"
-  // caso o login do Firebase falhe (liberando as travas de leitura/escrita)
   useEffect(() => {
     if (!auth) {
       setUser({ uid: 'modo-offline-aberto' });
@@ -981,7 +979,7 @@ export default function App() {
         }
       } catch (error) { 
         console.error("Autenticação nativa falhou. Ativando modo de acesso público...", error); 
-        setUser({ uid: 'banco-aberto-publico' }); // Força o sistema a prosseguir
+        setUser({ uid: 'banco-aberto-publico' }); 
       }
     };
     
@@ -991,7 +989,6 @@ export default function App() {
       if (currentUser) {
         setUser(currentUser);
       } else {
-        // Se ainda não houver user, atribui um para contornar o bloqueio de segurança
         setUser({ uid: 'banco-aberto-publico' });
       }
     });
@@ -1017,7 +1014,7 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!user || !db || !isConfigured) return; // Agora passa, pois 'user' sempre vai existir
+    if (!user || !db || !isConfigured) return;
     
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
@@ -1038,7 +1035,7 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!user || !db || !isConfigured) return; // Agora passa, pois 'user' sempre vai existir
+    if (!user || !db || !isConfigured) return; 
     
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -1103,7 +1100,6 @@ export default function App() {
   const addAssinatura = () => setFormData(prev => ({ ...prev, assinaturas: [...prev.assinaturas, { nome: '', cargo: '' }] }));
   const removeAssinatura = (indexToRemove) => setFormData(prev => ({ ...prev, assinaturas: prev.assinaturas.filter((_, index) => index !== indexToRemove) }));
 
-  // --- FUNÇÃO PARA EDITAR UM RELATÓRIO DO HISTÓRICO ---
   const startEditingReport = (registro) => {
     setFormData({
       logo: registro.logo || localStorage.getItem('imac_logo_oficial') || null,
@@ -1161,7 +1157,9 @@ export default function App() {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handleSaveReport = async () => {
+  // --- NOVA FUNÇÃO DE SALVAR ---
+  // Modificada para salvar/atualizar automaticamente ao clicar em visualizar
+  const handleSaveReport = async (action = 'save_and_preview') => {
     const registroData = {
       tipoRelatorio: formData.tipoRelatorio,
       dataRelatorio: formData.dataRelatorio,
@@ -1175,6 +1173,8 @@ export default function App() {
       logo: formData.logo || null, localData: formData.localData || '',
       userId: user?.uid || 'anonimo'
     };
+
+    let currentId = editingReportId;
 
     if (editingReportId) {
       // MODO EDIÇÃO - ATUALIZA O EXISTENTE
@@ -1190,25 +1190,28 @@ export default function App() {
       if (user && db && isConfigured && editingReportId.length > 15) {
         try {
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId), payloadEdicao);
-          setAppMessage("✅ Relatório editado e sincronizado com sucesso!");
+          setAppMessage("✅ Relatório atualizado e sincronizado!");
         } catch (error) { 
           console.error('Erro ao editar:', error); 
-          setAppMessage("💾 Edição salva localmente (offline)"); 
+          setAppMessage("💾 Atualização salva localmente (offline)"); 
         }
       } else { setAppMessage("💾 Edição salva localmente"); }
       
-      setEditingReportId(null); // Limpa o estado de edição
     } else {
       // MODO CRIAÇÃO - NOVO REGISTRO
-      const novoRegistro = { ...registroData, id: Date.now().toString(), dataCriacao: new Date().toISOString() };
+      const tempId = Date.now().toString();
+      const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString() };
+      currentId = tempId;
+
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
       if (user && db && isConfigured) {
         try {
-          const { id, ...registroParaNuvem } = novoRegistro; // Remove o ID local antes de enviar
+          const { id, ...registroParaNuvem } = novoRegistro;
           const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), registroParaNuvem);
+          currentId = docRef.id;
           setRegistros(prev => {
-            const updated = prev.map(r => r.id === novoRegistro.id ? { ...r, id: docRef.id } : r);
+            const updated = prev.map(r => r.id === tempId ? { ...r, id: docRef.id } : r);
             localStorage.setItem('imac_registros', JSON.stringify(updated));
             return updated;
           });
@@ -1220,9 +1223,14 @@ export default function App() {
       } else { setAppMessage("💾 Relatório salvo localmente"); }
     }
     
-    // Reseta o formulário
-    setFormData(getEmptyForm());
-    setView('dashboard'); // Volta pro painel
+    if (action === 'save_and_preview') {
+      setEditingReportId(currentId); // Guarda o ID para atualizar em vez de duplicar se voltar pra edição
+      setView('preview');
+    } else {
+      setFormData(getEmptyForm());
+      setEditingReportId(null);
+      setView('dashboard');
+    }
     setTimeout(() => setAppMessage(null), 3000);
   };
 
@@ -1231,10 +1239,8 @@ export default function App() {
   };
 
   const confirmDeleteRegistro = async (id) => {
-    // 1. Remove imediatamente da tela (para ser rápido)
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
     
-    // 2. Apaga definitivamente da nuvem para sumir dos outros computadores
     if (user && db && isConfigured && id.length > 15) {
       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) { console.error(error); }
     }
@@ -1394,7 +1400,7 @@ export default function App() {
         <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
           <button onClick={() => setView('form')} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
           <div className="flex gap-3">
-            <button onClick={handleSaveReport} className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold shadow transition"><Save size={18} /> {editingReportId ? 'SALVAR EDIÇÃO' : 'SALVAR NOVO'}</button>
+            <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> IMPRIMIR</button>
           </div>
         </div>
@@ -1609,7 +1615,7 @@ export default function App() {
            {editingReportId ? (
              <span className="font-bold text-[#5C3A21]">Editando {editingReportId.substring(0, 8)}...</span>
            ) : <span />}
-          <button onClick={() => setView('preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide"><FileText size={24} />VISUALIZAR DOCUMENTO</button>
+          <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide"><FileText size={24} />VISUALIZAR DOCUMENTO</button>
         </div>
       </div>
       <div className="text-center mt-6 text-xs text-gray-400 no-print">Desenvolvido por: Cristiamberg</div>
