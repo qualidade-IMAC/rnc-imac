@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 // --- CONFIGURAÇÃO DO BANCO DE DADOS FIREBASE ---
 let firebaseConfig;
@@ -1205,19 +1205,13 @@ export default function App() {
 
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
-      if (user && db && isConfigured) {
+      if (db && isConfigured) {
         try {
           const { id, ...registroParaNuvem } = novoRegistro;
-          const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), registroParaNuvem);
-          currentId = docRef.id;
-          setRegistros(prev => {
-            const updated = prev.map(r => r.id === tempId ? { ...r, id: docRef.id } : r);
-            localStorage.setItem('imac_registros', JSON.stringify(updated));
-            return updated;
-          });
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem);
           setAppMessage("✅ Relatório criado e sincronizado na nuvem!");
         } catch (error) { 
-          console.error("Erro Firebase addDoc:", error); 
+          console.error("Erro Firebase setDoc:", error); 
           setAppMessage("💾 Salvo localmente (offline)"); 
         }
       } else { setAppMessage("💾 Relatório salvo localmente"); }
