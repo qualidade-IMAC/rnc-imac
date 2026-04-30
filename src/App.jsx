@@ -125,6 +125,44 @@ const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx=
 const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
 const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
 
+// --- FUNÇÃO DE COMPRESSÃO DE IMAGENS (Evita erro de Limite de 1MB do Firestore) ---
+const compressImage = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1000;
+        const MAX_HEIGHT = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        // Reduz a qualidade da imagem para 70% (Tamanho final fica excelente)
+        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+      };
+    };
+    reader.onerror = error => reject(error);
+  });
+};
+
 // --- COMPONENTE DE TEXTO RICO (SEM LIMITES DE CARACTERES) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
@@ -910,6 +948,7 @@ export default function App() {
   const [fornecedores, setFornecedores] = useState([]);
   
   const [appMessage, setAppMessage] = useState(null);
+  const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
 
   const defaultAssinaturas = [
@@ -932,6 +971,20 @@ export default function App() {
   const [formData, setFormData] = useState(getEmptyForm());
 
   useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else { await signInAnonymously(auth); }
+      } catch (error) { console.error("Erro de Autenticação.", error); }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const savedFornecedores = localStorage.getItem('imac_fornecedores');
     if (!savedFornecedores) {
       const defaultFornecedores = ['Aurora Alimentos', 'Brasil Foods', 'Seara', 'JBS', 'Marfrig'];
@@ -949,13 +1002,13 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!db || !isConfigured) return;
+    if (!user || !db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { setFornecedores(data); localStorage.setItem('imac_fornecedores', JSON.stringify(data)); }
     }, (error) => console.error('Erro na nuvem:', error));
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const savedLocal = localStorage.getItem('imac_registros');
@@ -969,7 +1022,7 @@ export default function App() {
       } catch (e) { console.error('Erro local:', e); }
     }
     
-    if (!db || !isConfigured) return;
+    if (!user || !db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
@@ -986,41 +1039,37 @@ export default function App() {
       console.error('Erro na nuvem:', error);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!fornecedores.includes(nomeLimpo)) {
       setFornecedores(prev => { const newList = [...prev, nomeLimpo]; localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); return newList; });
     }
-    if (db && isConfigured) {
+    if (user && db && isConfigured) {
       try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }); } catch (error) {}
     }
   };
 
   const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
 
-  const handleImageUpload = (e, isLogo = false) => {
+  const handleImageUpload = async (e, isLogo = false) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
     if (isLogo) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData(prev => ({ ...prev, logo: event.target.result }));
-        localStorage.setItem('imac_logo_oficial', event.target.result);
-      };
-      reader.readAsDataURL(files[0]);
+      try {
+        const compressedLogo = await compressImage(files[0]);
+        setFormData(prev => ({ ...prev, logo: compressedLogo }));
+        localStorage.setItem('imac_logo_oficial', compressedLogo);
+      } catch (error) { console.error(error); }
       return;
     }
 
-    Promise.all(files.map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (event) => resolve(event.target.result);
-      reader.onerror = reject; reader.readAsDataURL(file);
-    }))).then((base64Images) => {
-      setFormData((prev) => ({ ...prev, imagens: [...prev.imagens, ...base64Images] }));
-    });
+    try {
+      const compressedImages = await Promise.all(files.map(file => compressImage(file)));
+      setFormData(prev => ({ ...prev, imagens: [...prev.imagens, ...compressedImages] }));
+    } catch (error) { console.error(error); }
   };
 
   const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: prev.imagens.filter((_, index) => index !== indexToRemove) }));
@@ -1079,7 +1128,7 @@ export default function App() {
       return updatedList;
     });
 
-    if (db && isConfigured && id.length > 15) {
+    if (user && db && isConfigured && id.length > 15) {
       try {
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id), payload);
         setAppMessage("✅ Avaliação salva com sucesso!");
@@ -1107,7 +1156,7 @@ export default function App() {
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
       imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
-      userId: 'anonimo'
+      userId: user?.uid || 'anonimo'
     };
 
     if (editingReportId) {
@@ -1121,11 +1170,14 @@ export default function App() {
         return updatedList;
       });
 
-      if (db && isConfigured && editingReportId.length > 15) {
+      if (user && db && isConfigured && editingReportId.length > 15) {
         try {
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId), payloadEdicao);
           setAppMessage("✅ Relatório editado com sucesso!");
-        } catch (error) { console.error('Erro ao editar:', error); setAppMessage("💾 Edição salva localmente (offline)"); }
+        } catch (error) { 
+          console.error('Erro ao editar:', error); 
+          setAppMessage("💾 Edição salva localmente (offline)"); 
+        }
       } else { setAppMessage("💾 Edição salva localmente"); }
       
       setEditingReportId(null); // Limpa o estado de edição
@@ -1134,7 +1186,7 @@ export default function App() {
       const novoRegistro = { ...registroData, id: Date.now().toString(), dataCriacao: new Date().toISOString() };
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
-      if (db && isConfigured) {
+      if (user && db && isConfigured) {
         try {
           const { id, ...registroParaNuvem } = novoRegistro; // Remove o ID local antes de enviar
           const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), registroParaNuvem);
@@ -1144,7 +1196,10 @@ export default function App() {
             return updated;
           });
           setAppMessage("✅ Relatório salvo com sucesso!");
-        } catch (error) { setAppMessage("💾 Salvo localmente (offline)"); }
+        } catch (error) { 
+          console.error("Erro Firebase addDoc:", error); 
+          setAppMessage("💾 Salvo localmente (offline)"); 
+        }
       } else { setAppMessage("💾 Relatório salvo localmente"); }
     }
     
@@ -1163,7 +1218,7 @@ export default function App() {
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
     
     // 2. Apaga definitivamente da nuvem para sumir dos outros computadores
-    if (db && isConfigured && id.length > 15) {
+    if (user && db && isConfigured && id.length > 15) {
       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) { console.error(error); }
     }
     setRegistroToDelete(null);
