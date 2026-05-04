@@ -84,7 +84,40 @@ if (typeof document !== 'undefined') {
     @media screen { .print-only { display: none !important; } }
   `;
   document.head.appendChild(style);
+
+  // Carrega a biblioteca de exportação de PDF nativa
+  if (!document.getElementById('html2pdf-script')) {
+    const script = document.createElement('script');
+    script.id = 'html2pdf-script';
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    document.head.appendChild(script);
+  }
 }
+
+// --- FUNÇÃO GLOBAL DE EXPORTAÇÃO DE PDF ---
+const exportToPDF = (elementId, filename, setAppMessage) => {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  if (window.html2pdf) {
+    if(setAppMessage) setAppMessage("⏳ Gerando PDF, aguarde...");
+    const opt = {
+      margin:       [10, 0, 10, 0], 
+      filename:     filename || 'Relatorio_RNC.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    window.html2pdf().set(opt).from(element).save().then(() => {
+      if(setAppMessage) {
+        setAppMessage("✅ PDF gerado e baixado com sucesso!");
+        setTimeout(() => setAppMessage(null), 3000);
+      }
+    });
+  } else {
+    if(setAppMessage) setAppMessage("⏳ Carregando biblioteca de PDF. Tente novamente em alguns segundos...");
+  }
+};
 
 // --- ÍCONES SVG ---
 const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
@@ -792,6 +825,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
   if (!registro) return null;
 
   const getTituloRelatorio = () => {
+    if (registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') return "RELATÓRIO DE NÃO CONFORMIDADE - CLIENTE";
     if (registro.tipoRelatorio === 'Insumo ou Embalagem') return "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (registro.tipoRelatorio === 'Ocorrência Interna') return "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (registro.tipoRelatorio.includes('Teste')) return "RELATÓRIO DE TESTES";
@@ -800,6 +834,8 @@ const RelatorioViewModal = ({ registro, onClose }) => {
   const getTituloSecao1 = () => registro.tipoRelatorio.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE";
   const getTituloSecao2 = () => registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRÊNCIA";
   const getTituloSecao3 = () => registro.tipoRelatorio.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS";
+
+  const isCliente = registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
 
   const dataFormatada = new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   const assinaturasRender = registro.assinaturas || [
@@ -815,12 +851,13 @@ const RelatorioViewModal = ({ registro, onClose }) => {
         <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-lg no-print">
           <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada}</p></div>
           <div className="flex gap-2">
+            <button onClick={() => exportToPDF('relatorio-modal-conteudo', `RNC_${registro.id}.pdf`)} className="flex items-center gap-1 px-5 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition text-sm"><Download size={16} /> Baixar PDF</button>
             <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm"><Printer size={16} /> Imprimir</button>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20} /></button>
           </div>
         </div>
 
-        <div className="text-black text-[15px] leading-relaxed">
+        <div id="relatorio-modal-conteudo" className="text-black text-[15px] leading-relaxed bg-white">
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm]">
             
@@ -838,18 +875,31 @@ const RelatorioViewModal = ({ registro, onClose }) => {
 
             <div className="mb-5 print:mb-3 break-inside-avoid">
               <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
-              <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
-                <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
-                {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
-                {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
-                {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
-                {registro.fornecedor && <p className="text-[14px]"><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
-                {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
-                {registro.dataRecebimento && <p className="text-[14px]"><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
-                {registro.nf && <p className="text-[14px]"><strong>Nota Fiscal:</strong> {registro.nf}</p>}
-                {registro.horarioEmbalamento && <p className="text-[14px]"><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
-              </div>
+              
+              {isCliente ? (
+                <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                  {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
+                  {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
+                  {registro.lojaLocal && <p className="text-[14px]"><strong>Loja ou Local:</strong> {registro.lojaLocal}</p>}
+                  {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
+                  <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
+                  {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
+                  <p className="text-[14px] col-span-2"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                  <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
+                  <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
+                  {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
+                  {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
+                  {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
+                  {registro.fornecedor && <p className="text-[14px]"><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
+                  {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
+                  {registro.dataRecebimento && <p className="text-[14px]"><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
+                  {registro.nf && <p className="text-[14px]"><strong>Nota Fiscal:</strong> {registro.nf}</p>}
+                  {registro.horarioEmbalamento && <p className="text-[14px]"><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
+                </div>
+              )}
             </div>
 
             {registro.descricao && (
@@ -919,6 +969,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
       <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
         <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
+        <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
         <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
       </select>
     </div>
@@ -957,6 +1008,7 @@ export default function App() {
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
     dataOcorrencia: '', produto: '', ocorrencia: '', lote: '', quantidade: '', validade: '',
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
+    lojaLocal: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
     imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
   });
@@ -1114,6 +1166,7 @@ export default function App() {
       dataRecebimento: registro.dataRecebimento || '',
       nf: registro.nf || '',
       horarioEmbalamento: registro.horarioEmbalamento || '',
+      lojaLocal: registro.lojaLocal || '',
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || `Aquiraz, ${new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
@@ -1169,6 +1222,7 @@ export default function App() {
       lote: formData.lote || '', quantidade: formData.quantidade || '', validade: formData.validade || '',
       dataRecebimento: formData.dataRecebimento || '', nf: formData.nf || '', horarioEmbalamento: formData.horarioEmbalamento || '',
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
+      lojaLocal: formData.lojaLocal || '',
       imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: user?.uid || 'anonimo'
@@ -1262,6 +1316,7 @@ export default function App() {
   };
 
   const isFornecedor = formData.tipoRelatorio === 'Problema com Fornecedor' || formData.tipoRelatorio === 'Insumo ou Embalagem';
+  const isCliente = formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
   const requiresHorario = formData.tipoRelatorio.includes('Teste') || formData.tipoRelatorio === 'Ocorrência Interna';
   const showValidade = !formData.tipoRelatorio.includes('Insumo') && !formData.tipoRelatorio.includes('Equipamento');
 
@@ -1270,6 +1325,7 @@ export default function App() {
       'Problema com Fornecedor': { produto: "Ex: Salsicha Hot Dog - Aurora", ocorrencia: "Ex: Desvio de padrão físico", lote: "Ex: 0426011411", quantidade: "Ex: 12 kg", descricao: "Durante o processo de abertura da embalagem, foi identificada uma não conformidade...", consideracoes: "A presença dessas avarias compromete a integridade do insumo..." },
       'Insumo ou Embalagem': { produto: "Ex: Embalagens plásticas", ocorrencia: "Ex: Fragilidade", lote: "Ex: LOTE 4.1", quantidade: "Ex: 1.562 unidades", descricao: "Durante a rotina de operação...", consideracoes: "O rompimento inviabiliza o acondicionamento..." },
       'Ocorrência Interna': { produto: "Ex: Pão Hot Dog", ocorrencia: "Ex: Presença de corpo estranho", lote: "Ex: A 0103", quantidade: "Ex: 1 pacote (5kg)", descricao: "Durante a rotina de operação...", consideracoes: "Solicitamos que a equipe reforce a atenção..." },
+      'Relatório de Não Conformidade - Cliente': { produto: "Ex: Pão de Queijo 400g", ocorrencia: "Ex: Mofo no produto", lote: "Ex: 213094", quantidade: "Ex: 2 pacotes", lojaLocal: "Ex: Supermercado XYZ", descricao: "Cliente reportou que ao abrir o produto...", consideracoes: "O setor de qualidade providenciará a análise da contraprova..." },
       'Teste de Produto': { produto: "Ex: Pão de Queijo", ocorrencia: "Ex: Teste de formulação", lote: "Ex: Lote Teste 01", quantidade: "Ex: Escala reduzida", descricao: "A avaliação foi realizada após...", consideracoes: "Os resultados obtidos..." },
       'Teste de Equipamento': { produto: "Ex: Seladora Automática", ocorrencia: "Ex: Oscilação na temperatura", lote: "Ex: N/A", quantidade: "Ex: N/A", descricao: "Durante o processamento...", consideracoes: "Como medida de contingência..." }
     };
@@ -1385,6 +1441,7 @@ export default function App() {
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
     let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+    if (formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE NÃO CONFORMIDADE - CLIENTE";
     if (formData.tipoRelatorio === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (formData.tipoRelatorio === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (formData.tipoRelatorio.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
@@ -1395,11 +1452,12 @@ export default function App() {
           <button onClick={() => setView('form')} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
           <div className="flex gap-3">
             <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
+            <button onClick={() => exportToPDF('relatorio-preview-conteudo', `RNC_${editingReportId || 'Novo'}.pdf`, setAppMessage)} className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-black shadow-md transition"><Download size={18} /> BAIXAR PDF</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> IMPRIMIR</button>
           </div>
         </div>
 
-        <div className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
+        <div id="relatorio-preview-conteudo" className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
             
@@ -1411,17 +1469,30 @@ export default function App() {
 
             <div className="mb-5 print:mb-3 break-inside-avoid">
               <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
-                {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
-                {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
-                {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
-                {formData.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {formData.fornecedor}</p>}
-                {formData.validade && showValidade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
-                {formData.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {formData.dataRecebimento}</p>}
-                {formData.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {formData.nf}</p>}
-                {formData.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {formData.horarioEmbalamento}</p>}
-              </div>
+              
+              {isCliente ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                  {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
+                  {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
+                  {formData.lojaLocal && <p><strong>Loja ou Local:</strong> {formData.lojaLocal}</p>}
+                  {formData.validade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
+                  <p><strong>Produto / Material:</strong> {formData.produto}</p>
+                  {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
+                  <p className="md:col-span-2 print:col-span-2"><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                  <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
+                  {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
+                  {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
+                  {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
+                  {formData.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {formData.fornecedor}</p>}
+                  {formData.validade && showValidade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
+                  {formData.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {formData.dataRecebimento}</p>}
+                  {formData.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {formData.nf}</p>}
+                  {formData.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {formData.horarioEmbalamento}</p>}
+                </div>
+              )}
             </div>
 
             {formData.descricao && (
@@ -1522,7 +1593,9 @@ export default function App() {
                 <label className="block text-sm font-bold mb-1 text-gray-700">Origem da Ocorrência</label>
                 <select name="tipoRelatorio" value={formData.tipoRelatorio} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none bg-white font-medium shadow-sm">
                   <option value="Problema com Fornecedor">Problema com Fornecedor</option><option value="Insumo ou Embalagem">Insumo ou Embalagem</option>
-                  <option value="Ocorrência Interna">Ocorrência Interna</option><option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
+                  <option value="Ocorrência Interna">Ocorrência Interna</option>
+                  <option value="Relatório de Não Conformidade - Cliente">Relatório de Não Conformidade - Cliente</option>
+                  <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
                 </select>
               </div>
               <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Emissão</label><input type="text" name="dataRelatorio" value={formData.dataRelatorio} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
@@ -1535,16 +1608,29 @@ export default function App() {
 
           <div className="space-y-4">
             <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-              <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-              <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-              <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-              <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-              {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-              {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
-              {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-            </div>
+            
+            {isCliente ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Loja ou Local</label><input type="text" maxLength={80} name="lojaLocal" value={formData.lojaLocal} onChange={handleChange} placeholder={placeholders.lojaLocal} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
+                {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
