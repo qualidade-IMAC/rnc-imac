@@ -94,21 +94,39 @@ if (typeof document !== 'undefined') {
   }
 }
 
-// --- FUNÇÃO GLOBAL DE EXPORTAÇÃO DE PDF ---
+// --- FUNÇÃO GLOBAL DE EXPORTAÇÃO DE PDF (CORRIGIDA) ---
 const exportToPDF = (elementId, filename, setAppMessage) => {
   const element = document.getElementById(elementId);
   if (!element) return;
   
   if (window.html2pdf) {
     if(setAppMessage) setAppMessage("⏳ Gerando PDF, aguarde...");
+    
+    // Salva o estilo original
+    const originalWidth = element.style.width;
+    const originalMaxWidth = element.style.maxWidth;
+    const originalMargin = element.style.margin;
+    
+    // Força a largura de 794px (Largura do A4) antes de gerar o PDF para não esticar
+    element.style.width = '794px';
+    element.style.maxWidth = '794px';
+    element.style.margin = '0 auto';
+
     const opt = {
-      margin:       [10, 0, 10, 0], 
+      margin:       10, // Margem uniforme evita distorção de aspecto
       filename:     filename || 'Relatorio_RNC.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      image:        { type: 'jpeg', quality: 1 },
+      html2canvas:  { scale: 2, useCORS: true, windowWidth: 794 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: 'css', avoid: '.break-inside-avoid' }
     };
+    
     window.html2pdf().set(opt).from(element).save().then(() => {
+      // Restaura o layout para a tela normal do usuário
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
+      element.style.margin = originalMargin;
+
       if(setAppMessage) {
         setAppMessage("✅ PDF gerado e baixado com sucesso!");
         setTimeout(() => setAppMessage(null), 3000);
