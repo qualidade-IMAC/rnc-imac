@@ -152,8 +152,6 @@ const RefreshCw = (p) => <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d
 const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></SvgIcon>;
 const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
 const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
-const Paperclip = (p) => <SvgIcon {...p}><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></SvgIcon>;
-const File = (p) => <SvgIcon {...p}><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></SvgIcon>;
 const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></SvgIcon>;
 
 // --- FUNÇÃO DE COMPRESSÃO DE IMAGENS ---
@@ -1004,18 +1002,6 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                 </div>
               )}
 
-              {/* LISTA DE ANEXOS NA IMPRESSÃO/PDF */}
-              {registro.anexos && registro.anexos.length > 0 && (
-                <div className="mb-6 mt-6 print:mt-4 break-inside-avoid">
-                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">Documentos Anexos Vinculados</p></div>
-                   <ul className="list-disc pl-5 ml-1">
-                     {registro.anexos.map((anexo, index) => (
-                        <li key={index} className="text-[14px] text-gray-700">{anexo.nome}</li>
-                     ))}
-                   </ul>
-                </div>
-              )}
-
               <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p className="text-[14px]">{registro.localData || `Aquiraz, ${dataFormatada}.`}</p></div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
@@ -1097,7 +1083,7 @@ export default function App() {
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
     lojaLocal: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
-    imagens: [], anexos: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
+    imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
   });
 
   const [formData, setFormData] = useState(getEmptyForm());
@@ -1173,7 +1159,7 @@ export default function App() {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
         const existingIds = new Set(cloudData.map(r => r.id));
-        const localOnly = prev.filter(r => !existingIds.has(r.id) && r.id.toString().length < 15);
+        const localOnly = prev.filter(r => !existingIds.has(r.id));
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
         localStorage.setItem('imac_registros', JSON.stringify(merged));
@@ -1225,37 +1211,7 @@ export default function App() {
     } catch (error) {}
   };
 
-  // UPLOAD DE DOCUMENTOS/ANEXOS
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    files.forEach(file => {
-      // Limite de 500KB para evitar estourar o limite do Firestore (1MB)
-      if (file.size > 500 * 1024) {
-        setAppMessage(`⚠️ Arquivo muito grande: ${file.name}. Máximo permitido é 500KB.`);
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        setFormData(prev => ({
-          ...prev,
-          anexos: [...(prev.anexos || []), {
-            id: Date.now() + Math.random(),
-            nome: file.name,
-            tamanho: (file.size / 1024).toFixed(1) + ' KB',
-            tipo: file.type,
-            data: event.target.result // Base64 do documento
-          }]
-        }));
-      };
-    });
-  };
-
   const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: prev.imagens.filter((_, index) => index !== indexToRemove) }));
-  const removeAnexo = (indexToRemove) => setFormData((prev) => ({ ...prev, anexos: prev.anexos.filter((_, index) => index !== indexToRemove) }));
   
   // ATUALIZAR IMAGEM ANOTADA NO NOVO FORMATO (Preserva os vetores)
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
@@ -1302,7 +1258,6 @@ export default function App() {
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || `Aquiraz, ${new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
       imagens: registro.imagens || [],
-      anexos: registro.anexos || [],
       fornecedor: registro.fornecedor || '',
       assinaturas: registro.assinaturas || [...defaultAssinaturas]
     });
@@ -1324,9 +1279,9 @@ export default function App() {
       localStorage.setItem('imac_registros', JSON.stringify(updatedList));
       return updatedList;
     });
-    if (user && db && isConfigured && id.length > 15) {
+    if (user && db && isConfigured) {
       try {
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id), payload);
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString()), payload);
         setAppMessage("✅ Avaliação salva com sucesso!");
       } catch (error) { setAppMessage("💾 Avaliação salva localmente (offline)"); }
     } else { setAppMessage("💾 Avaliação salva localmente"); }
@@ -1345,7 +1300,7 @@ export default function App() {
       dataRecebimento: formData.dataRecebimento || '', nf: formData.nf || '', horarioEmbalamento: formData.horarioEmbalamento || '',
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
       lojaLocal: formData.lojaLocal || '',
-      imagens: formData.imagens || [], anexos: formData.anexos || [], assinaturas: formData.assinaturas || [],
+      imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: user?.uid || 'anonimo'
     };
@@ -1362,9 +1317,9 @@ export default function App() {
         return updatedList;
       });
 
-      if (user && db && isConfigured && editingReportId.length > 15) {
+      if (user && db && isConfigured) {
         try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId), payloadEdicao);
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId.toString()), payloadEdicao);
           setAppMessage("✅ Relatório atualizado e sincronizado!");
         } catch (error) { setAppMessage("💾 Atualização salva localmente"); }
       } else { setAppMessage("💾 Edição salva localmente"); }
@@ -1400,8 +1355,8 @@ export default function App() {
 
   const confirmDeleteRegistro = async (id) => {
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
-    if (user && db && isConfigured && id.length > 15) {
-      try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) {}
+    if (user && db && isConfigured) {
+      try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString())); } catch (error) {}
     }
     setRegistroToDelete(null);
   };
@@ -1513,7 +1468,7 @@ export default function App() {
                     filteredRecords.map(reg => (
                       <tr key={reg.id} className="hover:bg-gray-50 transition">
                         <td className="px-4 py-3 whitespace-nowrap text-xs">{new Date(reg.dataCriacao).toLocaleDateString('pt-BR')}</td>
-                        <td className="px-4 py-3"><span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio}</span></td>
+                        <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio}</span></td>
                         <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto}>{reg.produto}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate" title={reg.fornecedor}>{reg.fornecedor || '-'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia}>{reg.ocorrencia}</td>
@@ -1628,18 +1583,6 @@ export default function App() {
                 <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
                   <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
-                </div>
-              )}
-
-              {/* LISTA DE ANEXOS NA IMPRESSÃO/PDF */}
-              {formData.anexos && formData.anexos.length > 0 && (
-                <div className="mb-6 mt-6 print:mt-4 break-inside-avoid">
-                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">Documentos Anexos Vinculados</p></div>
-                   <ul className="list-disc pl-5 ml-1">
-                     {formData.anexos.map((anexo, index) => (
-                        <li key={index} className="text-[14px] text-gray-700">{anexo.nome}</li>
-                     ))}
-                   </ul>
                 </div>
               )}
 
@@ -1809,39 +1752,6 @@ export default function App() {
                     </div>
                   );
                 })}
-              </div>
-            )}
-          </div>
-
-          {/* NOVA ÁREA: ANEXAR DOCUMENTOS (PDF, EXCEL, WORD) */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Documentos Anexos</h2>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-5 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-              <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                <div className="bg-white p-2.5 rounded-full shadow-sm mb-2 border border-gray-200"><Paperclip size={24} className="text-[#5C3A21]" /></div>
-                <span className="text-[13px] font-bold text-[#5C3A21]">Anexar PDF, Planilha ou Word</span>
-                <span className="text-xs text-gray-500 mt-0.5 font-medium">Tamanho máximo: 500KB por arquivo</span>
-                <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv" onChange={handleFileUpload} className="hidden" />
-              </label>
-            </div>
-
-            {formData.anexos && formData.anexos.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                {formData.anexos.map((anexo, index) => (
-                  <div key={index} className="flex items-center justify-between bg-white border border-gray-200 p-3 rounded-lg shadow-sm group">
-                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="bg-blue-100 p-2 rounded text-blue-700"><File size={20} /></div>
-                        <div className="flex flex-col min-w-0">
-                           <span className="text-sm font-bold text-gray-700 truncate" title={anexo.nome}>{anexo.nome}</span>
-                           <span className="text-xs text-gray-500">{anexo.tamanho}</span>
-                        </div>
-                     </div>
-                     <div className="flex gap-2">
-                        <a href={anexo.data} download={anexo.nome} className="text-gray-400 hover:text-blue-600 transition" title="Baixar Anexo"><Download size={18} /></a>
-                        <button onClick={() => removeAnexo(index)} className="text-gray-400 hover:text-red-600 transition" title="Remover"><Trash2 size={18}/></button>
-                     </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
