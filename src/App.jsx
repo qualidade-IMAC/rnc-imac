@@ -63,6 +63,7 @@ if (typeof document !== 'undefined') {
       .print-grid-signatures { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 15px 40px !important; }
       .print-bg-yellow { background-color: #F4B41A !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       .print-border-yellow { border-left-color: #F4B41A !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .print-bg-yellow-light { background-color: rgba(244, 180, 26, 0.15) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     @media screen { .print-only { display: none !important; } }
   `;
@@ -898,18 +899,19 @@ const StatusModal = ({ registro, onClose, onSave }) => {
 const RelatorioViewModal = ({ registro, onClose }) => {
   if (!registro) return null;
 
+  const isCliente = registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
+
   const getTituloRelatorio = () => {
-    if (registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') return "RELATÓRIO DE NÃO CONFORMIDADE - CLIENTE";
+    if (isCliente) return "RELATÓRIO DE DESVIO PADRÃO";
     if (registro.tipoRelatorio === 'Insumo ou Embalagem') return "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (registro.tipoRelatorio === 'Ocorrência Interna') return "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (registro.tipoRelatorio.includes('Teste')) return "RELATÓRIO DE TESTES";
     return "RELATÓRIO DE OCORRÊNCIA PRODUTO";
   };
-  const getTituloSecao1 = () => registro.tipoRelatorio.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE";
-  const getTituloSecao2 = () => registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRÊNCIA";
-  const getTituloSecao3 = () => registro.tipoRelatorio.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS";
-
-  const isCliente = registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
+  
+  const getTituloSecao1 = () => isCliente ? "DADOS DO PRODUTO" : (registro.tipoRelatorio.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
+  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRÊNCIA");
+  const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (registro.tipoRelatorio.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
 
   const dataFormatada = new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   const assinaturasRender = registro.assinaturas || [
@@ -946,73 +948,133 @@ const RelatorioViewModal = ({ registro, onClose }) => {
               </div>
             </div>
 
-            <div className="mb-5 print:mb-3 break-inside-avoid">
-              <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
-              
-              {isCliente ? (
-                <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                  {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
-                  {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
-                  {registro.lojaLocal && <p className="text-[14px]"><strong>Loja ou Local:</strong> {registro.lojaLocal}</p>}
-                  {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
-                  <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
-                  {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
-                  <p className="text-[14px] col-span-2"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                  <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
-                  <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
-                  {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
-                  {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
-                  {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
-                  {registro.fornecedor && <p className="text-[14px]"><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
-                  {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
-                  {registro.dataRecebimento && <p className="text-[14px]"><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
-                  {registro.nf && <p className="text-[14px]"><strong>Nota Fiscal:</strong> {registro.nf}</p>}
-                  {registro.horarioEmbalamento && <p className="text-[14px]"><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
-                </div>
-              )}
-            </div>
-
-            {registro.descricao && (
-              <div className="mb-5 print:mb-3 w-full overflow-hidden">
-                <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
-                <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.descricao }} />
-              </div>
-            )}
-
-            {registro.imagens && registro.imagens.length > 0 && (
-              <div className="mb-6 mt-6 print:mt-4">
-                <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
-                  {registro.imagens.map((img, index) => {
-                    const src = typeof img === 'string' ? img : img.displaySrc;
-                    return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="print:pt-4">
-              {registro.consideracoes && (
-                <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
-                </div>
-              )}
-
-              <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p className="text-[14px]">{registro.localData || `Aquiraz, ${dataFormatada}.`}</p></div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                {assinaturasRender.map((assinatura, index) => (
-                  <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                    <p className="font-bold">{assinatura.nome}</p>
-                    <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+            {isCliente ? (
+              // ================= LAYOUT ESPECÍFICO PARA "RELATÓRIO DE DESVIO PADRÃO" (CLIENTE) =================
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p className="text-[14px]"><strong>CLIENTE:</strong> {registro.lojaLocal}</p>
+                    <p className="text-[14px]"><strong>SUPERVISOR:</strong> {registro.supervisor}</p>
+                    <p className="text-[14px]"><strong>PRODUTO:</strong> {registro.produto}</p>
+                    <p className="text-[14px]"><strong>LOTE:</strong> {registro.lote}</p>
+                    <p className="text-[14px]"><strong>DATA DE FABRICAÇÃO:</strong> {registro.dataFabricacao}</p>
+                    <p className="text-[14px]"><strong>DATA VALIDADE:</strong> {registro.validade}</p>
+                    <p className="text-[14px] col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {registro.quantidade}</p>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
+                  
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+
+                  <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Sabor</span><span className="text-[14px] font-semibold">{registro.sabor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Odor</span><span className="text-[14px] font-semibold">{registro.odor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Cor</span><span className="text-[14px] font-semibold">{registro.cor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Temp. °C</span><span className="text-[14px] font-semibold">{registro.temperatura || 'Não informado'}</span></div>
+                  </div>
+                </div>
+
+                {registro.imagens && registro.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
+                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                      {registro.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                  
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
+                     <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
+                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'PROCEDENTE' ? 'X' : '  '}) PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'NÃO PROCEDENTE' ? 'X' : '  '}) NÃO PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
+                  </div>
+
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+
+                  <p className="text-[14px] ml-1 mb-8"><strong>AÇÃO CORRETIVA:</strong> {registro.acaoCorretiva || '-'}</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {assinaturasRender.map((assinatura, index) => (
+                      <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold uppercase">Responsável: {assinatura.nome}</p>
+                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              // ================= LAYOUT PADRÃO (OUTRAS ORIGENS) =================
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
+                    <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
+                    {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
+                    {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
+                    {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
+                    {registro.fornecedor && <p className="text-[14px]"><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
+                    {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
+                    {registro.dataRecebimento && <p className="text-[14px]"><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
+                    {registro.nf && <p className="text-[14px]"><strong>Nota Fiscal:</strong> {registro.nf}</p>}
+                    {registro.horarioEmbalamento && <p className="text-[14px]"><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
+                  </div>
+                </div>
+
+                {registro.descricao && (
+                  <div className="mb-5 print:mb-3 w-full overflow-hidden">
+                    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
+                    <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+                  </div>
+                )}
+
+                {registro.imagens && registro.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                      {registro.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="print:pt-4">
+                  {registro.consideracoes && (
+                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+                    </div>
+                  )}
+
+                  <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p className="text-[14px]">{registro.localData || `Aquiraz, ${dataFormatada}.`}</p></div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {assinaturasRender.map((assinatura, index) => (
+                      <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold">{assinatura.nome}</p>
+                        <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
             
           </div>
         </div>
@@ -1081,7 +1143,7 @@ export default function App() {
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
     dataOcorrencia: '', produto: '', ocorrencia: '', lote: '', quantidade: '', validade: '',
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
-    lojaLocal: '',
+    lojaLocal: '', dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
     imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
   });
@@ -1254,6 +1316,14 @@ export default function App() {
       nf: registro.nf || '',
       horarioEmbalamento: registro.horarioEmbalamento || '',
       lojaLocal: registro.lojaLocal || '',
+      dataFabricacao: registro.dataFabricacao || '',
+      supervisor: registro.supervisor || '',
+      sabor: registro.sabor || '',
+      odor: registro.odor || '',
+      cor: registro.cor || '',
+      temperatura: registro.temperatura || '',
+      statusParecer: registro.statusParecer || '',
+      acaoCorretiva: registro.acaoCorretiva || '',
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || `Aquiraz, ${new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
@@ -1299,7 +1369,9 @@ export default function App() {
       lote: formData.lote || '', quantidade: formData.quantidade || '', validade: formData.validade || '',
       dataRecebimento: formData.dataRecebimento || '', nf: formData.nf || '', horarioEmbalamento: formData.horarioEmbalamento || '',
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
-      lojaLocal: formData.lojaLocal || '',
+      lojaLocal: formData.lojaLocal || '', dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
+      sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
+      statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '',
       imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: user?.uid || 'anonimo'
@@ -1391,7 +1463,7 @@ export default function App() {
       'Problema com Fornecedor': { produto: "Ex: Salsicha Hot Dog - Aurora", ocorrencia: "Ex: Desvio de padrão físico", lote: "Ex: 0426011411", quantidade: "Ex: 12 kg", descricao: "Durante o processo de abertura da embalagem, foi identificada uma não conformidade...", consideracoes: "A presença dessas avarias compromete a integridade do insumo..." },
       'Insumo ou Embalagem': { produto: "Ex: Embalagens plásticas", ocorrencia: "Ex: Fragilidade", lote: "Ex: LOTE 4.1", quantidade: "Ex: 1.562 unidades", descricao: "Durante a rotina de operação...", consideracoes: "O rompimento inviabiliza o acondicionamento..." },
       'Ocorrência Interna': { produto: "Ex: Pão Hot Dog", ocorrencia: "Ex: Presença de corpo estranho", lote: "Ex: A 0103", quantidade: "Ex: 1 pacote (5kg)", descricao: "Durante a rotina de operação...", consideracoes: "Solicitamos que a equipe reforce a atenção..." },
-      'Relatório de Não Conformidade - Cliente': { produto: "Ex: Pão de Queijo 400g", ocorrencia: "Ex: Mofo no produto", lote: "Ex: 213094", quantidade: "Ex: 2 pacotes", lojaLocal: "Ex: Supermercado XYZ", descricao: "Cliente reportou que ao abrir o produto...", consideracoes: "O setor de qualidade providenciará a análise da contraprova..." },
+      'Relatório de Não Conformidade - Cliente': { produto: "Ex: Pão de Queijo 400g", ocorrencia: "A loja relatou que...", lote: "Ex: 213094", quantidade: "Ex: 2 pacotes", lojaLocal: "Ex: São Luiz - Cambeba", descricao: "Cliente reportou que...", consideracoes: "Após o recebimento da reclamação..." },
       'Teste de Produto': { produto: "Ex: Pão de Queijo", ocorrencia: "Ex: Teste de formulação", lote: "Ex: Lote Teste 01", quantidade: "Ex: Escala reduzida", descricao: "A avaliação foi realizada após...", consideracoes: "Os resultados obtidos..." },
       'Teste de Equipamento': { produto: "Ex: Seladora Automática", ocorrencia: "Ex: Oscilação na temperatura", lote: "Ex: N/A", quantidade: "Ex: N/A", descricao: "Durante o processamento...", consideracoes: "Como medida de contingência..." }
     };
@@ -1468,7 +1540,7 @@ export default function App() {
                     filteredRecords.map(reg => (
                       <tr key={reg.id} className="hover:bg-gray-50 transition">
                         <td className="px-4 py-3 whitespace-nowrap text-xs">{new Date(reg.dataCriacao).toLocaleDateString('pt-BR')}</td>
-                        <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio}</span></td>
+                        <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? 'Cliente' : reg.tipoRelatorio}</span></td>
                         <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto}>{reg.produto}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate" title={reg.fornecedor}>{reg.fornecedor || '-'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia}>{reg.ocorrencia}</td>
@@ -1506,7 +1578,7 @@ export default function App() {
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
     let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
-    if (formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE NÃO CONFORMIDADE - CLIENTE";
+    if (formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
     if (formData.tipoRelatorio === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (formData.tipoRelatorio === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (formData.tipoRelatorio.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
@@ -1531,71 +1603,131 @@ export default function App() {
               <div className="text-right"><p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{tituloRelatorio}</p><p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {formData.dataRelatorio}</p></div>
             </div>
 
-            <div className="mb-5 print:mb-3 break-inside-avoid">
-              <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
-              
-              {isCliente ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                  {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
-                  {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
-                  {formData.lojaLocal && <p><strong>Loja ou Local:</strong> {formData.lojaLocal}</p>}
-                  {formData.validade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
-                  <p><strong>Produto / Material:</strong> {formData.produto}</p>
-                  {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
-                  <p className="md:col-span-2 print:col-span-2"><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                  <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
-                  {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
-                  {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
-                  {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
-                  {formData.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {formData.fornecedor}</p>}
-                  {formData.validade && showValidade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
-                  {formData.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {formData.dataRecebimento}</p>}
-                  {formData.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {formData.nf}</p>}
-                  {formData.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {formData.horarioEmbalamento}</p>}
-                </div>
-              )}
-            </div>
-
-            {formData.descricao && (
-              <div className="mb-5 print:mb-3 w-full overflow-hidden">
-                <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
-                <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
-              </div>
-            )}
-
-            {formData.imagens.length > 0 && (
-              <div className="mb-6 mt-6 print:mt-4">
-                <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
-                  {formData.imagens.map((img, index) => {
-                    const src = typeof img === 'string' ? img : img.displaySrc;
-                    return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="print:pt-4">
-              {formData.consideracoes && (
-                <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
-                  <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
-                </div>
-              )}
-
-              <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p>{formData.localData}</p></div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                {formData.assinaturas.map((assinatura, index) => (
-                  <div key={index} className={formData.assinaturas.length % 2 !== 0 && index === formData.assinaturas.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                    <p className="font-bold">{assinatura.nome}</p><p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+            {isCliente ? (
+              // ================= LAYOUT ESPECÍFICO PARA "RELATÓRIO DE DESVIO PADRÃO" (CLIENTE) =================
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">DADOS DO PRODUTO</p></div>
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
+                    <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
+                    <p className="text-[14px]"><strong>PRODUTO:</strong> {formData.produto}</p>
+                    <p className="text-[14px]"><strong>LOTE:</strong> {formData.lote}</p>
+                    <p className="text-[14px]"><strong>DATA DE FABRICAÇÃO:</strong> {formData.dataFabricacao}</p>
+                    <p className="text-[14px]"><strong>DATA VALIDADE:</strong> {formData.validade}</p>
+                    <p className="text-[14px] col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {formData.quantidade}</p>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">INFORMAÇÕES SOBRE A OCORRÊNCIA</p></div>
+                  
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao }} />
+
+                  <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Sabor</span><span className="text-[14px] font-semibold">{formData.sabor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Odor</span><span className="text-[14px] font-semibold">{formData.odor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Cor</span><span className="text-[14px] font-semibold">{formData.cor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Temp. °C</span><span className="text-[14px] font-semibold">{formData.temperatura || 'Não informado'}</span></div>
+                  </div>
+                </div>
+
+                {formData.imagens && formData.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
+                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                      {formData.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">PARECER TÉCNICO</p></div>
+                  
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
+                     <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
+                     <p className="text-[14px] font-semibold">({formData.statusParecer === 'PROCEDENTE' ? 'X' : '  '}) PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO PROCEDENTE' ? 'X' : '  '}) NÃO PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
+                  </div>
+
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes }} />
+
+                  <p className="text-[14px] ml-1 mb-8"><strong>AÇÃO CORRETIVA:</strong> {formData.acaoCorretiva || '-'}</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {formData.assinaturas.map((assinatura, index) => (
+                      <div key={index} className={formData.assinaturas.length % 2 !== 0 && index === formData.assinaturas.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold uppercase">Responsável: {assinatura.nome}</p>
+                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              // ================= LAYOUT PADRÃO (OUTRAS ORIGENS) =================
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
+                    {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
+                    {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
+                    {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
+                    {formData.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {formData.fornecedor}</p>}
+                    {formData.validade && showValidade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
+                    {formData.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {formData.dataRecebimento}</p>}
+                    {formData.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {formData.nf}</p>}
+                    {formData.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {formData.horarioEmbalamento}</p>}
+                  </div>
+                </div>
+
+                {formData.descricao && (
+                  <div className="mb-5 print:mb-3 w-full overflow-hidden">
+                    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
+                    <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+                  </div>
+                )}
+
+                {formData.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                      {formData.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="print:pt-4">
+                  {formData.consideracoes && (
+                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
+                      <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                    </div>
+                  )}
+
+                  <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p>{formData.localData}</p></div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {formData.assinaturas.map((assinatura, index) => (
+                      <div key={index} className={formData.assinaturas.length % 2 !== 0 && index === formData.assinaturas.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold">{assinatura.nome}</p><p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
           </div>
         </div>
@@ -1687,78 +1819,154 @@ export default function App() {
             )}
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-            
-            {isCliente ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Loja ou Local</label><input type="text" maxLength={80} name="lojaLocal" value={formData.lojaLocal} onChange={handleChange} placeholder={placeholders.lojaLocal} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+          {isCliente ? (
+            // ================= FORMULÁRIO ESPECÍFICO PARA CLIENTE =================
+            <>
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Cliente / Loja ou Local</label><input type="text" maxLength={80} name="lojaLocal" value={formData.lojaLocal} onChange={handleChange} placeholder={placeholders.lojaLocal} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-                {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
-                {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-              </div>
-            )}
-          </div>
 
-          <div className="space-y-6">
-            <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
-            <div>
-              <div className="mb-1">
-                <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
+              <div className="space-y-6">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
+                <div>
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descrição da Não Conformidade Apresentada</label></div>
+                  <RichTextEditor value={formData.descricao} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                </div>
+                
+                <div>
+                   <label className="block text-sm font-bold mb-3 text-gray-700">Características do Produto</label>
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                   </div>
+                </div>
               </div>
-              <RichTextEditor value={formData.descricao} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
-            </div>
-            <div>
-              <div className="mb-1">
-                <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
-              </div>
-              <RichTextEditor value={formData.consideracoes} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-              <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
-                <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
-                <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-              </label>
-            </div>
-            {formData.imagens.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                {formData.imagens.map((img, index) => {
-                  const src = typeof img === 'string' ? img : img.displaySrc;
-                  return (
-                    <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
-                      <img src={src} alt="Preview" className="w-full h-32 object-cover" />
-                      <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                      <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                    </div>
-                  );
-                })}
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Registro Fotográfico</h2>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
+                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                    <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
+                    <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
+                    <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                </div>
+                {formData.imagens.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    {formData.imagens.map((img, index) => {
+                      const src = typeof img === 'string' ? img : img.displaySrc;
+                      return (
+                        <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
+                          <img src={src} alt="Preview" className="w-full h-32 object-cover" />
+                          <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                          <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              <div className="space-y-6">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
+                
+                <div>
+                   <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
+                   <select name="statusParecer" value={formData.statusParecer} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
+                      <option value="">Selecione uma opção...</option>
+                      <option value="PROCEDENTE">Procedente</option>
+                      <option value="NÃO PROCEDENTE">Não Procedente</option>
+                      <option value="NÃO APLICADO">Não Aplicado</option>
+                   </select>
+                </div>
+
+                <div>
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
+                  <RichTextEditor value={formData.consideracoes} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-700">Ação Corretiva</label>
+                  <input type="text" name="acaoCorretiva" value={formData.acaoCorretiva} onChange={handleChange} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                </div>
+              </div>
+            </>
+          ) : (
+            // ================= FORMULÁRIO PADRÃO (OUTROS TIPOS) =================
+            <>
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                  {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
+                  {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
+                <div>
+                  <div className="mb-1">
+                    <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
+                  </div>
+                  <RichTextEditor value={formData.descricao} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                </div>
+                <div>
+                  <div className="mb-1">
+                    <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
+                  </div>
+                  <RichTextEditor value={formData.consideracoes} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
+                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                    <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
+                    <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
+                    <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
+                </div>
+                {formData.imagens.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    {formData.imagens.map((img, index) => {
+                      const src = typeof img === 'string' ? img : img.displaySrc;
+                      return (
+                        <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
+                          <img src={src} alt="Preview" className="w-full h-32 object-cover" />
+                          <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                          <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="space-y-4 pt-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
-              <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas</h2>
+              <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
               <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1772,7 +1980,9 @@ export default function App() {
             </div>
           </div>
 
-          <div className="pt-4"><label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label><input type="text" name="localData" value={formData.localData} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" /></div>
+          {!isCliente && (
+            <div className="pt-4"><label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label><input type="text" name="localData" value={formData.localData} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" /></div>
+          )}
         </div>
 
         <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
