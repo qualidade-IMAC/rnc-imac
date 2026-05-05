@@ -11,7 +11,6 @@ if (typeof __firebase_config !== 'undefined') {
   firebaseConfig = JSON.parse(__firebase_config);
   isConfigured = true;
 } else {
-  // Chaves originais restauradas para conectar todos os computadores
   firebaseConfig = {
     apiKey: "AIzaSyAomEpViVLeoDdILS88SjjozJNr4BtjjNU",
     authDomain: "rnc-imac-51124.firebaseapp.com",
@@ -35,32 +34,17 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.innerHTML = `
-    .rich-text-content:empty:before {
-      content: attr(data-placeholder);
-      color: #9ca3af;
-      pointer-events: none;
-      display: block;
-    }
+    .rich-text-content:empty:before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; display: block; }
     .rich-text-content b, .rich-text-content strong { font-weight: 900 !important; color: inherit; }
     .rich-text-content i, .rich-text-content em { font-style: italic !important; }
     .rich-text-content u { text-decoration: underline !important; }
-    .rich-text-content { 
-      white-space: pre-wrap; 
-      word-break: break-word !important; 
-      overflow-wrap: break-word !important;
-      word-wrap: break-word !important;
-    }
+    .rich-text-content { white-space: pre-wrap; word-break: break-word !important; overflow-wrap: break-word !important; word-wrap: break-word !important; }
     .rich-text-content div { min-height: 1.5rem; }
     .rich-text-content ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
     .rich-text-content li { margin-bottom: 0.25rem; }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-      animation: fadeInUp 0.4s ease-out forwards;
-    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
     @media print {
       @page { margin: 10mm 10mm 10mm 10mm !important; size: A4; }
@@ -78,14 +62,12 @@ if (typeof document !== 'undefined') {
       .break-inside-avoid { page-break-inside: avoid !important; break-inside: avoid !important; }
       .print-grid-signatures { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 15px 40px !important; }
       .print-bg-yellow { background-color: #F4B41A !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .print-bg-orange { background-color: #ED7D31 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       .print-border-yellow { border-left-color: #F4B41A !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     @media screen { .print-only { display: none !important; } }
   `;
   document.head.appendChild(style);
 
-  // Carrega a biblioteca de exportação de PDF nativa
   if (!document.getElementById('html2pdf-script')) {
     const script = document.createElement('script');
     script.id = 'html2pdf-script';
@@ -94,26 +76,23 @@ if (typeof document !== 'undefined') {
   }
 }
 
-// --- FUNÇÃO GLOBAL DE EXPORTAÇÃO DE PDF (CORRIGIDA) ---
+// --- FUNÇÃO DE EXPORTAÇÃO DE PDF ---
 const exportToPDF = (elementId, filename, setAppMessage) => {
   const element = document.getElementById(elementId);
   if (!element) return;
   
   if (window.html2pdf) {
     if(setAppMessage) setAppMessage("⏳ Gerando PDF, aguarde...");
-    
-    // Salva o estilo original
     const originalWidth = element.style.width;
     const originalMaxWidth = element.style.maxWidth;
     const originalMargin = element.style.margin;
     
-    // Força a largura de 794px (Largura do A4) antes de gerar o PDF para não esticar
     element.style.width = '794px';
     element.style.maxWidth = '794px';
     element.style.margin = '0 auto';
 
     const opt = {
-      margin:       10, // Margem uniforme evita distorção de aspecto
+      margin:       10,
       filename:     filename || 'Relatorio_RNC.pdf',
       image:        { type: 'jpeg', quality: 1 },
       html2canvas:  { scale: 2, useCORS: true, windowWidth: 794 },
@@ -122,7 +101,6 @@ const exportToPDF = (elementId, filename, setAppMessage) => {
     };
     
     window.html2pdf().set(opt).from(element).save().then(() => {
-      // Restaura o layout para a tela normal do usuário
       element.style.width = originalWidth;
       element.style.maxWidth = originalMaxWidth;
       element.style.margin = originalMargin;
@@ -166,7 +144,6 @@ const BarChart2 = (p) => <SvgIcon {...p}><line x1="18" y1="20" x2="18" y2="10"/>
 const BoldIcon = (p) => <SvgIcon {...p} strokeWidth={3}><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></SvgIcon>;
 const ItalicIcon = (p) => <SvgIcon {...p}><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></SvgIcon>;
 const UnderlineIcon = (p) => <SvgIcon {...p}><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></SvgIcon>;
-const Save = (p) => <SvgIcon {...p}><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8" /></SvgIcon>;
 const Truck = (p) => <SvgIcon {...p}><path d="M16 3H1v13h15M8 16h7v4H8zM21 16h-2v4H5"/><circle cx="6.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></SvgIcon>;
 const Eye = (p) => <SvgIcon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
 const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-5M7 10l5 5 5-5M12 15V3"/></SvgIcon>;
@@ -175,6 +152,9 @@ const RefreshCw = (p) => <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d
 const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></SvgIcon>;
 const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
 const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
+const Paperclip = (p) => <SvgIcon {...p}><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></SvgIcon>;
+const File = (p) => <SvgIcon {...p}><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></SvgIcon>;
+const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></SvgIcon>;
 
 // --- FUNÇÃO DE COMPRESSÃO DE IMAGENS ---
 const compressImage = (file) => {
@@ -207,7 +187,7 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO ---
+// --- COMPONENTE DE TEXTO RICO (ATUALIZADO) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
@@ -223,8 +203,8 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     onChange(html);
   };
 
-  const execCommand = (command) => {
-    document.execCommand(command, false, null);
+  const execCommand = (command, value = null) => {
+    document.execCommand(command, false, value);
     editorRef.current.focus();
     handleInput();
   };
@@ -232,11 +212,39 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   return (
     <div className="w-full relative">
       <div className="w-full border border-gray-300 rounded focus-within:ring-2 focus-within:ring-[#F4B41A] shadow-sm bg-white overflow-hidden flex flex-col">
-        <div className="flex bg-gray-50 border-b border-gray-200 p-1.5 justify-between items-center">
-          <div className="flex gap-1">
-            <button type="button" onClick={(e) => { e.preventDefault(); execCommand('bold'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Negrito (Ctrl+B)"><BoldIcon size={18} /></button>
-            <button type="button" onClick={(e) => { e.preventDefault(); execCommand('italic'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Itálico (Ctrl+I)"><ItalicIcon size={18} /></button>
-            <button type="button" onClick={(e) => { e.preventDefault(); execCommand('underline'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Sublinhado (Ctrl+U)"><UnderlineIcon size={18} /></button>
+        <div className="flex bg-gray-50 border-b border-gray-200 p-1.5 gap-2 items-center flex-wrap">
+          <div className="flex gap-1 border-r border-gray-300 pr-2">
+            <button type="button" onClick={(e) => { e.preventDefault(); execCommand('bold'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Negrito"><BoldIcon size={18} /></button>
+            <button type="button" onClick={(e) => { e.preventDefault(); execCommand('italic'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Itálico"><ItalicIcon size={18} /></button>
+            <button type="button" onClick={(e) => { e.preventDefault(); execCommand('underline'); }} className="p-1.5 hover:bg-gray-200 text-gray-700 rounded transition" title="Sublinhado"><UnderlineIcon size={18} /></button>
+          </div>
+          
+          <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+            <span className="text-xs text-gray-500 font-bold ml-1" title="Cor do Texto"><Palette size={16}/></span>
+            <input 
+               type="color" 
+               className="w-6 h-6 p-0 border-0 rounded cursor-pointer" 
+               title="Mudar Cor"
+               onChange={(e) => execCommand('foreColor', e.target.value)} 
+               defaultValue="#000000"
+            />
+          </div>
+
+          <div className="flex items-center gap-1">
+            <select 
+               className="text-sm bg-transparent border border-gray-300 rounded p-1 outline-none text-gray-700" 
+               title="Tamanho do Texto"
+               onChange={(e) => execCommand('fontSize', e.target.value)}
+               defaultValue="3"
+            >
+              <option value="1">Muito Pequeno</option>
+              <option value="2">Pequeno</option>
+              <option value="3">Normal</option>
+              <option value="4">Médio</option>
+              <option value="5">Grande</option>
+              <option value="6">Muito Grande</option>
+              <option value="7">Gigante</option>
+            </select>
           </div>
         </div>
         <div
@@ -252,8 +260,8 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
-const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
+// --- COMPONENTE DE EDIÇÃO DE IMAGEM (PERSISTENTE E EDITÁVEL) ---
+const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
   const [color, setColor] = useState('#FF0000');
@@ -263,7 +271,7 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
   const [forceRender, setForceRender] = useState(0); 
   const [cropRect, setCropRect] = useState(null);
   
-  const shapesRef = useRef([]);
+  const shapesRef = useRef(JSON.parse(JSON.stringify(initialShapes || [])));
   const imageRef = useRef(null);
   const isDrawing = useRef(false);
   const draggedShapeIndex = useRef(null);
@@ -274,14 +282,45 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
 
   useEffect(() => {
     const img = new Image();
-    img.src = imageSrc;
+    img.src = baseImageSrc;
     img.onload = () => {
       imageRef.current = img;
       canvasRef.current.width = img.width;
       canvasRef.current.height = img.height;
       redraw(null);
     };
-  }, [imageSrc]);
+  }, [baseImageSrc]);
+
+  // Atualiza as ferramentas com base na seleção
+  useEffect(() => {
+    if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
+      const shape = shapesRef.current[selectedShapeIndex];
+      setColor(shape.color || '#FF0000');
+      if (shape.type === 'text') setTextSize(shape.size || 28);
+    }
+  }, [selectedShapeIndex]);
+
+  const changeColor = (newColor) => {
+    setColor(newColor);
+    if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
+      shapesRef.current[selectedShapeIndex].color = newColor;
+      redraw();
+    }
+  };
+
+  const changeTextSize = (delta) => {
+    setTextSize(s => {
+      const newSize = Math.max(12, Math.min(72, s + delta));
+      if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]?.type === 'text') {
+        shapesRef.current[selectedShapeIndex].size = newSize;
+        const ctx = canvasRef.current.getContext('2d');
+        ctx.font = `bold ${newSize}px sans-serif`;
+        shapesRef.current[selectedShapeIndex].width = ctx.measureText(shapesRef.current[selectedShapeIndex].text).width;
+        redraw();
+      }
+      return newSize;
+    });
+  };
 
   const getShapeCenter = (shape) => {
     if (shape.type === 'circle') return { x: shape.x1, y: shape.y1 };
@@ -534,7 +573,7 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
       const dist = Math.sqrt(Math.pow(currentPos.current.x - startPos.current.x, 2) + Math.pow(currentPos.current.y - startPos.current.y, 2));
       if (dist > 10) {
         shapesRef.current.push({
-          type: tool, x1: startPos.current.x, y1: startPos.current.y, x2: currentPos.current.x, y2: currentPos.current.y, color: color, rotation: 0
+          type: tool, x1: startPos.current.x, y1: startPos.current.y, x2: currentPos.current.x, y2: currentPos.current.y, color: color, rotation: 0, size: textSize
         });
       }
       redraw();
@@ -576,7 +615,7 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
     const img = new Image();
     img.src = newImageSrc;
     img.onload = () => {
-      imageRef.current = img;
+      imageRef.current = img; // Atualiza a imagem base original internamente
       canvasRef.current.width = img.width;
       canvasRef.current.height = img.height;
       // Atualiza a posição dos desenhos já feitos
@@ -601,7 +640,8 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
 
   const handleSave = () => {
     setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);
-    setTimeout(() => { onSave(canvasRef.current.toDataURL('image/jpeg', 0.95)); }, 50);
+    // Retorna: 1. A imagem renderizada (achatada) | 2. A Imagem Base (limpa) | 3. O array de Formas (para re-editar futuramente)
+    setTimeout(() => { onSave(canvasRef.current.toDataURL('image/jpeg', 0.95), imageRef.current.src, shapesRef.current); }, 50);
   };
 
   return (
@@ -609,11 +649,11 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
       <div className="w-full max-w-4xl bg-gray-900 p-4 rounded-xl shadow-2xl flex flex-col h-full max-h-[90vh] relative">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4 bg-gray-800 p-3 rounded-lg">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex bg-gray-700 p-1 rounded-lg">
+            <div className="flex bg-gray-700 p-1 rounded-lg items-center">
               <button onClick={() => {setTool('move'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded flex items-center gap-1 ${tool === 'move' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Mover Seleção"><Move size={20} strokeWidth={3} /></button>
-              <div className="w-px bg-gray-500 mx-1"></div>
+              <div className="w-px h-6 bg-gray-500 mx-1"></div>
               <button onClick={() => {setTool('crop'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'crop' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Cortar Imagem"><Scissors size={20} strokeWidth={3} /></button>
-              <div className="w-px bg-gray-500 mx-1"></div>
+              <div className="w-px h-6 bg-gray-500 mx-1"></div>
               <button onClick={() => {setTool('arrow'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'arrow' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Seta"><ArrowUpRight size={20} strokeWidth={3} /></button>
               <button onClick={() => {setTool('circle'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'circle' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Círculo"><Circle size={20} strokeWidth={3} /></button>
               <button onClick={() => {setTool('text'); setSelectedShapeIndex(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'text' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Escrever Texto"><TypeIcon size={20} strokeWidth={3} /></button>
@@ -625,21 +665,39 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
               </button>
             )}
 
-            {tool === 'text' && (
+            {(tool === 'text' || (tool === 'move' && selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]?.type === 'text')) && (
               <div className="flex items-center gap-2 bg-gray-700 px-2 py-1.5 rounded-lg border border-gray-600">
-                <button onClick={() => setTextSize(s => Math.max(12, s - 4))} className="text-white hover:text-[#F4B41A] transition p-1"><Minus size={16} /></button>
+                <button onClick={() => changeTextSize(-4)} className="text-white hover:text-[#F4B41A] transition p-1"><Minus size={16} /></button>
                 <span className="text-white text-sm font-bold w-6 text-center">{textSize}</span>
-                <button onClick={() => setTextSize(s => Math.min(72, s + 4))} className="text-white hover:text-[#F4B41A] transition p-1"><Plus size={16} /></button>
+                <button onClick={() => changeTextSize(4)} className="text-white hover:text-[#F4B41A] transition p-1"><Plus size={16} /></button>
               </div>
             )}
 
             <div className="flex gap-2">
-              <button onClick={() => setColor('#FF0000')} className={`w-8 h-8 rounded-full bg-red-500 border-2 ${color === '#FF0000' ? 'border-white scale-110 shadow-md' : 'border-transparent opacity-70'}`} title="Vermelho" />
-              <button onClick={() => setColor('#F4B41A')} className={`w-8 h-8 rounded-full bg-[#F4B41A] border-2 ${color === '#F4B41A' ? 'border-white scale-110 shadow-md' : 'border-transparent opacity-70'}`} title="Amarelo" />
-              <button onClick={() => setColor('#FFFFFF')} className={`w-8 h-8 rounded-full bg-white border-2 ${color === '#FFFFFF' ? 'border-gray-400 scale-110 shadow-md' : 'border-transparent opacity-70'}`} title="Branco" />
+              <button onClick={() => changeColor('#FF0000')} className={`w-8 h-8 rounded-full bg-red-500 border-2 ${color === '#FF0000' ? 'border-white scale-110 shadow-md' : 'border-transparent opacity-70'}`} title="Vermelho" />
+              <button onClick={() => changeColor('#F4B41A')} className={`w-8 h-8 rounded-full bg-[#F4B41A] border-2 ${color === '#F4B41A' ? 'border-white scale-110 shadow-md' : 'border-transparent opacity-70'}`} title="Amarelo" />
+              <button onClick={() => changeColor('#FFFFFF')} className={`w-8 h-8 rounded-full bg-white border-2 ${color === '#FFFFFF' ? 'border-gray-400 scale-110 shadow-md' : 'border-transparent opacity-70'}`} title="Branco" />
             </div>
 
             <div className="flex gap-2 ml-2 items-center">
+              {tool === 'move' && selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]?.type === 'text' && (
+                <div className="flex items-center" title="Editar Texto Selecionado">
+                  <input 
+                    type="text" 
+                    value={shapesRef.current[selectedShapeIndex].text} 
+                    onChange={(e) => { 
+                      shapesRef.current[selectedShapeIndex].text = e.target.value; 
+                      const ctx = canvasRef.current.getContext('2d');
+                      ctx.font = `bold ${shapesRef.current[selectedShapeIndex].size}px sans-serif`;
+                      shapesRef.current[selectedShapeIndex].width = ctx.measureText(e.target.value).width;
+                      setForceRender(prev => prev + 1); 
+                      redraw(); 
+                    }} 
+                    className="ml-2 w-32 sm:w-48 px-2 py-1 rounded text-black font-bold outline-none border-2 border-[#F4B41A]" 
+                  />
+                </div>
+              )}
+
               {selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex] && (
                 <div className="flex items-center gap-1.5 bg-[#F4B41A]/20 px-2 py-1 rounded-lg border border-[#F4B41A]/50" title="Girar (ou use o scroll do mouse)">
                   <RefreshCw size={16} className="text-[#F4B41A]" />
@@ -652,7 +710,7 @@ const ImageAnnotator = ({ imageSrc, onSave, onCancel }) => {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={onCancel} className="flex items-center gap-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 font-bold transition"><X size={18} /> <span className="hidden sm:inline">Cancelar</span></button>
-            <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-bold transition"><Check size={18} /> <span className="hidden sm:inline">Salvar Edição</span></button>
+            <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-50 font-bold transition"><Check size={18} /> <span className="hidden sm:inline">Salvar Edição</span></button>
           </div>
         </div>
 
@@ -879,7 +937,6 @@ const RelatorioViewModal = ({ registro, onClose }) => {
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm]">
             
-            {/* --- PÁGINA 1: CABEÇALHO, DESCRIÇÃO E IMAGENS --- */}
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
               <div>
                 {registro.logo ? <img src={registro.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
@@ -931,17 +988,31 @@ const RelatorioViewModal = ({ registro, onClose }) => {
               <div className="mb-6 mt-6 print:mt-4">
                 <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                 <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
-                  {registro.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />)}
+                  {registro.imagens.map((img, index) => {
+                    const src = typeof img === 'string' ? img : img.displaySrc;
+                    return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                  })}
                 </div>
               </div>
             )}
 
-            {/* --- CONTINUAÇÃO DO RELATÓRIO (FLUXO NATURAL) --- */}
             <div className="print:pt-4">
               {registro.consideracoes && (
                 <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+                </div>
+              )}
+
+              {/* LISTA DE ANEXOS NA IMPRESSÃO/PDF */}
+              {registro.anexos && registro.anexos.length > 0 && (
+                <div className="mb-6 mt-6 print:mt-4 break-inside-avoid">
+                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">Documentos Anexos Vinculados</p></div>
+                   <ul className="list-disc pl-5 ml-1">
+                     {registro.anexos.map((anexo, index) => (
+                        <li key={index} className="text-[14px] text-gray-700">{anexo.nome}</li>
+                     ))}
+                   </ul>
                 </div>
               )}
 
@@ -1002,8 +1073,6 @@ export default function App() {
   const [registroToDelete, setRegistroToDelete] = useState(null); 
   const [registroToView, setRegistroToView] = useState(null);
   const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
-  
-  // NOVO ESTADO: Guarda o ID do relatório que está sendo editado
   const [editingReportId, setEditingReportId] = useState(null);
 
   const [dbError, setDbError] = useState(false); 
@@ -1028,7 +1097,7 @@ export default function App() {
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
     lojaLocal: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
-    imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
+    imagens: [], anexos: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
   });
 
   const [formData, setFormData] = useState(getEmptyForm());
@@ -1048,21 +1117,15 @@ export default function App() {
           await signInAnonymously(auth); 
         }
       } catch (error) { 
-        console.error("Autenticação nativa falhou. Ativando modo de acesso público...", error); 
+        console.error("Autenticação nativa falhou.", error); 
         setUser({ uid: 'banco-aberto-publico' }); 
       }
     };
-    
     initAuth();
     
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        setUser({ uid: 'banco-aberto-publico' });
-      }
+      setUser(currentUser ? currentUser : { uid: 'banco-aberto-publico' });
     });
-    
     return () => unsubscribe();
   }, []);
 
@@ -1081,15 +1144,14 @@ export default function App() {
       try {
         const parsed = JSON.parse(savedLocal);
         if (Array.isArray(parsed) && parsed.length > 0) setFornecedores(parsed);
-      } catch (e) { console.error('Erro local:', e); }
+      } catch (e) {}
     }
     
     if (!user || !db || !isConfigured) return;
-    
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { setFornecedores(data); localStorage.setItem('imac_fornecedores', JSON.stringify(data)); }
-    }, (error) => console.error('Erro na nuvem:', error));
+    });
     return () => unsubscribe();
   }, [user]);
 
@@ -1102,7 +1164,7 @@ export default function App() {
           parsed.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
           setRegistros(parsed);
         }
-      } catch (e) { console.error('Erro local:', e); }
+      } catch (e) {}
     }
     
     if (!user || !db || !isConfigured) return; 
@@ -1120,7 +1182,6 @@ export default function App() {
       setDbError(false);
     }, (error) => {
       if (error.code === 'permission-denied') setDbError(true);
-      console.error('Erro na nuvem:', error);
     });
     return () => unsubscribe();
   }, [user]);
@@ -1137,6 +1198,7 @@ export default function App() {
 
   const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
 
+  // UPGRADE: IMAGENS SALVAM O ESTADO DE EDIÇÃO (Formato de Objeto)
   const handleImageUpload = async (e, isLogo = false) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -1146,21 +1208,72 @@ export default function App() {
         const compressedLogo = await compressImage(files[0]);
         setFormData(prev => ({ ...prev, logo: compressedLogo }));
         localStorage.setItem('imac_logo_oficial', compressedLogo);
-      } catch (error) { console.error(error); }
+      } catch (error) {}
       return;
     }
 
     try {
       const compressedImages = await Promise.all(files.map(file => compressImage(file)));
-      setFormData(prev => ({ ...prev, imagens: [...prev.imagens, ...compressedImages] }));
-    } catch (error) { console.error(error); }
+      const newImageObjects = compressedImages.map(base64 => ({
+        isObject: true,
+        id: Date.now() + Math.random(),
+        baseSrc: base64, // Imagem Pura
+        displaySrc: base64, // Imagem Renderizada com Anotações
+        shapes: [] // Anotações guardadas para edição futura
+      }));
+      setFormData(prev => ({ ...prev, imagens: [...prev.imagens, ...newImageObjects] }));
+    } catch (error) {}
+  };
+
+  // UPLOAD DE DOCUMENTOS/ANEXOS
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    files.forEach(file => {
+      // Limite de 500KB para evitar estourar o limite do Firestore (1MB)
+      if (file.size > 500 * 1024) {
+        setAppMessage(`⚠️ Arquivo muito grande: ${file.name}. Máximo permitido é 500KB.`);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        setFormData(prev => ({
+          ...prev,
+          anexos: [...(prev.anexos || []), {
+            id: Date.now() + Math.random(),
+            nome: file.name,
+            tamanho: (file.size / 1024).toFixed(1) + ' KB',
+            tipo: file.type,
+            data: event.target.result // Base64 do documento
+          }]
+        }));
+      };
+    });
   };
 
   const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: prev.imagens.filter((_, index) => index !== indexToRemove) }));
-  const updateAnnotatedImage = (newImageBase64) => {
-    setFormData(prev => { const novasImagens = [...prev.imagens]; novasImagens[editingImageIndex] = newImageBase64; return { ...prev, imagens: novasImagens }; });
+  const removeAnexo = (indexToRemove) => setFormData((prev) => ({ ...prev, anexos: prev.anexos.filter((_, index) => index !== indexToRemove) }));
+  
+  // ATUALIZAR IMAGEM ANOTADA NO NOVO FORMATO (Preserva os vetores)
+  const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
+    setFormData(prev => { 
+      const novasImagens = [...prev.imagens];
+      const item = novasImagens[editingImageIndex];
+      
+      if (typeof item === 'string') {
+        // Atualiza imagens antigas (string) para o novo formato inteligente
+        novasImagens[editingImageIndex] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+      } else {
+        novasImagens[editingImageIndex] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+      }
+      return { ...prev, imagens: novasImagens }; 
+    });
     setEditingImageIndex(null); 
   };
+  
   const removeLogo = () => { setFormData(prev => ({ ...prev, logo: null })); localStorage.removeItem('imac_logo_oficial'); };
   
   const handleAssinaturaChange = (index, field, value) => {
@@ -1189,6 +1302,7 @@ export default function App() {
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || `Aquiraz, ${new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
       imagens: registro.imagens || [],
+      anexos: registro.anexos || [],
       fornecedor: registro.fornecedor || '',
       assinaturas: registro.assinaturas || [...defaultAssinaturas]
     });
@@ -1205,31 +1319,21 @@ export default function App() {
 
   const handleUpdateStatus = async (id, newStatus, newObs) => {
     const payload = { status: newStatus, observacoesStatus: newObs, dataModificacao: new Date().toISOString() };
-    
     setRegistros(prev => {
       const updatedList = prev.map(r => r.id === id ? { ...r, ...payload } : r);
       localStorage.setItem('imac_registros', JSON.stringify(updatedList));
       return updatedList;
     });
-
     if (user && db && isConfigured && id.length > 15) {
       try {
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id), payload);
-        setAppMessage("✅ Avaliação salva com sucesso e sincronizada!");
-      } catch (error) { 
-        console.error('Erro ao atualizar status:', error); 
-        setAppMessage("💾 Avaliação salva localmente (offline)"); 
-      }
-    } else { 
-      setAppMessage("💾 Avaliação salva localmente"); 
-    }
-    
+        setAppMessage("✅ Avaliação salva com sucesso!");
+      } catch (error) { setAppMessage("💾 Avaliação salva localmente (offline)"); }
+    } else { setAppMessage("💾 Avaliação salva localmente"); }
     setEvaluatingRegistro(null);
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  // --- NOVA FUNÇÃO DE SALVAR ---
-  // Modificada para salvar/atualizar automaticamente ao clicar em visualizar
   const handleSaveReport = async (action = 'save_and_preview') => {
     const registroData = {
       tipoRelatorio: formData.tipoRelatorio,
@@ -1241,7 +1345,7 @@ export default function App() {
       dataRecebimento: formData.dataRecebimento || '', nf: formData.nf || '', horarioEmbalamento: formData.horarioEmbalamento || '',
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
       lojaLocal: formData.lojaLocal || '',
-      imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
+      imagens: formData.imagens || [], anexos: formData.anexos || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: user?.uid || 'anonimo'
     };
@@ -1249,7 +1353,6 @@ export default function App() {
     let currentId = editingReportId;
 
     if (editingReportId) {
-      // MODO EDIÇÃO - ATUALIZA O EXISTENTE
       const updatedAt = new Date().toISOString();
       const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
       
@@ -1263,14 +1366,10 @@ export default function App() {
         try {
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId), payloadEdicao);
           setAppMessage("✅ Relatório atualizado e sincronizado!");
-        } catch (error) { 
-          console.error('Erro ao editar:', error); 
-          setAppMessage("💾 Atualização salva localmente (offline)"); 
-        }
+        } catch (error) { setAppMessage("💾 Atualização salva localmente"); }
       } else { setAppMessage("💾 Edição salva localmente"); }
       
     } else {
-      // MODO CRIAÇÃO - NOVO REGISTRO
       const tempId = Date.now().toString();
       const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString() };
       currentId = tempId;
@@ -1281,16 +1380,13 @@ export default function App() {
         try {
           const { id, ...registroParaNuvem } = novoRegistro;
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem);
-          setAppMessage("✅ Relatório criado e sincronizado na nuvem!");
-        } catch (error) { 
-          console.error("Erro Firebase setDoc:", error); 
-          setAppMessage("💾 Salvo localmente (offline)"); 
-        }
+          setAppMessage("✅ Relatório salvo na nuvem!");
+        } catch (error) { setAppMessage("💾 Salvo localmente (offline)"); }
       } else { setAppMessage("💾 Relatório salvo localmente"); }
     }
     
     if (action === 'save_and_preview') {
-      setEditingReportId(currentId); // Guarda o ID para atualizar em vez de duplicar se voltar pra edição
+      setEditingReportId(currentId);
       setView('preview');
     } else {
       setFormData(getEmptyForm());
@@ -1300,15 +1396,12 @@ export default function App() {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handlePrintAndSave = async () => {
-    window.print();
-  };
+  const handlePrintAndSave = async () => window.print();
 
   const confirmDeleteRegistro = async (id) => {
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
-    
     if (user && db && isConfigured && id.length > 15) {
-      try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) { console.error(error); }
+      try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id)); } catch (error) {}
     }
     setRegistroToDelete(null);
   };
@@ -1411,7 +1504,6 @@ export default function App() {
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h2 className="font-bold text-gray-700">Histórico de Emissões <span className="text-gray-400 font-normal ml-2">({filteredRecords.length} registros)</span></h2>
-              <span className={`text-xs px-3 py-1 rounded-full border font-bold ${isConfigured && !dbError ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>{isConfigured && !dbError ? '✔ Sincronizando' : '💾 Local'}</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -1479,7 +1571,6 @@ export default function App() {
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
             
-            {/* --- PÁGINA 1: CABEÇALHO, DESCRIÇÃO E IMAGENS --- */}
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
               <div>{formData.logo ? <img src={formData.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>} <p className="font-bold text-black text-[14px]">Controle de Qualidade</p></div>
               <div className="text-right"><p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{tituloRelatorio}</p><p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {formData.dataRelatorio}</p></div>
@@ -1524,17 +1615,31 @@ export default function App() {
               <div className="mb-6 mt-6 print:mt-4">
                 <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                 <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
-                  {formData.imagens.map((img, index) => <img key={index} src={img} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />)}
+                  {formData.imagens.map((img, index) => {
+                    const src = typeof img === 'string' ? img : img.displaySrc;
+                    return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                  })}
                 </div>
               </div>
             )}
 
-            {/* --- CONTINUAÇÃO DO RELATÓRIO (FLUXO NATURAL) --- */}
             <div className="print:pt-4">
               {formData.consideracoes && (
                 <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
                   <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                </div>
+              )}
+
+              {/* LISTA DE ANEXOS NA IMPRESSÃO/PDF */}
+              {formData.anexos && formData.anexos.length > 0 && (
+                <div className="mb-6 mt-6 print:mt-4 break-inside-avoid">
+                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">Documentos Anexos Vinculados</p></div>
+                   <ul className="list-disc pl-5 ml-1">
+                     {formData.anexos.map((anexo, index) => (
+                        <li key={index} className="text-[14px] text-gray-700">{anexo.nome}</li>
+                     ))}
+                   </ul>
                 </div>
               )}
 
@@ -1561,7 +1666,22 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
       {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
-      {editingImageIndex !== null && <ImageAnnotator imageSrc={formData.imagens[editingImageIndex]} onSave={updateAnnotatedImage} onCancel={() => setEditingImageIndex(null)} />}
+      
+      {/* RENDERIZAÇÃO DO ANOTADOR COM OS NOVOS PARÂMETROS */}
+      {editingImageIndex !== null && (() => {
+        const imgObj = formData.imagens[editingImageIndex];
+        const baseSrc = typeof imgObj === 'string' ? imgObj : imgObj.baseSrc;
+        const initialShapes = typeof imgObj === 'string' ? [] : imgObj.shapes;
+        
+        return (
+          <ImageAnnotator 
+            baseImageSrc={baseSrc} 
+            initialShapes={initialShapes}
+            onSave={updateAnnotatedImage} 
+            onCancel={() => setEditingImageIndex(null)} 
+          />
+        );
+      })()}
 
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border-t-[10px] border-[#5C3A21]">
         <div className="bg-white px-8 py-6 flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 gap-4">
@@ -1679,11 +1799,47 @@ export default function App() {
             </div>
             {formData.imagens.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                {formData.imagens.map((img, index) => (
-                  <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
-                    <img src={img} alt="Preview" className="w-full h-32 object-cover" />
-                    <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                    <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                {formData.imagens.map((img, index) => {
+                  const src = typeof img === 'string' ? img : img.displaySrc;
+                  return (
+                    <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
+                      <img src={src} alt="Preview" className="w-full h-32 object-cover" />
+                      <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                      <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* NOVA ÁREA: ANEXAR DOCUMENTOS (PDF, EXCEL, WORD) */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Documentos Anexos</h2>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-5 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
+              <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                <div className="bg-white p-2.5 rounded-full shadow-sm mb-2 border border-gray-200"><Paperclip size={24} className="text-[#5C3A21]" /></div>
+                <span className="text-[13px] font-bold text-[#5C3A21]">Anexar PDF, Planilha ou Word</span>
+                <span className="text-xs text-gray-500 mt-0.5 font-medium">Tamanho máximo: 500KB por arquivo</span>
+                <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv" onChange={handleFileUpload} className="hidden" />
+              </label>
+            </div>
+
+            {formData.anexos && formData.anexos.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                {formData.anexos.map((anexo, index) => (
+                  <div key={index} className="flex items-center justify-between bg-white border border-gray-200 p-3 rounded-lg shadow-sm group">
+                     <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="bg-blue-100 p-2 rounded text-blue-700"><File size={20} /></div>
+                        <div className="flex flex-col min-w-0">
+                           <span className="text-sm font-bold text-gray-700 truncate" title={anexo.nome}>{anexo.nome}</span>
+                           <span className="text-xs text-gray-500">{anexo.tamanho}</span>
+                        </div>
+                     </div>
+                     <div className="flex gap-2">
+                        <a href={anexo.data} download={anexo.nome} className="text-gray-400 hover:text-blue-600 transition" title="Baixar Anexo"><Download size={18} /></a>
+                        <button onClick={() => removeAnexo(index)} className="text-gray-400 hover:text-red-600 transition" title="Remover"><Trash2 size={18}/></button>
+                     </div>
                   </div>
                 ))}
               </div>
