@@ -68,53 +68,7 @@ if (typeof document !== 'undefined') {
     @media screen { .print-only { display: none !important; } }
   `;
   document.head.appendChild(style);
-
-  if (!document.getElementById('html2pdf-script')) {
-    const script = document.createElement('script');
-    script.id = 'html2pdf-script';
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    document.head.appendChild(script);
-  }
 }
-
-// --- FUNÇÃO DE EXPORTAÇÃO DE PDF ---
-const exportToPDF = (elementId, filename, setAppMessage) => {
-  const element = document.getElementById(elementId);
-  if (!element) return;
-  
-  if (window.html2pdf) {
-    if(setAppMessage) setAppMessage("⏳ Gerando PDF, aguarde...");
-    const originalWidth = element.style.width;
-    const originalMaxWidth = element.style.maxWidth;
-    const originalMargin = element.style.margin;
-    
-    element.style.width = '794px';
-    element.style.maxWidth = '794px';
-    element.style.margin = '0 auto';
-
-    const opt = {
-      margin:       10,
-      filename:     filename || 'Relatorio_RNC.pdf',
-      image:        { type: 'jpeg', quality: 1 },
-      html2canvas:  { scale: 2, useCORS: true, windowWidth: 794 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:    { mode: 'css', avoid: '.break-inside-avoid' }
-    };
-    
-    window.html2pdf().set(opt).from(element).save().then(() => {
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
-      element.style.margin = originalMargin;
-
-      if(setAppMessage) {
-        setAppMessage("✅ PDF gerado e baixado com sucesso!");
-        setTimeout(() => setAppMessage(null), 3000);
-      }
-    });
-  } else {
-    if(setAppMessage) setAppMessage("⏳ Carregando biblioteca de PDF. Tente novamente em alguns segundos...");
-  }
-};
 
 // --- ÍCONES SVG ---
 const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
@@ -927,7 +881,6 @@ const RelatorioViewModal = ({ registro, onClose }) => {
         <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-lg no-print">
           <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada}</p></div>
           <div className="flex gap-2">
-            <button onClick={() => exportToPDF('relatorio-modal-conteudo', `RNC_${registro.id}.pdf`)} className="flex items-center gap-1 px-5 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition text-sm"><Download size={16} /> Baixar PDF</button>
             <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm"><Printer size={16} /> Imprimir</button>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20} /></button>
           </div>
@@ -1004,7 +957,10 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
 
-                  <p className="text-[14px] ml-1 mb-8"><strong>AÇÃO CORRETIVA:</strong> {registro.acaoCorretiva || '-'}</p>
+                  <div className="mb-8">
+                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
+                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: registro.acaoCorretiva || '-' }} />
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {assinaturasRender.map((assinatura, index) => (
@@ -1589,7 +1545,6 @@ export default function App() {
           <button onClick={() => setView('form')} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
           <div className="flex gap-3">
             <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
-            <button onClick={() => exportToPDF('relatorio-preview-conteudo', `RNC_${editingReportId || 'Novo'}.pdf`, setAppMessage)} className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-black shadow-md transition"><Download size={18} /> BAIXAR PDF</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> IMPRIMIR</button>
           </div>
         </div>
@@ -1659,7 +1614,10 @@ export default function App() {
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes }} />
 
-                  <p className="text-[14px] ml-1 mb-8"><strong>AÇÃO CORRETIVA:</strong> {formData.acaoCorretiva || '-'}</p>
+                  <div className="mb-8">
+                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
+                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {formData.assinaturas.map((assinatura, index) => (
@@ -1898,8 +1856,8 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-700">Ação Corretiva</label>
-                  <input type="text" name="acaoCorretiva" value={formData.acaoCorretiva} onChange={handleChange} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
+                  <RichTextEditor value={formData.acaoCorretiva} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
                 </div>
               </div>
             </>
