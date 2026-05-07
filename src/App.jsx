@@ -30,18 +30,6 @@ const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
 
-// --- LOGO OFICIAL IMAC (VETORIZADA NATIVAMENTE) ---
-const DEFAULT_LOGO = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 150">
-  <g transform="translate(300, 50)">
-    <circle cx="0" cy="0" r="40" fill="#F4B41A"/>
-    <path d="M -18 -10 Q -10 -20 -2 -10 Z" fill="#ffffff"/>
-    <path d="M 6 -10 Q 14 -20 22 -10 Z" fill="#ffffff"/>
-    <path d="M -22 10 Q 0 35 30 10 A 18 18 0 0 0 45 -15" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
-  </g>
-  <text x="180" y="115" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="130" fill="#5C3A21" text-anchor="middle" letter-spacing="1">IMAC</text>
-</svg>`);
-
 // --- ESTILOS GLOBAIS ---
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
@@ -124,7 +112,6 @@ const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line
 const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
 const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></SvgIcon>;
 const LogOut = (p) => <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
-const Settings = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></SvgIcon>;
 
 // --- FUNÇÃO DE COMPRESSÃO DE IMAGENS ---
 const compressImage = (file) => {
@@ -157,7 +144,7 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO ---
+// --- COMPONENTE DE TEXTO RICO (ATUALIZADO) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
@@ -230,7 +217,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
+// --- COMPONENTE DE EDIÇÃO DE IMAGEM (PERSISTENTE E EDITÁVEL) ---
 const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
@@ -261,6 +248,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     };
   }, [baseImageSrc]);
 
+  // Atualiza as ferramentas com base na seleção
   useEffect(() => {
     if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
       const shape = shapesRef.current[selectedShapeIndex];
@@ -701,9 +689,9 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
   const [novoFornecedor, setNovoFornecedor] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fornecedoresFiltrados = fornecedores.filter(f => f.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+  const fornecedoresFiltrados = fornecedores.filter(f => f.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const handleSelect = (fornecedorNome) => { onChange(fornecedorNome); setIsAdding(false); setSearchTerm(''); };
+  const handleSelect = (fornecedor) => { onChange(fornecedor); setIsAdding(false); setSearchTerm(''); };
   const handleAddNew = () => { if (novoFornecedor.trim()) { onAddFornecedor(novoFornecedor.trim()); onChange(novoFornecedor.trim()); setNovoFornecedor(''); setIsAdding(false); setSearchTerm(''); } };
 
   return (
@@ -720,9 +708,9 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
           {searchTerm && (
             <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {fornecedoresFiltrados.length > 0 ? (
-                fornecedoresFiltrados.map((fornecedor) => (
-                  <button key={fornecedor.id} type="button" onClick={() => handleSelect(fornecedor.nome)} className={`w-full text-left px-4 py-2 hover:bg-[#F4B41A]/20 transition flex items-center gap-2 ${value === fornecedor.nome ? 'bg-[#F4B41A]/30 font-bold' : ''}`}>
-                    <Truck size={16} className="text-gray-500" /> {fornecedor.nome} {value === fornecedor.nome && <Check size={16} className="text-green-600 ml-auto" />}
+                fornecedoresFiltrados.map((fornecedor, idx) => (
+                  <button key={idx} type="button" onClick={() => handleSelect(fornecedor)} className={`w-full text-left px-4 py-2 hover:bg-[#F4B41A]/20 transition flex items-center gap-2 ${value === fornecedor ? 'bg-[#F4B41A]/30 font-bold' : ''}`}>
+                    <Truck size={16} className="text-gray-500" /> {fornecedor} {value === fornecedor && <Check size={16} className="text-green-600 ml-auto" />}
                   </button>
                 ))
               ) : <div className="px-4 py-3 text-gray-500 text-sm">Nenhum fornecedor encontrado</div>}
@@ -743,60 +731,6 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
       )}
     </div>
   );
-};
-
-// --- MODAL DE GERENCIAR FORNECEDORES ---
-const GerenciarFornecedoresModal = ({ fornecedores, onClose, onAdd, onEdit, onDelete }) => {
-  const [novoForn, setNovoForn] = useState('');
-  const [editId, setEditId] = useState(null);
-  const [editNome, setEditNome] = useState('');
-
-  const handleAdd = () => { if(novoForn.trim()) { onAdd(novoForn); setNovoForn(''); } };
-  const handleSaveEdit = (id) => { if(editNome.trim()) { onEdit(id, editNome); } setEditId(null); };
-
-  return (
-    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
-      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-lg w-full border-t-4 border-[#F4B41A] animate-fade-in-up flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><Settings size={24} className="text-[#5C3A21]"/> Gerenciar Fornecedores</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20}/></button>
-        </div>
-        
-        <div className="flex gap-2 mb-6">
-          <input type="text" value={novoForn} onChange={e => setNovoForn(e.target.value)} placeholder="Novo fornecedor..." className="flex-1 border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" onKeyDown={e => e.key === 'Enter' && handleAdd()} />
-          <button onClick={handleAdd} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold flex items-center gap-1 shadow-sm transition"><Plus size={18}/> Adicionar</button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-          {fornecedores.length === 0 ? <p className="text-gray-500 text-center py-4">Nenhum fornecedor cadastrado.</p> : 
-           fornecedores.map(f => (
-             <div key={f.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
-                {editId === f.id ? (
-                  <div className="flex flex-1 gap-2 mr-2">
-                     <input autoFocus type="text" value={editNome} onChange={e => setEditNome(e.target.value)} className="flex-1 border border-[#F4B41A] px-3 py-1.5 rounded outline-none shadow-sm font-medium" onKeyDown={e => e.key === 'Enter' && handleSaveEdit(f.id)} />
-                     <button onClick={() => handleSaveEdit(f.id)} className="bg-green-100 text-green-700 hover:bg-green-200 p-2 rounded transition" title="Salvar"><Check size={18}/></button>
-                     <button onClick={() => setEditId(null)} className="bg-gray-200 text-gray-600 hover:bg-gray-300 p-2 rounded transition" title="Cancelar"><X size={18}/></button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="font-medium text-gray-700 truncate mr-2" title={f.nome}>{f.nome}</span>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => { setEditId(f.id); setEditNome(f.nome); }} className="text-blue-600 hover:bg-blue-100 p-2 rounded transition" title="Editar"><Edit3 size={16}/></button>
-                      <button onClick={() => { if(window.confirm('Excluir este fornecedor permanentemente?')) onDelete(f.id); }} className="text-red-600 hover:bg-red-100 p-2 rounded transition" title="Apagar"><Trash2 size={16}/></button>
-                    </div>
-                  </>
-                )}
-             </div>
-           ))
-          }
-        </div>
-        
-        <div className="mt-6 text-right pt-4 border-t border-gray-100">
-          <button onClick={onClose} className="px-6 py-2.5 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-700 transition">Concluir</button>
-        </div>
-      </div>
-    </div>
-  )
 };
 
 // --- COMPONENTE DO GRÁFICO DE BARRAS ---
@@ -917,6 +851,200 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
   );
 };
 
+// --- MODAL DE VISUALIZAÇÃO DO RELATÓRIO ---
+const RelatorioViewModal = ({ registro, onClose }) => {
+  if (!registro) return null;
+
+  const isCliente = registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
+
+  const getTituloRelatorio = () => {
+    if (isCliente) return "RELATÓRIO DE DESVIO PADRÃO";
+    if (registro.tipoRelatorio === 'Insumo ou Embalagem') return "RELATÓRIO DE OCORRÊNCIA INSUMO";
+    if (registro.tipoRelatorio === 'Ocorrência Interna') return "RELATÓRIO INTERNO DE OCORRÊNCIA";
+    if (registro.tipoRelatorio.includes('Teste')) return "RELATÓRIO DE TESTES";
+    return "RELATÓRIO DE OCORRÊNCIA PRODUTO";
+  };
+  
+  const getTituloSecao1 = () => isCliente ? "DADOS DO PRODUTO" : (registro.tipoRelatorio.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
+  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
+  const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (registro.tipoRelatorio.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
+
+  const dataFormatada = new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const assinaturasRender = registro.assinaturas || [
+    { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' },
+    { nome: 'Thalita Maria Lima Lelis', cargo: 'Gerente Industrial\nResponsável Técnica\nIMAC Congelados' },
+    { nome: 'Nathália Viana de Carvalho', cargo: 'Nutricionista - CRN 13435\nControle de Qualidade\nIMAC Congelados' },
+    { nome: 'Cristiamberg Coimbra', cargo: 'Estagiário de Qualidade\nControle de Qualidade\nIMAC Congelados' }
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-start justify-center p-4 pt-10 backdrop-blur-sm overflow-y-auto modal-overlay-print">
+      <div className="max-w-[210mm] w-full bg-white shadow-2xl print:shadow-none mb-10 print:mb-0 animate-fade-in-up relative">
+        <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-lg no-print">
+          <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada} {registro.autorNome ? `por ${registro.autorNome}` : ''}</p></div>
+          <div className="flex gap-2">
+            <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm"><Printer size={16} /> Imprimir / PDF</button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20} /></button>
+          </div>
+        </div>
+
+        <div id="relatorio-modal-conteudo" className="text-black text-[15px] leading-relaxed bg-white">
+          <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
+          <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm]">
+            
+            <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
+              <div>
+                <img src={registro.logo || null} alt="Logo" className="h-[50px] object-contain mb-1" style={{ display: registro.logo ? 'block' : 'none' }} />
+                {!registro.logo && <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
+                <p className="font-bold text-black text-[14px]">Controle de Qualidade</p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{getTituloRelatorio()}</p>
+                <p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {dataFormatada}</p>
+              </div>
+            </div>
+
+            {isCliente ? (
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p className="text-[14px]"><strong>CLIENTE:</strong> {registro.lojaLocal}</p>
+                    <p className="text-[14px]"><strong>SUPERVISOR:</strong> {registro.supervisor}</p>
+                    <p className="text-[14px]"><strong>PRODUTO:</strong> {registro.produto}</p>
+                    <p className="text-[14px]"><strong>LOTE:</strong> {registro.lote}</p>
+                    <p className="text-[14px]"><strong>DATA DE FABRICAÇÃO:</strong> {registro.dataFabricacao}</p>
+                    <p className="text-[14px]"><strong>DATA VALIDADE:</strong> {registro.validade}</p>
+                    <p className="text-[14px] col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {registro.quantidade}</p>
+                  </div>
+                </div>
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
+                  
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+
+                  <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Sabor</span><span className="text-[14px] font-semibold">{registro.sabor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Odor</span><span className="text-[14px] font-semibold">{registro.odor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Cor</span><span className="text-[14px] font-semibold">{registro.cor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Temp. °C</span><span className="text-[14px] font-semibold">{registro.temperatura || 'Não informado'}</span></div>
+                  </div>
+                </div>
+
+                {registro.imagens && registro.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
+                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                      {registro.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                  
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
+                     <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
+                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'PROCEDENTE' ? 'X' : '  '}) PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'NÃO PROCEDENTE' ? 'X' : '  '}) NÃO PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
+                  </div>
+
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+
+                  <div className="mb-8">
+                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
+                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: registro.acaoCorretiva || '-' }} />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {assinaturasRender.map((assinatura, index) => (
+                      <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold uppercase">Responsável: {assinatura.nome}</p>
+                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
+                    <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
+                    {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
+                    {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
+                    {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
+                    {registro.fornecedor && <p className="text-[14px]"><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
+                    {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
+                    {registro.dataRecebimento && <p className="text-[14px]"><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
+                    {registro.nf && <p className="text-[14px]"><strong>Nota Fiscal:</strong> {registro.nf}</p>}
+                    {registro.horarioEmbalamento && <p className="text-[14px]"><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
+                  </div>
+                </div>
+
+                {registro.descricao && (
+                  <div className="mb-5 print:mb-3 w-full overflow-hidden">
+                    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
+                    <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+                  </div>
+                )}
+
+                {registro.imagens && registro.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                      {registro.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="print:pt-4">
+                  {registro.consideracoes && (
+                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+                    </div>
+                  )}
+
+                  <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p className="text-[14px]">{registro.localData || `Aquiraz, ${dataFormatada}.`}</p></div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {assinaturasRender.map((assinatura, index) => (
+                      <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold">{assinatura.nome}</p>
+                        <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+            
+          </div>
+        </div>
+
+        <div className="border-t-2 border-gray-200 p-4 flex justify-between items-center bg-gray-50 no-print rounded-b-lg">
+          <span className="text-xs text-gray-400">ID: {registro.id}</span>
+          <button onClick={onClose} className="px-6 py-2 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-700 transition text-sm">Fechar</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- FILTROS DO DASHBOARD ---
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
@@ -930,7 +1058,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
         <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
       </select>
       <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="">Todos Fornecedores</option>{fornecedores.map((f) => <option key={f.id} value={f.nome}>{f.nome}</option>)}
+        <option value="">Todos Fornecedores</option>{fornecedores.map((f, i) => <option key={i} value={f}>{f}</option>)}
       </select>
       <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
@@ -948,9 +1076,9 @@ export default function App() {
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
+  const [registroToView, setRegistroToView] = useState(null);
   const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
   const [editingReportId, setEditingReportId] = useState(null);
-  const [managingFornecedores, setManagingFornecedores] = useState(false);
 
   const [dbError, setDbError] = useState(false); 
   const [fornecedores, setFornecedores] = useState([]);
@@ -1039,45 +1167,28 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // INIT FORNECEDORES
   useEffect(() => {
     const savedFornecedores = localStorage.getItem('imac_fornecedores');
     if (!savedFornecedores) {
-      const defaultFornecedores = [
-        {id: 'local_1', nome: 'Aurora Alimentos'},
-        {id: 'local_2', nome: 'Brasil Foods'},
-        {id: 'local_3', nome: 'Seara'},
-        {id: 'local_4', nome: 'JBS'},
-        {id: 'local_5', nome: 'Marfrig'}
-      ];
+      const defaultFornecedores = ['Aurora Alimentos', 'Brasil Foods', 'Seara', 'JBS', 'Marfrig'];
       localStorage.setItem('imac_fornecedores', JSON.stringify(defaultFornecedores));
       setFornecedores(defaultFornecedores);
-    } else {
-      try {
-        const parsed = JSON.parse(savedFornecedores);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Migração de strings para objetos, se for versão antiga
-          if (typeof parsed[0] === 'string') {
-            const mapped = parsed.map((nome, i) => ({ id: 'local_' + i, nome }));
-            setFornecedores(mapped);
-            localStorage.setItem('imac_fornecedores', JSON.stringify(mapped));
-          } else {
-            setFornecedores(parsed);
-          }
-        }
-      } catch (e) {}
     }
   }, []);
 
   useEffect(() => {
+    const savedLocal = localStorage.getItem('imac_fornecedores');
+    if (savedLocal) {
+      try {
+        const parsed = JSON.parse(savedLocal);
+        if (Array.isArray(parsed) && parsed.length > 0) setFornecedores(parsed);
+      } catch (e) {}
+    }
+    
     if (!user || !db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
-      if (data.length > 0) { 
-        data.sort((a,b) => a.nome.localeCompare(b.nome));
-        setFornecedores(data); 
-        localStorage.setItem('imac_fornecedores', JSON.stringify(data)); 
-      }
+      const data = snapshot.docs.map(doc => doc.data().nome);
+      if (data.length > 0) { setFornecedores(data); localStorage.setItem('imac_fornecedores', JSON.stringify(data)); }
     });
     return () => unsubscribe();
   }, [user]);
@@ -1100,6 +1211,8 @@ export default function App() {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
         const existingIds = new Set(cloudData.map(r => r.id));
+        // CORREÇÃO: Mantém localmente APENAS os relatórios criados recentemente que ainda não subiram (marcados com _isUnsynced)
+        // Se não tiver essa marcação e sumiu da nuvem, é porque foi deletado em outro aparelho!
         const localOnly = prev.filter(r => !existingIds.has(r.id) && r._isUnsynced);
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
@@ -1113,43 +1226,13 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // AÇÕES DOS FORNECEDORES
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
-    if (!fornecedores.some(f => f.nome === nomeLimpo)) {
-      const tempObj = { id: 'local_' + Date.now(), nome: nomeLimpo };
-      setFornecedores(prev => { 
-        const newList = [...prev, tempObj].sort((a,b) => a.nome.localeCompare(b.nome)); 
-        localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); 
-        return newList; 
-      });
+    if (!fornecedores.includes(nomeLimpo)) {
+      setFornecedores(prev => { const newList = [...prev, nomeLimpo]; localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); return newList; });
     }
     if (user && db && isConfigured) {
       try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }); } catch (error) {}
-    }
-  };
-
-  const editFornecedor = async (id, novoNome) => {
-    const nomeLimpo = novoNome.trim();
-    if (!nomeLimpo) return;
-    setFornecedores(prev => {
-      const newList = prev.map(f => f.id === id ? { ...f, nome: nomeLimpo } : f).sort((a,b) => a.nome.localeCompare(b.nome));
-      localStorage.setItem('imac_fornecedores', JSON.stringify(newList));
-      return newList;
-    });
-    if (user && db && isConfigured && !id.startsWith('local_')) {
-      try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fornecedores', id), { nome: nomeLimpo }); } catch(e) {}
-    }
-  };
-
-  const deleteFornecedor = async (id) => {
-    setFornecedores(prev => {
-      const newList = prev.filter(f => f.id !== id);
-      localStorage.setItem('imac_fornecedores', JSON.stringify(newList));
-      return newList;
-    });
-    if (user && db && isConfigured && !id.startsWith('local_')) {
-      try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fornecedores', id)); } catch(e) {}
     }
   };
 
@@ -1313,6 +1396,7 @@ export default function App() {
       
     } else {
       const tempId = Date.now().toString();
+      // Adicionado a flag _isUnsynced para identificar que é um rascunho local novo
       const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
       currentId = tempId;
 
@@ -1320,7 +1404,7 @@ export default function App() {
       
       if (db && isConfigured) {
         try {
-          const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
+          const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro; // Tira a flag antes de mandar pra nuvem
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem);
           setAppMessage("✅ Relatório salvo na nuvem!");
         } catch (error) { setAppMessage("💾 Salvo localmente (offline)"); }
@@ -1337,6 +1421,8 @@ export default function App() {
     }
     setTimeout(() => setAppMessage(null), 3000);
   };
+
+  const handlePrintAndSave = async () => window.print();
 
   const confirmDeleteRegistro = async (id) => {
     setRegistros(prev => { 
@@ -1464,7 +1550,6 @@ export default function App() {
 
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
-        {managingFornecedores && <GerenciarFornecedoresModal fornecedores={fornecedores} onClose={() => setManagingFornecedores(false)} onAdd={addFornecedor} onEdit={editFornecedor} onDelete={deleteFornecedor} />}
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} />}
         {registroToDelete && (
@@ -1493,7 +1578,6 @@ export default function App() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
-              <button onClick={() => setManagingFornecedores(true)} className="bg-gray-100 text-[#5C3A21] px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm border border-gray-300" title="Gerenciar Fornecedores"><Settings size={16} /><span className="hidden sm:inline">Fornecedores</span></button>
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
               <button onClick={handleLogout} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-50 hover:text-red-600 transition flex items-center gap-2 text-sm border border-gray-200" title="Sair do Sistema"><LogOut size={16} /></button>
             </div>
@@ -1586,8 +1670,7 @@ export default function App() {
             
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
               <div>
-                <img src={formData.logo || null} alt="Logo" className="h-[50px] object-contain mb-1" style={{ display: formData.logo ? 'block' : 'none' }} />
-                {!formData.logo && <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
+                {formData.logo ? <img src={formData.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
                 <p className="font-bold text-black text-[14px]">Controle de Qualidade</p>
               </div>
               <div className="text-right">
@@ -1599,7 +1682,7 @@ export default function App() {
             {formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">DADOS DO PRODUTO</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
@@ -1612,7 +1695,7 @@ export default function App() {
                 </div>
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">INFORMAÇÕES SOBRE A OCORRÊNCIA</p></div>
                   
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao }} />
@@ -1639,7 +1722,7 @@ export default function App() {
                 )}
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">PARECER TÉCNICO</p></div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
                      <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
@@ -1904,7 +1987,7 @@ export default function App() {
             <>
               <div className="space-y-4">
                 <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
