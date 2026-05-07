@@ -71,53 +71,7 @@ if (typeof document !== 'undefined') {
     @media screen { .print-only { display: none !important; } }
   `;
   document.head.appendChild(style);
-
-  if (!document.getElementById('html2pdf-script')) {
-    const script = document.createElement('script');
-    script.id = 'html2pdf-script';
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    document.head.appendChild(script);
-  }
 }
-
-// --- FUNÇÃO DE EXPORTAÇÃO DE PDF ---
-const exportToPDF = (elementId, filename, setAppMessage) => {
-  const element = document.getElementById(elementId);
-  if (!element) return;
-  
-  if (window.html2pdf) {
-    if(setAppMessage) setAppMessage("⏳ Gerando PDF, aguarde...");
-    const originalWidth = element.style.width;
-    const originalMaxWidth = element.style.maxWidth;
-    const originalMargin = element.style.margin;
-    
-    element.style.width = '794px';
-    element.style.maxWidth = '794px';
-    element.style.margin = '0 auto';
-
-    const opt = {
-      margin:       10,
-      filename:     filename || 'Relatorio_RNC.pdf',
-      image:        { type: 'jpeg', quality: 1 },
-      html2canvas:  { scale: 2, useCORS: true, windowWidth: 794 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:    { mode: 'css', avoid: '.break-inside-avoid' }
-    };
-    
-    window.html2pdf().set(opt).from(element).save().then(() => {
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
-      element.style.margin = originalMargin;
-
-      if(setAppMessage) {
-        setAppMessage("✅ PDF gerado e baixado com sucesso!");
-        setTimeout(() => setAppMessage(null), 3000);
-      }
-    });
-  } else {
-    if(setAppMessage) setAppMessage("⏳ Carregando biblioteca de PDF. Tente novamente em alguns segundos...");
-  }
-};
 
 // --- ÍCONES SVG ---
 const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
@@ -190,7 +144,7 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO (ATUALIZADO) ---
+// --- COMPONENTE DE TEXTO RICO ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
@@ -263,7 +217,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM (PERSISTENTE E EDITÁVEL) ---
+// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
 const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
@@ -294,7 +248,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     };
   }, [baseImageSrc]);
 
-  // Atualiza as ferramentas com base na seleção
   useEffect(() => {
     if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
       const shape = shapesRef.current[selectedShapeIndex];
@@ -950,7 +903,6 @@ const RelatorioViewModal = ({ registro, onClose }) => {
             </div>
 
             {isCliente ? (
-              // ================= LAYOUT ESPECÍFICO PARA "RELATÓRIO DE DESVIO PADRÃO" (CLIENTE) =================
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
@@ -1021,7 +973,6 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                 </div>
               </>
             ) : (
-              // ================= LAYOUT PADRÃO (OUTRAS ORIGENS) =================
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
@@ -1466,6 +1417,8 @@ export default function App() {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
+  const handlePrintAndSave = async () => window.print();
+
   const confirmDeleteRegistro = async (id) => {
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
     if (user && db && isConfigured) {
@@ -1718,7 +1671,6 @@ export default function App() {
             </div>
 
             {formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? (
-              // ================= LAYOUT ESPECÍFICO PARA "RELATÓRIO DE DESVIO PADRÃO" (CLIENTE) =================
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">DADOS DO PRODUTO</p></div>
@@ -1789,7 +1741,6 @@ export default function App() {
                 </div>
               </>
             ) : (
-              // ================= LAYOUT PADRÃO (OUTRAS ORIGENS) =================
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
@@ -1838,7 +1789,8 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {formData.assinaturas.map((assinatura, index) => (
                       <div key={index} className={formData.assinaturas.length % 2 !== 0 && index === formData.assinaturas.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold">{assinatura.nome}</p><p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+                        <p className="font-bold">{assinatura.nome}</p>
+                        <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
                       </div>
                     ))}
                   </div>
@@ -2026,7 +1978,7 @@ export default function App() {
             <>
               <div className="space-y-4">
                 <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
