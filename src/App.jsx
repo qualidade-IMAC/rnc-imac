@@ -144,7 +144,7 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO ---
+// --- COMPONENTE DE TEXTO RICO (ATUALIZADO) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
@@ -217,7 +217,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
+// --- COMPONENTE DE EDIÇÃO DE IMAGEM (PERSISTENTE E EDITÁVEL) ---
 const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
@@ -248,6 +248,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     };
   }, [baseImageSrc]);
 
+  // Atualiza as ferramentas com base na seleção
   useEffect(() => {
     if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
       const shape = shapesRef.current[selectedShapeIndex];
@@ -893,7 +894,8 @@ const RelatorioViewModal = ({ registro, onClose }) => {
             
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
               <div>
-                {registro.logo ? <img src={registro.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
+                <img src={registro.logo || null} alt="Logo" className="h-[50px] object-contain mb-1" style={{ display: registro.logo ? 'block' : 'none' }} />
+                {!registro.logo && <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
                 <p className="font-bold text-black text-[14px]">Controle de Qualidade</p>
               </div>
               <div className="text-right">
@@ -1209,7 +1211,9 @@ export default function App() {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
         const existingIds = new Set(cloudData.map(r => r.id));
-        const localOnly = prev.filter(r => !existingIds.has(r.id));
+        // CORREÇÃO: Mantém localmente APENAS os relatórios criados recentemente que ainda não subiram (marcados com _isUnsynced)
+        // Se não tiver essa marcação e sumiu da nuvem, é porque foi deletado em outro aparelho!
+        const localOnly = prev.filter(r => !existingIds.has(r.id) && r._isUnsynced);
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
         localStorage.setItem('imac_registros', JSON.stringify(merged));
@@ -1392,14 +1396,15 @@ export default function App() {
       
     } else {
       const tempId = Date.now().toString();
-      const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString() };
+      // Adicionado a flag _isUnsynced para identificar que é um rascunho local novo
+      const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
       currentId = tempId;
 
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
       if (db && isConfigured) {
         try {
-          const { id, ...registroParaNuvem } = novoRegistro;
+          const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro; // Tira a flag antes de mandar pra nuvem
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem);
           setAppMessage("✅ Relatório salvo na nuvem!");
         } catch (error) { setAppMessage("💾 Salvo localmente (offline)"); }
@@ -1420,7 +1425,11 @@ export default function App() {
   const handlePrintAndSave = async () => window.print();
 
   const confirmDeleteRegistro = async (id) => {
-    setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
+    setRegistros(prev => { 
+      const newList = prev.filter(r => r.id !== id); 
+      localStorage.setItem('imac_registros', JSON.stringify(newList)); 
+      return newList; 
+    });
     if (user && db && isConfigured) {
       try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString())); } catch (error) {}
     }
