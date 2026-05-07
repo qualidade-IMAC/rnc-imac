@@ -45,6 +45,9 @@ if (typeof document !== 'undefined') {
 
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+    
+    @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; transform: scale(0.98); } }
+    .animate-pulse-soft { animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
     @media print {
       @page { margin: 10mm 10mm 10mm 10mm !important; size: A4; }
@@ -68,7 +71,53 @@ if (typeof document !== 'undefined') {
     @media screen { .print-only { display: none !important; } }
   `;
   document.head.appendChild(style);
+
+  if (!document.getElementById('html2pdf-script')) {
+    const script = document.createElement('script');
+    script.id = 'html2pdf-script';
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    document.head.appendChild(script);
+  }
 }
+
+// --- FUNÇÃO DE EXPORTAÇÃO DE PDF ---
+const exportToPDF = (elementId, filename, setAppMessage) => {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  if (window.html2pdf) {
+    if(setAppMessage) setAppMessage("⏳ Gerando PDF, aguarde...");
+    const originalWidth = element.style.width;
+    const originalMaxWidth = element.style.maxWidth;
+    const originalMargin = element.style.margin;
+    
+    element.style.width = '794px';
+    element.style.maxWidth = '794px';
+    element.style.margin = '0 auto';
+
+    const opt = {
+      margin:       10,
+      filename:     filename || 'Relatorio_RNC.pdf',
+      image:        { type: 'jpeg', quality: 1 },
+      html2canvas:  { scale: 2, useCORS: true, windowWidth: 794 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: 'css', avoid: '.break-inside-avoid' }
+    };
+    
+    window.html2pdf().set(opt).from(element).save().then(() => {
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
+      element.style.margin = originalMargin;
+
+      if(setAppMessage) {
+        setAppMessage("✅ PDF gerado e baixado com sucesso!");
+        setTimeout(() => setAppMessage(null), 3000);
+      }
+    });
+  } else {
+    if(setAppMessage) setAppMessage("⏳ Carregando biblioteca de PDF. Tente novamente em alguns segundos...");
+  }
+};
 
 // --- ÍCONES SVG ---
 const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
@@ -108,6 +157,7 @@ const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx=
 const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
 const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
 const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></SvgIcon>;
+const LogOut = (p) => <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
 
 // --- FUNÇÃO DE COMPRESSÃO DE IMAGENS ---
 const compressImage = (file) => {
@@ -568,10 +618,9 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     const img = new Image();
     img.src = newImageSrc;
     img.onload = () => {
-      imageRef.current = img; // Atualiza a imagem base original internamente
+      imageRef.current = img; 
       canvasRef.current.width = img.width;
       canvasRef.current.height = img.height;
-      // Atualiza a posição dos desenhos já feitos
       shapesRef.current = shapesRef.current.map(s => {
         if (s.type === 'circle' || s.type === 'arrow') {
           return { ...s, x1: s.x1 - cropRect.x, y1: s.y1 - cropRect.y, x2: s.x2 - cropRect.x, y2: s.y2 - cropRect.y };
@@ -593,7 +642,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
 
   const handleSave = () => {
     setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);
-    // Retorna: 1. A imagem renderizada (achatada) | 2. A Imagem Base (limpa) | 3. O array de Formas (para re-editar futuramente)
     setTimeout(() => { onSave(canvasRef.current.toDataURL('image/jpeg', 0.95), imageRef.current.src, shapesRef.current); }, 50);
   };
 
@@ -806,7 +854,7 @@ const PieChartComponent = ({ data, title }) => {
 };
 
 // --- MODAL DE AVALIAÇÃO DE STATUS ---
-const StatusModal = ({ registro, onClose, onSave }) => {
+const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
   const [status, setStatus] = useState(registro.status || 'Pendente');
   const [obs, setObs] = useState(registro.observacoesStatus || '');
 
@@ -814,7 +862,7 @@ const StatusModal = ({ registro, onClose, onSave }) => {
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
         <h3 className="text-xl font-black text-gray-900 mb-1">Avaliar RNC</h3>
-        <p className="text-gray-500 text-sm mb-6 font-medium">Controle de qualidade e liberação do relatório.</p>
+        <p className="text-gray-500 text-sm mb-6 font-medium">Avaliação realizada por: <span className="font-bold">{avaliadorAtual}</span></p>
         
         <div className="space-y-5">
           <div>
@@ -864,7 +912,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
   };
   
   const getTituloSecao1 = () => isCliente ? "DADOS DO PRODUTO" : (registro.tipoRelatorio.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
-  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRÊNCIA");
+  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
   const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (registro.tipoRelatorio.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
 
   const dataFormatada = new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -879,9 +927,9 @@ const RelatorioViewModal = ({ registro, onClose }) => {
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-start justify-center p-4 pt-10 backdrop-blur-sm overflow-y-auto modal-overlay-print">
       <div className="max-w-[210mm] w-full bg-white shadow-2xl print:shadow-none mb-10 print:mb-0 animate-fade-in-up relative">
         <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-lg no-print">
-          <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada}</p></div>
+          <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada} {registro.autorNome ? `por ${registro.autorNome}` : ''}</p></div>
           <div className="flex gap-2">
-            <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm"><Printer size={16} /> Imprimir</button>
+            <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm"><Printer size={16} /> Imprimir / PDF</button>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20} /></button>
           </div>
         </div>
@@ -1071,7 +1119,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
 
 // --- SISTEMA PRINCIPAL ---
 export default function App() {
-  const [view, setView] = useState('form'); 
+  const [view, setView] = useState('welcome'); 
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
@@ -1085,6 +1133,40 @@ export default function App() {
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
+
+  // ESTADOS DE IDENTIFICAÇÃO DO USUÁRIO
+  const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
+  
+  useEffect(() => {
+    const savedName = localStorage.getItem('imac_user_name');
+    const savedRole = localStorage.getItem('imac_user_role');
+    if (savedName && savedRole) {
+      setUserName(savedName);
+      setUserRole(savedRole);
+      setView('dashboard');
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (userName.trim() && userRole.trim()) {
+      localStorage.setItem('imac_user_name', userName.trim());
+      localStorage.setItem('imac_user_role', userRole.trim());
+      setView('dashboard');
+    } else {
+      setAppMessage("⚠️ Por favor, preencha nome e setor/cargo.");
+      setTimeout(() => setAppMessage(null), 3000);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('imac_user_name');
+    localStorage.removeItem('imac_user_role');
+    setUserName('');
+    setUserRole('');
+    setView('welcome');
+  };
 
   const defaultAssinaturas = [
     { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' },
@@ -1121,7 +1203,6 @@ export default function App() {
           await signInAnonymously(auth); 
         }
       } catch (error) { 
-        console.error("Autenticação nativa falhou.", error); 
         setUser({ uid: 'banco-aberto-publico' }); 
       }
     };
@@ -1202,7 +1283,6 @@ export default function App() {
 
   const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
 
-  // UPGRADE: IMAGENS SALVAM O ESTADO DE EDIÇÃO (Formato de Objeto)
   const handleImageUpload = async (e, isLogo = false) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -1221,9 +1301,9 @@ export default function App() {
       const newImageObjects = compressedImages.map(base64 => ({
         isObject: true,
         id: Date.now() + Math.random(),
-        baseSrc: base64, // Imagem Pura
-        displaySrc: base64, // Imagem Renderizada com Anotações
-        shapes: [] // Anotações guardadas para edição futura
+        baseSrc: base64, 
+        displaySrc: base64,
+        shapes: [] 
       }));
       setFormData(prev => ({ ...prev, imagens: [...prev.imagens, ...newImageObjects] }));
     } catch (error) {}
@@ -1231,14 +1311,11 @@ export default function App() {
 
   const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: prev.imagens.filter((_, index) => index !== indexToRemove) }));
   
-  // ATUALIZAR IMAGEM ANOTADA NO NOVO FORMATO (Preserva os vetores)
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
     setFormData(prev => { 
       const novasImagens = [...prev.imagens];
       const item = novasImagens[editingImageIndex];
-      
       if (typeof item === 'string') {
-        // Atualiza imagens antigas (string) para o novo formato inteligente
         novasImagens[editingImageIndex] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
       } else {
         novasImagens[editingImageIndex] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
@@ -1299,18 +1376,26 @@ export default function App() {
   };
 
   const handleUpdateStatus = async (id, newStatus, newObs) => {
-    const payload = { status: newStatus, observacoesStatus: newObs, dataModificacao: new Date().toISOString() };
+    const payload = { 
+      status: newStatus, 
+      observacoesStatus: newObs, 
+      dataModificacao: new Date().toISOString(),
+      avaliadorNome: userName
+    };
+    
     setRegistros(prev => {
       const updatedList = prev.map(r => r.id === id ? { ...r, ...payload } : r);
       localStorage.setItem('imac_registros', JSON.stringify(updatedList));
       return updatedList;
     });
+    
     if (user && db && isConfigured) {
       try {
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString()), payload);
         setAppMessage("✅ Avaliação salva com sucesso!");
       } catch (error) { setAppMessage("💾 Avaliação salva localmente (offline)"); }
     } else { setAppMessage("💾 Avaliação salva localmente"); }
+    
     setEvaluatingRegistro(null);
     setTimeout(() => setAppMessage(null), 3000);
   };
@@ -1330,7 +1415,9 @@ export default function App() {
       statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '',
       imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
       logo: formData.logo || null, localData: formData.localData || '',
-      userId: user?.uid || 'anonimo'
+      userId: user?.uid || 'anonimo',
+      autorNome: userName,
+      autorCargo: userRole
     };
 
     let currentId = editingReportId;
@@ -1379,8 +1466,6 @@ export default function App() {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handlePrintAndSave = async () => window.print();
-
   const confirmDeleteRegistro = async (id) => {
     setRegistros(prev => { const newList = prev.filter(r => r.id !== id); localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
     if (user && db && isConfigured) {
@@ -1404,8 +1489,8 @@ export default function App() {
 
   const exportToCSV = () => {
     const records = getFilteredRecords();
-    const rows = records.map(r => [new Date(r.dataCriacao).toLocaleDateString('pt-BR'), r.tipoRelatorio, r.produto || '', r.fornecedor || '', r.ocorrencia || '', r.lote || '', r.quantidade || '']);
-    const csv = [['Data', 'Tipo', 'Produto', 'Fornecedor', 'Ocorrência', 'Lote', 'Quantidade'].join(';'), ...rows.map(row => row.join(';'))].join('\n');
+    const rows = records.map(r => [new Date(r.dataCriacao).toLocaleDateString('pt-BR'), r.tipoRelatorio, r.produto || '', r.fornecedor || '', r.ocorrencia || '', r.lote || '', r.quantidade || '', r.autorNome || '']);
+    const csv = [['Data', 'Tipo', 'Produto', 'Fornecedor', 'Ocorrência', 'Lote', 'Quantidade', 'Autor'].join(';'), ...rows.map(row => row.join(';'))].join('\n');
     const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `relatorios_rnc.csv`; link.click();
   };
 
@@ -1427,6 +1512,65 @@ export default function App() {
   };
   const placeholders = getPlaceholders();
 
+  // ==================== TELA DE BOAS VINDAS ====================
+  if (view === 'welcome') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#F4B41A] opacity-20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#5C3A21] opacity-10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft" style={{animationDelay: '1s'}}></div>
+        
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 relative z-10 border-t-[8px] border-[#5C3A21] animate-fade-in-up">
+          <div className="text-center mb-8">
+            {localStorage.getItem('imac_logo_oficial') ? (
+              <img src={localStorage.getItem('imac_logo_oficial')} alt="IMAC" className="max-h-20 object-contain mx-auto mb-4" />
+            ) : (
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-gray-200">
+                <h1 className="text-3xl font-black text-[#5C3A21]">IMAC</h1>
+              </div>
+            )}
+            <h2 className="text-2xl font-black text-gray-800 mt-4">Controle de Qualidade</h2>
+            <p className="text-gray-500 mt-2 text-sm">Identifique-se para acessar o sistema de Relatórios de Não Conformidade.</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Seu Nome Completo</label>
+              <input 
+                type="text" 
+                required
+                value={userName} 
+                onChange={(e) => setUserName(e.target.value)} 
+                placeholder="Ex: João Silva" 
+                className="w-full border-2 border-gray-200 p-3.5 rounded-xl focus:border-[#F4B41A] focus:ring-4 focus:ring-[#F4B41A]/20 outline-none transition font-medium text-gray-800" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Setor ou Cargo</label>
+              <input 
+                type="text" 
+                required
+                value={userRole} 
+                onChange={(e) => setUserRole(e.target.value)} 
+                placeholder="Ex: Analista de Qualidade" 
+                className="w-full border-2 border-gray-200 p-3.5 rounded-xl focus:border-[#F4B41A] focus:ring-4 focus:ring-[#F4B41A]/20 outline-none transition font-medium text-gray-800" 
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="w-full bg-[#5C3A21] text-[#F4B41A] font-black p-4 rounded-xl shadow-lg hover:bg-[#4a2e1a] hover:shadow-xl transition transform active:scale-95 flex justify-center items-center gap-2 mt-4 text-lg"
+            >
+              ACESSAR SISTEMA <ArrowUpRight size={20} />
+            </button>
+          </form>
+          
+          <div className="mt-8 text-center text-xs text-gray-400 font-medium">
+            <p>Os relatórios gerados serão assinados como <strong>{userName || '...'}</strong></p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ==================== DASHBOARD ====================
   if (view === 'dashboard') {
     const filteredRecords = getFilteredRecords();
@@ -1445,7 +1589,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
-        {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} />}
+        {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} />}
         {registroToDelete && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
             <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full border-t-4 border-red-500">
@@ -1461,11 +1605,19 @@ export default function App() {
         {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up no-print"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
 
         <div className={`max-w-7xl mx-auto ${registroToView ? 'no-print' : ''}`}>
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-            <div><h1 className="text-3xl font-black text-[#5C3A21] flex items-center gap-2"><BarChart2 size={28} className="text-[#F4B41A]" />Painel de Qualidade</h1><p className="text-gray-600">Análise de Não Conformidades</p></div>
-            <div className="flex gap-2">
-              <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm"><Download size={16} /> Exportar CSV</button>
+          
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="bg-[#F4B41A] p-3 rounded-xl shadow-sm hidden md:block"><BarChart2 size={32} className="text-[#5C3A21]" /></div>
+              <div>
+                <h1 className="text-2xl font-black text-[#5C3A21]">Painel de Qualidade</h1>
+                <p className="text-gray-500 font-medium">Olá, <span className="text-[#5C3A21] font-bold">{userName}</span> ({userRole})</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
+              <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
+              <button onClick={handleLogout} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-50 hover:text-red-600 transition flex items-center gap-2 text-sm border border-gray-200" title="Sair do Sistema"><LogOut size={16} /></button>
             </div>
           </div>
 
@@ -1490,7 +1642,7 @@ export default function App() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Fornecedor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
+                <thead className="bg-gray-50 text-gray-500"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
                     filteredRecords.map(reg => (
@@ -1498,7 +1650,7 @@ export default function App() {
                         <td className="px-4 py-3 whitespace-nowrap text-xs">{new Date(reg.dataCriacao).toLocaleDateString('pt-BR')}</td>
                         <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? 'Cliente' : reg.tipoRelatorio}</span></td>
                         <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto}>{reg.produto}</td>
-                        <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate" title={reg.fornecedor}>{reg.fornecedor || '-'}</td>
+                        <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome}>{reg.autorNome ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia}>{reg.ocorrencia}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1.5 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
@@ -1545,7 +1697,8 @@ export default function App() {
           <button onClick={() => setView('form')} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
           <div className="flex gap-3">
             <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
-            <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> IMPRIMIR</button>
+            <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> Imprimir / PDF</button>
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 font-bold shadow transition border border-red-200" title="Sair do Sistema"><LogOut size={18} /></button>
           </div>
         </div>
 
@@ -1554,11 +1707,17 @@ export default function App() {
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
             
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
-              <div>{formData.logo ? <img src={formData.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>} <p className="font-bold text-black text-[14px]">Controle de Qualidade</p></div>
-              <div className="text-right"><p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{tituloRelatorio}</p><p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {formData.dataRelatorio}</p></div>
+              <div>
+                {formData.logo ? <img src={formData.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
+                <p className="font-bold text-black text-[14px]">Controle de Qualidade</p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{tituloRelatorio}</p>
+                <p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {formData.dataRelatorio}</p>
+              </div>
             </div>
 
-            {isCliente ? (
+            {formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? (
               // ================= LAYOUT ESPECÍFICO PARA "RELATÓRIO DE DESVIO PADRÃO" (CLIENTE) =================
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
@@ -1725,7 +1884,7 @@ export default function App() {
                 {editingReportId ? 'EDIÇÃO DE RNC' : 'SISTEMA DE EMISSÃO DE RNC'}
               </h1>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                {editingReportId ? `Editando registro ${editingReportId.substring(0,6)}...` : 'Controle de Qualidade IMAC'}
+                {editingReportId ? `Editando registro ${editingReportId.substring(0,6)}...` : `Operador Atual: ${userName}`}
               </p>
             </div>
           </div>
@@ -1734,6 +1893,7 @@ export default function App() {
                <button onClick={cancelEditing} className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 transition">Cancelar Edição</button>
             )}
             <button onClick={() => setView('dashboard')} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
+            <button onClick={handleLogout} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 px-4 py-2 rounded-lg font-bold border border-gray-300 transition" title="Sair do Sistema"><LogOut size={18} /></button>
           </div>
         </div>
 
