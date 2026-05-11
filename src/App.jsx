@@ -80,8 +80,6 @@ const saveToLocalStorage = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
     console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}. Tentando reduzir o tamanho...`);
-    // Se o erro for por tamanho excedido (QuotaExceededError) e for a lista de registros,
-    // nós removemos as imagens (que pesam muito) apenas do backup local. O Firebase ainda mantém as originais.
     if (key === 'imac_registros' && Array.isArray(data)) {
       try {
         const lightweightData = data.slice(0, 30).map(item => ({
@@ -1988,6 +1986,8 @@ function App() {
       </div>
     );
   }
+
+  const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
