@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs } from 'firebase/firestore';
 
 // --- CONFIGURAÇÃO DO BANCO DE DADOS FIREBASE ---
 let firebaseConfig;
@@ -144,7 +144,7 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO (ATUALIZADO) ---
+// --- COMPONENTE DE TEXTO RICO ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
@@ -217,7 +217,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM (PERSISTENTE E EDITÁVEL) ---
+// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
 const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
@@ -248,7 +248,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     };
   }, [baseImageSrc]);
 
-  // Atualiza as ferramentas com base na seleção
   useEffect(() => {
     if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
       const shape = shapesRef.current[selectedShapeIndex];
@@ -689,7 +688,8 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
   const [novoFornecedor, setNovoFornecedor] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fornecedoresFiltrados = fornecedores.filter(f => f.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Proteção contra valores mal formatados que poderiam quebrar a tela
+  const fornecedoresFiltrados = fornecedores.filter(f => f && typeof f === 'string' && f.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleSelect = (fornecedor) => { onChange(fornecedor); setIsAdding(false); setSearchTerm(''); };
   const handleAddNew = () => { if (novoFornecedor.trim()) { onAddFornecedor(novoFornecedor.trim()); onChange(novoFornecedor.trim()); setNovoFornecedor(''); setIsAdding(false); setSearchTerm(''); } };
@@ -729,6 +729,62 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
           <Truck size={16} className="text-[#5C3A21]" /> <span className="font-bold text-[#5C3A21] text-sm">Fornecedor: {value}</span>
         </div>
       )}
+    </div>
+  );
+};
+
+// --- MODAL DE GERENCIAR FORNECEDORES (NOVO) ---
+const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEdit, onRemove }) => {
+  const [editingName, setEditingName] = useState(null);
+  const [editValue, setEditValue] = useState('');
+  const [newFornecedor, setNewFornecedor] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSaveEdit = (oldName) => {
+    onEdit(oldName, editValue);
+    setEditingName(null);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up flex flex-col max-h-[85vh]">
+        <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
+          <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2"><Truck size={24}/> Gerenciar Fornecedores</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition"><X size={20}/></button>
+        </div>
+
+        <div className="flex gap-2 mb-5">
+          <input type="text" value={newFornecedor} onChange={(e) => setNewFornecedor(e.target.value)} placeholder="Nome do novo fornecedor..." className="flex-1 border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm font-medium" onKeyDown={(e) => { if (e.key === 'Enter') { onAdd(newFornecedor.trim()); setNewFornecedor(''); } }} />
+          <button onClick={() => { if(newFornecedor.trim()) { onAdd(newFornecedor.trim()); setNewFornecedor(''); } }} className="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition font-bold flex items-center gap-1 shadow-sm"><Plus size={18}/><span className="hidden sm:inline">Adicionar</span></button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 border border-gray-200 rounded-lg p-2 bg-gray-50">
+          {fornecedores.length === 0 ? <p className="text-center text-gray-500 py-6 text-sm font-medium">Nenhum fornecedor cadastrado.</p> :
+            <ul className="space-y-2">
+              {fornecedores.filter(f => typeof f === 'string').sort().map((f, idx) => (
+                <li key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm transition hover:shadow-md">
+                  {editingName === f ? (
+                    <div className="flex flex-1 gap-2 items-center">
+                      <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus className="flex-1 border-b-2 border-[#F4B41A] outline-none px-1 text-sm font-bold bg-yellow-50" onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(f); if (e.key === 'Escape') setEditingName(null); }} />
+                      <button onClick={() => handleSaveEdit(f)} className="text-white bg-green-500 hover:bg-green-600 p-1.5 rounded transition"><Check size={16}/></button>
+                      <button onClick={() => setEditingName(null)} className="text-gray-500 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition"><X size={16}/></button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="font-bold text-gray-700 text-sm truncate pr-2" title={f}>{f}</span>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => { setEditingName(f); setEditValue(f); }} className="text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 p-1.5 rounded transition" title="Editar nome"><Edit3 size={16}/></button>
+                        <button onClick={() => { if(window.confirm(`Tem certeza que deseja apagar o fornecedor:\n${f}?`)) onRemove(f); }} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-1.5 rounded transition" title="Excluir"><Trash2 size={16}/></button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          }
+        </div>
+      </div>
     </div>
   );
 };
@@ -855,26 +911,25 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
 const RelatorioViewModal = ({ registro, onClose }) => {
   if (!registro) return null;
 
-  const isCliente = registro.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
+  // Proteções contra valores nulos
+  const tipoStr = registro.tipoRelatorio || '';
+  const isCliente = tipoStr === 'Relatório de Não Conformidade - Cliente';
 
   const getTituloRelatorio = () => {
     if (isCliente) return "RELATÓRIO DE DESVIO PADRÃO";
-    if (registro.tipoRelatorio === 'Insumo ou Embalagem') return "RELATÓRIO DE OCORRÊNCIA INSUMO";
-    if (registro.tipoRelatorio === 'Ocorrência Interna') return "RELATÓRIO INTERNO DE OCORRÊNCIA";
-    if (registro.tipoRelatorio.includes('Teste')) return "RELATÓRIO DE TESTES";
+    if (tipoStr === 'Insumo ou Embalagem') return "RELATÓRIO DE OCORRÊNCIA INSUMO";
+    if (tipoStr === 'Ocorrência Interna') return "RELATÓRIO INTERNO DE OCORRÊNCIA";
+    if (tipoStr.includes('Teste')) return "RELATÓRIO DE TESTES";
     return "RELATÓRIO DE OCORRÊNCIA PRODUTO";
   };
   
-  const getTituloSecao1 = () => isCliente ? "DADOS DO PRODUTO" : (registro.tipoRelatorio.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
-  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (registro.tipoRelatorio.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
-  const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (registro.tipoRelatorio.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
+  const getTituloSecao1 = () => isCliente ? "DADOS DO PRODUTO" : (tipoStr.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
+  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (tipoStr.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
+  const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (tipoStr.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
 
-  const dataFormatada = new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-  const assinaturasRender = registro.assinaturas || [
-    { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' },
-    { nome: 'Thalita Maria Lima Lelis', cargo: 'Gerente Industrial\nResponsável Técnica\nIMAC Congelados' },
-    { nome: 'Nathália Viana de Carvalho', cargo: 'Nutricionista - CRN 13435\nControle de Qualidade\nIMAC Congelados' },
-    { nome: 'Cristiamberg Coimbra', cargo: 'Estagiário de Qualidade\nControle de Qualidade\nIMAC Congelados' }
+  const dataFormatada = registro.dataCriacao ? new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+  const assinaturasRender = Array.isArray(registro.assinaturas) ? registro.assinaturas : [
+    { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' }
   ];
 
   return (
@@ -923,7 +978,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
                   
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: registro.descricao || '' }} />
 
                   <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
@@ -934,7 +989,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   </div>
                 </div>
 
-                {registro.imagens && registro.imagens.length > 0 && (
+                {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
@@ -957,7 +1012,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   </div>
 
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes || '' }} />
 
                   <div className="mb-8">
                      <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
@@ -995,11 +1050,11 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                 {registro.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden">
                     <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
-                    <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+                    <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.descricao || '' }} />
                   </div>
                 )}
 
-                {registro.imagens && registro.imagens.length > 0 && (
+                {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
@@ -1015,7 +1070,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   {registro.consideracoes && (
                     <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
                       <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
-                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes || '' }} />
                     </div>
                   )}
 
@@ -1058,7 +1113,8 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
         <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
       </select>
       <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="">Todos Fornecedores</option>{fornecedores.map((f, i) => <option key={i} value={f}>{f}</option>)}
+        <option value="">Todos Fornecedores</option>
+        {fornecedores.filter(f => typeof f === 'string').map((f, i) => <option key={i} value={f}>{f}</option>)}
       </select>
       <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
@@ -1079,6 +1135,7 @@ export default function App() {
   const [registroToView, setRegistroToView] = useState(null);
   const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
   const [editingReportId, setEditingReportId] = useState(null);
+  const [isFornecedoresModalOpen, setFornecedoresModalOpen] = useState(false);
 
   const [dbError, setDbError] = useState(false); 
   const [fornecedores, setFornecedores] = useState([]);
@@ -1188,7 +1245,10 @@ export default function App() {
     if (!user || !db || !isConfigured) return;
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
-      if (data.length > 0) { setFornecedores(data); localStorage.setItem('imac_fornecedores', JSON.stringify(data)); }
+      if (data.length > 0) { 
+        setFornecedores(data); 
+        localStorage.setItem('imac_fornecedores', JSON.stringify(data)); 
+      }
     });
     return () => unsubscribe();
   }, [user]);
@@ -1211,8 +1271,6 @@ export default function App() {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
         const existingIds = new Set(cloudData.map(r => r.id));
-        // CORREÇÃO: Mantém localmente APENAS os relatórios criados recentemente que ainda não subiram (marcados com _isUnsynced)
-        // Se não tiver essa marcação e sumiu da nuvem, é porque foi deletado em outro aparelho!
         const localOnly = prev.filter(r => !existingIds.has(r.id) && r._isUnsynced);
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
@@ -1226,13 +1284,48 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
+  // FUNÇÕES DE FORNECEDORES (ADICIONAR, EDITAR, REMOVER)
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!fornecedores.includes(nomeLimpo)) {
       setFornecedores(prev => { const newList = [...prev, nomeLimpo]; localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); return newList; });
+      if (user && db && isConfigured) {
+        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
+      }
     }
+  };
+
+  const editFornecedorObj = async (oldName, newName) => {
+    if(!newName.trim() || oldName === newName) return;
+    const cleanNew = newName.trim();
+    const newList = fornecedores.map(f => f === oldName ? cleanNew : f);
+    setFornecedores(newList);
+    localStorage.setItem('imac_fornecedores', JSON.stringify(newList));
+
     if (user && db && isConfigured) {
-      try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }); } catch (error) {}
+        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
+            const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
+            if (docToEdit) {
+                updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
+            } else {
+                addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: cleanNew, dataCriacao: new Date().toISOString() }).catch(()=>{});
+            }
+        }).catch(()=>{});
+    }
+  };
+
+  const removeFornecedorObj = async (nomeToRemove) => {
+    const newList = fornecedores.filter(f => f !== nomeToRemove);
+    setFornecedores(newList);
+    localStorage.setItem('imac_fornecedores', JSON.stringify(newList));
+
+    if (user && db && isConfigured) {
+        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
+            const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
+            if (docToDel) {
+                deleteDoc(docToDel.ref).catch(()=>{});
+            }
+        }).catch(()=>{});
     }
   };
 
@@ -1260,15 +1353,15 @@ export default function App() {
         displaySrc: base64,
         shapes: [] 
       }));
-      setFormData(prev => ({ ...prev, imagens: [...prev.imagens, ...newImageObjects] }));
+      setFormData(prev => ({ ...prev, imagens: [...(prev.imagens || []), ...newImageObjects] }));
     } catch (error) {}
   };
 
-  const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: prev.imagens.filter((_, index) => index !== indexToRemove) }));
+  const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: (prev.imagens || []).filter((_, index) => index !== indexToRemove) }));
   
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
     setFormData(prev => { 
-      const novasImagens = [...prev.imagens];
+      const novasImagens = [...(prev.imagens || [])];
       const item = novasImagens[editingImageIndex];
       if (typeof item === 'string') {
         novasImagens[editingImageIndex] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
@@ -1283,11 +1376,14 @@ export default function App() {
   const removeLogo = () => { setFormData(prev => ({ ...prev, logo: null })); localStorage.removeItem('imac_logo_oficial'); };
   
   const handleAssinaturaChange = (index, field, value) => {
-    const novasAssinaturas = [...formData.assinaturas]; novasAssinaturas[index][field] = value;
-    setFormData(prev => ({ ...prev, assinaturas: novasAssinaturas }));
+    const novasAssinaturas = [...(formData.assinaturas || [])]; 
+    if(novasAssinaturas[index]) {
+      novasAssinaturas[index][field] = value;
+      setFormData(prev => ({ ...prev, assinaturas: novasAssinaturas }));
+    }
   };
-  const addAssinatura = () => setFormData(prev => ({ ...prev, assinaturas: [...prev.assinaturas, { nome: '', cargo: '' }] }));
-  const removeAssinatura = (indexToRemove) => setFormData(prev => ({ ...prev, assinaturas: prev.assinaturas.filter((_, index) => index !== indexToRemove) }));
+  const addAssinatura = () => setFormData(prev => ({ ...prev, assinaturas: [...(prev.assinaturas || []), { nome: '', cargo: '' }] }));
+  const removeAssinatura = (indexToRemove) => setFormData(prev => ({ ...prev, assinaturas: (prev.assinaturas || []).filter((_, index) => index !== indexToRemove) }));
 
   const startEditingReport = (registro) => {
     setFormData({
@@ -1315,9 +1411,9 @@ export default function App() {
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || `Aquiraz, ${new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
-      imagens: registro.imagens || [],
+      imagens: Array.isArray(registro.imagens) ? registro.imagens : [],
       fornecedor: registro.fornecedor || '',
-      assinaturas: registro.assinaturas || [...defaultAssinaturas]
+      assinaturas: Array.isArray(registro.assinaturas) ? registro.assinaturas : [...defaultAssinaturas]
     });
     setEditingReportId(registro.id);
     setView('form');
@@ -1330,7 +1426,8 @@ export default function App() {
     setView('dashboard');
   };
 
-  const handleUpdateStatus = async (id, newStatus, newObs) => {
+  // Correção CRÍTICA: Remover os "awaits" que bloqueavam a interface do usuário!
+  const handleUpdateStatus = (id, newStatus, newObs) => {
     const payload = { 
       status: newStatus, 
       observacoesStatus: newObs, 
@@ -1345,20 +1442,20 @@ export default function App() {
     });
     
     if (user && db && isConfigured) {
-      try {
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString()), payload);
-        setAppMessage("✅ Avaliação salva com sucesso!");
-      } catch (error) { setAppMessage("💾 Avaliação salva localmente (offline)"); }
+      updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString()), payload)
+        .then(() => setAppMessage("✅ Avaliação salva com sucesso!"))
+        .catch(() => setAppMessage("💾 Avaliação salva localmente (offline)"));
     } else { setAppMessage("💾 Avaliação salva localmente"); }
     
     setEvaluatingRegistro(null);
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handleSaveReport = async (action = 'save_and_preview') => {
+  // Correção CRÍTICA na função de Salvar! Transição visual instantânea + Save em Background.
+  const handleSaveReport = (action = 'save_and_preview') => {
     const registroData = {
-      tipoRelatorio: formData.tipoRelatorio,
-      dataRelatorio: formData.dataRelatorio,
+      tipoRelatorio: formData.tipoRelatorio || 'Problema com Fornecedor',
+      dataRelatorio: formData.dataRelatorio || '',
       produto: formData.produto || 'Não especificado',
       ocorrencia: formData.ocorrencia || 'Sem descrição',
       fornecedor: formData.fornecedor || '',
@@ -1368,11 +1465,12 @@ export default function App() {
       lojaLocal: formData.lojaLocal || '', dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
       sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
       statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '',
-      imagens: formData.imagens || [], assinaturas: formData.assinaturas || [],
+      imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
+      assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: user?.uid || 'anonimo',
-      autorNome: userName,
-      autorCargo: userRole
+      autorNome: userName || 'Desconhecido',
+      autorCargo: userRole || ''
     };
 
     let currentId = editingReportId;
@@ -1388,29 +1486,27 @@ export default function App() {
       });
 
       if (user && db && isConfigured) {
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId.toString()), payloadEdicao);
-          setAppMessage("✅ Relatório atualizado e sincronizado!");
-        } catch (error) { setAppMessage("💾 Atualização salva localmente"); }
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId.toString()), payloadEdicao)
+          .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
+          .catch(() => setAppMessage("💾 Atualização salva localmente"));
       } else { setAppMessage("💾 Edição salva localmente"); }
       
     } else {
       const tempId = Date.now().toString();
-      // Adicionado a flag _isUnsynced para identificar que é um rascunho local novo
       const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
       currentId = tempId;
 
       setRegistros(prev => { const newList = [novoRegistro, ...prev]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
       
-      if (db && isConfigured) {
-        try {
-          const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro; // Tira a flag antes de mandar pra nuvem
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem);
-          setAppMessage("✅ Relatório salvo na nuvem!");
-        } catch (error) { setAppMessage("💾 Salvo localmente (offline)"); }
+      if (user && db && isConfigured) {
+        const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem)
+          .then(() => setAppMessage("✅ Relatório salvo na nuvem!"))
+          .catch(() => setAppMessage("💾 Salvo localmente (offline)"));
       } else { setAppMessage("💾 Relatório salvo localmente"); }
     }
     
+    // Transição IMEDIATA (sem "awaits" travando o sistema)
     if (action === 'save_and_preview') {
       setEditingReportId(currentId);
       setView('preview');
@@ -1422,16 +1518,16 @@ export default function App() {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handlePrintAndSave = async () => window.print();
+  const handlePrintAndSave = () => window.print();
 
-  const confirmDeleteRegistro = async (id) => {
+  const confirmDeleteRegistro = (id) => {
     setRegistros(prev => { 
       const newList = prev.filter(r => r.id !== id); 
       localStorage.setItem('imac_registros', JSON.stringify(newList)); 
       return newList; 
     });
     if (user && db && isConfigured) {
-      try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString())); } catch (error) {}
+      deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString())).catch(()=>{});
     }
     setRegistroToDelete(null);
   };
@@ -1456,10 +1552,11 @@ export default function App() {
     const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `relatorios_rnc.csv`; link.click();
   };
 
-  const isFornecedor = formData.tipoRelatorio === 'Problema com Fornecedor' || formData.tipoRelatorio === 'Insumo ou Embalagem';
-  const isCliente = formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente';
-  const requiresHorario = formData.tipoRelatorio.includes('Teste') || formData.tipoRelatorio === 'Ocorrência Interna';
-  const showValidade = !formData.tipoRelatorio.includes('Insumo') && !formData.tipoRelatorio.includes('Equipamento');
+  const tipoRelAtual = formData.tipoRelatorio || 'Problema com Fornecedor';
+  const isFornecedor = tipoRelAtual === 'Problema com Fornecedor' || tipoRelAtual === 'Insumo ou Embalagem';
+  const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
+  const requiresHorario = tipoRelAtual.includes('Teste') || tipoRelAtual === 'Ocorrência Interna';
+  const showValidade = !tipoRelAtual.includes('Insumo') && !tipoRelAtual.includes('Equipamento');
 
   const getPlaceholders = () => {
     const p = {
@@ -1470,7 +1567,7 @@ export default function App() {
       'Teste de Produto': { produto: "Ex: Pão de Queijo", ocorrencia: "Ex: Teste de formulação", lote: "Ex: Lote Teste 01", quantidade: "Ex: Escala reduzida", descricao: "A avaliação foi realizada após...", consideracoes: "Os resultados obtidos..." },
       'Teste de Equipamento': { produto: "Ex: Seladora Automática", ocorrencia: "Ex: Oscilação na temperatura", lote: "Ex: N/A", quantidade: "Ex: N/A", descricao: "Durante o processamento...", consideracoes: "Como medida de contingência..." }
     };
-    return p[formData.tipoRelatorio] || p['Problema com Fornecedor'];
+    return p[tipoRelAtual] || p['Problema com Fornecedor'];
   };
   const placeholders = getPlaceholders();
 
@@ -1552,6 +1649,19 @@ export default function App() {
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} />}
+        
+        {/* MODAL DE FORNECEDORES AQUI */}
+        {isFornecedoresModalOpen && (
+           <GerenciarFornecedoresModal 
+             isOpen={isFornecedoresModalOpen} 
+             onClose={() => setFornecedoresModalOpen(false)} 
+             fornecedores={fornecedores}
+             onAdd={addFornecedor}
+             onEdit={editFornecedorObj}
+             onRemove={removeFornecedorObj}
+           />
+        )}
+
         {registroToDelete && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
             <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full border-t-4 border-red-500">
@@ -1578,6 +1688,10 @@ export default function App() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
+              
+              {/* BOTÃO DE FORNECEDORES ADICIONADO AQUI */}
+              <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
+
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
               <button onClick={handleLogout} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-50 hover:text-red-600 transition flex items-center gap-2 text-sm border border-gray-200" title="Sair do Sistema"><LogOut size={16} /></button>
             </div>
@@ -1648,10 +1762,13 @@ export default function App() {
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
     let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
-    if (formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
-    if (formData.tipoRelatorio === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
-    if (formData.tipoRelatorio === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
-    if (formData.tipoRelatorio.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
+    
+    const tipoStr = formData.tipoRelatorio || ''; // Proteção crucial contra null!
+    
+    if (tipoStr === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
+    if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
+    if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
+    if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
 
     return (
       <div className="min-h-screen bg-gray-200 p-4 md:p-8 font-sans print:bg-white print:p-0">
@@ -1679,7 +1796,7 @@ export default function App() {
               </div>
             </div>
 
-            {formData.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? (
+            {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">DADOS DO PRODUTO</p></div>
@@ -1698,7 +1815,8 @@ export default function App() {
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">INFORMAÇÕES SOBRE A OCORRÊNCIA</p></div>
                   
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao }} />
+                  {/* Utilização segura do innerHTML (impede quebras por nulo) */}
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
 
                   <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
@@ -1709,7 +1827,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {formData.imagens && formData.imagens.length > 0 && (
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
@@ -1732,7 +1850,7 @@ export default function App() {
                   </div>
 
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes }} />
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
 
                   <div className="mb-8">
                      <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
@@ -1740,7 +1858,7 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {formData.assinaturas.map((assinatura, index) => (
+                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
                       <div key={index} className={formData.assinaturas.length % 2 !== 0 && index === formData.assinaturas.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
                         <p className="font-bold uppercase">Responsável: {assinatura.nome}</p>
                         <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura.cargo}</p>
@@ -1773,7 +1891,7 @@ export default function App() {
                   </div>
                 )}
 
-                {formData.imagens.length > 0 && (
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
@@ -1796,7 +1914,7 @@ export default function App() {
                   <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p>{formData.localData}</p></div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {formData.assinaturas.map((assinatura, index) => (
+                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
                       <div key={index} className={formData.assinaturas.length % 2 !== 0 && index === formData.assinaturas.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
                         <p className="font-bold">{assinatura.nome}</p>
                         <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
@@ -1822,7 +1940,8 @@ export default function App() {
       
       {/* RENDERIZAÇÃO DO ANOTADOR COM OS NOVOS PARÂMETROS */}
       {editingImageIndex !== null && (() => {
-        const imgObj = formData.imagens[editingImageIndex];
+        const imgObj = formData.imagens && formData.imagens[editingImageIndex];
+        if(!imgObj) return null;
         const baseSrc = typeof imgObj === 'string' ? imgObj : imgObj.baseSrc;
         const initialShapes = typeof imgObj === 'string' ? [] : imgObj.shapes;
         
@@ -1942,7 +2061,7 @@ export default function App() {
                     <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
                 </div>
-                {formData.imagens.length > 0 && (
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     {formData.imagens.map((img, index) => {
                       const src = typeof img === 'string' ? img : img.displaySrc;
@@ -2025,7 +2144,7 @@ export default function App() {
                     <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
                 </div>
-                {formData.imagens.length > 0 && (
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     {formData.imagens.map((img, index) => {
                       const src = typeof img === 'string' ? img : img.displaySrc;
@@ -2049,11 +2168,11 @@ export default function App() {
               <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {formData.assinaturas.map((assinatura, index) => (
+              {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
                 <div key={index} className="bg-gray-50 border border-gray-200 p-4 rounded-lg relative">
                   <button onClick={() => removeAssinatura(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"><UserX size={18} /></button>
-                  <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura.nome} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
-                  <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura.cargo} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
+                  <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura.nome || ''} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
+                  <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura.cargo || ''} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
                 </div>
               ))}
             </div>
