@@ -74,6 +74,29 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
   document.head.appendChild(style);
 }
 
+// --- FUNÇÃO SEGURA PARA SALVAR NO LOCALSTORAGE (PREVINE QUOTA EXCEEDED) ---
+const saveToLocalStorage = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}. Tentando reduzir o tamanho...`);
+    // Se o erro for por tamanho excedido (QuotaExceededError) e for a lista de registros,
+    // nós removemos as imagens (que pesam muito) apenas do backup local. O Firebase ainda mantém as originais.
+    if (key === 'imac_registros' && Array.isArray(data)) {
+      try {
+        const lightweightData = data.slice(0, 30).map(item => ({
+          ...item,
+          imagens: [], // Removemos as imagens do cache local para liberar espaço
+          logo: null
+        }));
+        localStorage.setItem(key, JSON.stringify(lightweightData));
+      } catch (fallbackError) {
+        console.error("Falha definitiva ao salvar backup local.", fallbackError);
+      }
+    }
+  }
+};
+
 // --- FUNÇÃO SEGURA PARA DATAS ---
 const safeDate = (dateString) => {
   if (!dateString) return '';
@@ -1273,7 +1296,7 @@ function App() {
     const savedFornecedores = localStorage.getItem('imac_fornecedores');
     if (!savedFornecedores) {
       const defaultFornecedores = ['Aurora Alimentos', 'Brasil Foods', 'Seara', 'JBS', 'Marfrig'];
-      localStorage.setItem('imac_fornecedores', JSON.stringify(defaultFornecedores));
+      saveToLocalStorage('imac_fornecedores', defaultFornecedores);
       setFornecedores(defaultFornecedores);
     } else {
       try {
@@ -1289,7 +1312,7 @@ function App() {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { 
         setFornecedores(data); 
-        localStorage.setItem('imac_fornecedores', JSON.stringify(data)); 
+        saveToLocalStorage('imac_fornecedores', data); 
       }
     });
     return () => unsubscribe();
@@ -1316,7 +1339,7 @@ function App() {
         const localOnly = (prev || []).filter(r => r && r.id && !existingIds.has(String(r.id)) && r._isUnsynced);
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
-        localStorage.setItem('imac_registros', JSON.stringify(merged));
+        saveToLocalStorage('imac_registros', merged);
         return merged;
       });
       setDbError(false);
@@ -1329,7 +1352,7 @@ function App() {
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!(fornecedores || []).includes(nomeLimpo)) {
-      setFornecedores(prev => { const newList = [...(prev || []), nomeLimpo]; localStorage.setItem('imac_fornecedores', JSON.stringify(newList)); return newList; });
+      setFornecedores(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_fornecedores', newList); return newList; });
       if (user && db && isConfigured) {
         addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
       }
@@ -1341,7 +1364,7 @@ function App() {
     const cleanNew = newName.trim();
     const newList = (fornecedores || []).map(f => f === oldName ? cleanNew : f);
     setFornecedores(newList);
-    localStorage.setItem('imac_fornecedores', JSON.stringify(newList));
+    saveToLocalStorage('imac_fornecedores', newList);
 
     if (user && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
@@ -1355,7 +1378,7 @@ function App() {
   const removeFornecedorObj = async (nomeToRemove) => {
     const newList = (fornecedores || []).filter(f => f !== nomeToRemove);
     setFornecedores(newList);
-    localStorage.setItem('imac_fornecedores', JSON.stringify(newList));
+    saveToLocalStorage('imac_fornecedores', newList);
 
     if (user && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
@@ -1375,7 +1398,7 @@ function App() {
       try {
         const compressedLogo = await compressImage(files[0]);
         setFormData(prev => ({ ...prev, logo: compressedLogo }));
-        localStorage.setItem('imac_logo_oficial', compressedLogo);
+        try { localStorage.setItem('imac_logo_oficial', compressedLogo); } catch(e){}
       } catch (error) {}
       return;
     }
@@ -1473,7 +1496,7 @@ function App() {
     
     setRegistros(prev => {
       const updatedList = (prev || []).map(r => r && r.id === id ? { ...r, ...payload } : r);
-      localStorage.setItem('imac_registros', JSON.stringify(updatedList));
+      saveToLocalStorage('imac_registros', updatedList);
       return updatedList;
     });
     
@@ -1516,7 +1539,7 @@ function App() {
       
       setRegistros(prev => {
         const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
-        localStorage.setItem('imac_registros', JSON.stringify(updatedList));
+        saveToLocalStorage('imac_registros', updatedList);
         return updatedList;
       });
 
@@ -1531,7 +1554,7 @@ function App() {
       const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
       currentId = tempId;
 
-      setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; localStorage.setItem('imac_registros', JSON.stringify(newList)); return newList; });
+      setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; saveToLocalStorage('imac_registros', newList); return newList; });
       
       if (user && db && isConfigured) {
         const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
@@ -1557,7 +1580,7 @@ function App() {
   const confirmDeleteRegistro = (id) => {
     setRegistros(prev => { 
       const newList = (prev || []).filter(r => r && r.id !== id); 
-      localStorage.setItem('imac_registros', JSON.stringify(newList)); 
+      saveToLocalStorage('imac_registros', newList); 
       return newList; 
     });
     if (user && db && isConfigured) {
