@@ -30,9 +30,10 @@ const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
 
-// --- ESTILOS GLOBAIS ---
-if (typeof document !== 'undefined') {
+// --- ESTILOS GLOBAIS COM PROTEÇÃO ---
+if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
   const style = document.createElement('style');
+  style.id = 'imac-global-styles';
   style.innerHTML = `
     .rich-text-content:empty:before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; display: block; }
     .rich-text-content b, .rich-text-content strong { font-weight: 900 !important; color: inherit; }
@@ -72,6 +73,18 @@ if (typeof document !== 'undefined') {
   `;
   document.head.appendChild(style);
 }
+
+// --- FUNÇÃO SEGURA PARA DATAS ---
+const safeDate = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('pt-BR');
+  } catch (error) {
+    return '';
+  }
+};
 
 // --- ÍCONES SVG ---
 const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
@@ -144,27 +157,31 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO (CORRIGIDO PARA EVITAR TELA BRANCA) ---
+// --- COMPONENTE DE TEXTO RICO (BLINDADO) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
+    if (editorRef.current && editorRef.current.innerHTML !== (value || '')) {
       editorRef.current.innerHTML = value || '';
     }
   }, [value]);
 
   const handleInput = () => {
-    if (!editorRef.current) return; // PROTEÇÃO VITAL: Evita o erro "Cannot read properties of null"
+    if (!editorRef.current) return;
     let html = editorRef.current.innerHTML;
     if (html === '<br>' || html === '<div><br></div>') html = '';
-    onChange(html);
+    if (typeof onChange === 'function') onChange(html);
   };
 
-  const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value);
-    if(editorRef.current) editorRef.current.focus();
-    handleInput();
+  const execCommand = (command, val = null) => {
+    try {
+      document.execCommand(command, false, val);
+      if(editorRef.current) editorRef.current.focus();
+      handleInput();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -229,7 +246,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
   const [forceRender, setForceRender] = useState(0); 
   const [cropRect, setCropRect] = useState(null);
   
-  const shapesRef = useRef(JSON.parse(JSON.stringify(initialShapes || [])));
+  const shapesRef = useRef(Array.isArray(initialShapes) ? JSON.parse(JSON.stringify(initialShapes)) : []);
   const imageRef = useRef(null);
   const isDrawing = useRef(false);
   const draggedShapeIndex = useRef(null);
@@ -239,6 +256,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
   const lastMousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
+    if (!baseImageSrc) return;
     const img = new Image();
     img.src = baseImageSrc;
     img.onload = () => {
@@ -274,7 +292,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
         shapesRef.current[selectedShapeIndex].size = newSize;
         const ctx = canvasRef.current.getContext('2d');
         ctx.font = `bold ${newSize}px sans-serif`;
-        shapesRef.current[selectedShapeIndex].width = ctx.measureText(shapesRef.current[selectedShapeIndex].text).width;
+        shapesRef.current[selectedShapeIndex].width = ctx.measureText(shapesRef.current[selectedShapeIndex].text || '').width;
         redraw();
       }
       return newSize;
@@ -282,11 +300,11 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
   };
 
   const getShapeCenter = (shape) => {
-    if (shape.type === 'circle') return { x: shape.x1, y: shape.y1 };
-    if (shape.type === 'arrow') return { x: (shape.x1 + shape.x2)/2, y: (shape.y1 + shape.y2)/2 };
+    if (shape.type === 'circle') return { x: shape.x1 || 0, y: shape.y1 || 0 };
+    if (shape.type === 'arrow') return { x: ((shape.x1 || 0) + (shape.x2 || 0))/2, y: ((shape.y1 || 0) + (shape.y2 || 0))/2 };
     if (shape.type === 'text') {
-      const w = shape.width || (shape.text.length * (shape.size * 0.6));
-      return { x: shape.x + w/2, y: shape.y };
+      const w = shape.width || ((shape.text || '').length * ((shape.size || 28) * 0.6));
+      return { x: (shape.x || 0) + w/2, y: shape.y || 0 };
     }
     return { x: 0, y: 0 };
   };
@@ -328,9 +346,9 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     ctx.lineJoin = "round";
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = size > 24 ? 6 : 4;
-    ctx.strokeText(text, x, y);
+    ctx.strokeText(text || '', x, y);
     ctx.fillStyle = color;
-    ctx.fillText(text, x, y);
+    ctx.fillText(text || '', x, y);
   };
 
   const drawSelectionBox = (ctx, shape) => {
@@ -338,15 +356,15 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     const pad = 15;
     
     if (shape.type === 'circle') {
-      const r = Math.sqrt(Math.pow(shape.x2 - shape.x1, 2) + Math.pow(shape.y2 - shape.y1, 2));
+      const r = Math.sqrt(Math.pow((shape.x2 || 0) - (shape.x1 || 0), 2) + Math.pow((shape.y2 || 0) - (shape.y1 || 0), 2));
       minX = shape.x1 - r; maxX = shape.x1 + r; minY = shape.y1 - r; maxY = shape.y1 + r;
     } else if (shape.type === 'arrow') {
-      minX = Math.min(shape.x1, shape.x2); maxX = Math.max(shape.x1, shape.x2);
-      minY = Math.min(shape.y1, shape.y2); maxY = Math.max(shape.y1, shape.y2);
+      minX = Math.min(shape.x1 || 0, shape.x2 || 0); maxX = Math.max(shape.x1 || 0, shape.x2 || 0);
+      minY = Math.min(shape.y1 || 0, shape.y2 || 0); maxY = Math.max(shape.y1 || 0, shape.y2 || 0);
     } else if (shape.type === 'text') {
-      const w = shape.width || (shape.text.length * (shape.size * 0.6));
-      minX = shape.x; maxX = shape.x + w; minY = shape.y - (shape.size / 2); maxY = shape.y + (shape.size / 2);
-    }
+      const w = shape.width || ((shape.text || '').length * ((shape.size || 28) * 0.6));
+      minX = shape.x || 0; maxX = (shape.x || 0) + w; minY = (shape.y || 0) - ((shape.size || 28) / 2); maxY = (shape.y || 0) + ((shape.size || 28) / 2);
+    } else return;
     
     ctx.beginPath();
     ctx.setLineDash([8, 8]); ctx.strokeStyle = '#00BFFF'; ctx.lineWidth = 3;
@@ -435,21 +453,21 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
 
     const pad = 25; 
     if (shape.type === 'circle') {
-      const r = Math.sqrt(Math.pow(shape.x2 - shape.x1, 2) + Math.pow(shape.y2 - shape.y1, 2));
-      return Math.sqrt(Math.pow(rpx - shape.x1, 2) + Math.pow(rpy - shape.y1, 2)) <= r + pad;
+      const r = Math.sqrt(Math.pow((shape.x2||0) - (shape.x1||0), 2) + Math.pow((shape.y2||0) - (shape.y1||0), 2));
+      return Math.sqrt(Math.pow(rpx - (shape.x1||0), 2) + Math.pow(rpy - (shape.y1||0), 2)) <= r + pad;
     } else if (shape.type === 'arrow') {
-      const minX = Math.min(shape.x1, shape.x2) - pad, maxX = Math.max(shape.x1, shape.x2) + pad;
-      const minY = Math.min(shape.y1, shape.y2) - pad, maxY = Math.max(shape.y1, shape.y2) + pad;
+      const minX = Math.min(shape.x1||0, shape.x2||0) - pad, maxX = Math.max(shape.x1||0, shape.x2||0) + pad;
+      const minY = Math.min(shape.y1||0, shape.y2||0) - pad, maxY = Math.max(shape.y1||0, shape.y2||0) + pad;
       if (rpx >= minX && rpx <= maxX && rpy >= minY && rpy <= maxY) {
-        const l2 = Math.pow(shape.x2 - shape.x1, 2) + Math.pow(shape.y2 - shape.y1, 2);
+        const l2 = Math.pow((shape.x2||0) - (shape.x1||0), 2) + Math.pow((shape.y2||0) - (shape.y1||0), 2);
         if (l2 === 0) return false;
-        let t = Math.max(0, Math.min(1, ((rpx - shape.x1) * (shape.x2 - shape.x1) + (rpy - shape.y1) * (shape.y2 - shape.y1)) / l2));
-        const projX = shape.x1 + t * (shape.x2 - shape.x1), projY = shape.y1 + t * (shape.y2 - shape.y1);
+        let t = Math.max(0, Math.min(1, ((rpx - (shape.x1||0)) * ((shape.x2||0) - (shape.x1||0)) + (rpy - (shape.y1||0)) * ((shape.y2||0) - (shape.y1||0))) / l2));
+        const projX = (shape.x1||0) + t * ((shape.x2||0) - (shape.x1||0)), projY = (shape.y1||0) + t * ((shape.y2||0) - (shape.y1||0));
         return Math.sqrt(Math.pow(rpx - projX, 2) + Math.pow(rpy - projY, 2)) <= pad;
       }
     } else if (shape.type === 'text') {
-      const w = shape.width || (shape.text.length * (shape.size * 0.6));
-      return rpx >= shape.x - pad && rpx <= shape.x + w + pad && rpy >= shape.y - (shape.size / 2) - pad && rpy <= shape.y + (shape.size / 2) + pad;
+      const w = shape.width || ((shape.text||'').length * ((shape.size||28) * 0.6));
+      return rpx >= (shape.x||0) - pad && rpx <= (shape.x||0) + w + pad && rpy >= (shape.y||0) - ((shape.size||28) / 2) - pad && rpy <= (shape.y||0) + ((shape.size||28) / 2) + pad;
     }
     return false;
   };
@@ -650,12 +668,12 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
                 <div className="flex items-center" title="Editar Texto Selecionado">
                   <input 
                     type="text" 
-                    value={shapesRef.current[selectedShapeIndex].text} 
+                    value={shapesRef.current[selectedShapeIndex].text || ''} 
                     onChange={(e) => { 
                       shapesRef.current[selectedShapeIndex].text = e.target.value; 
                       if(canvasRef.current) {
                         const ctx = canvasRef.current.getContext('2d');
-                        ctx.font = `bold ${shapesRef.current[selectedShapeIndex].size}px sans-serif`;
+                        ctx.font = `bold ${shapesRef.current[selectedShapeIndex].size || 28}px sans-serif`;
                         shapesRef.current[selectedShapeIndex].width = ctx.measureText(e.target.value).width;
                         setForceRender(prev => prev + 1); 
                         redraw(); 
@@ -702,8 +720,7 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
   const [novoFornecedor, setNovoFornecedor] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Proteção contra valores mal formatados que poderiam quebrar a tela
-  const fornecedoresFiltrados = (fornecedores || []).filter(f => f && typeof f === 'string' && f.toLowerCase().includes(searchTerm.toLowerCase()));
+  const fornecedoresFiltrados = (fornecedores || []).filter(f => f && typeof f === 'string' && f.toLowerCase().includes((searchTerm || '').toLowerCase()));
 
   const handleSelect = (fornecedor) => { onChange(fornecedor); setIsAdding(false); setSearchTerm(''); };
   const handleAddNew = () => { if (novoFornecedor.trim()) { onAddFornecedor(novoFornecedor.trim()); onChange(novoFornecedor.trim()); setNovoFornecedor(''); setIsAdding(false); setSearchTerm(''); } };
@@ -747,12 +764,12 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
   );
 };
 
-// --- MODAL DE GERENCIAR FORNECEDORES (CORRIGIDO PARA REMOVER WINDOW.CONFIRM) ---
+// --- MODAL DE GERENCIAR FORNECEDORES ---
 const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEdit, onRemove }) => {
   const [editingName, setEditingName] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [newFornecedor, setNewFornecedor] = useState('');
-  const [fornecedorToDelete, setFornecedorToDelete] = useState(null); // Caixa de confirmação customizada!
+  const [fornecedorToDelete, setFornecedorToDelete] = useState(null);
 
   if (!isOpen) return null;
 
@@ -765,7 +782,6 @@ const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEd
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up flex flex-col max-h-[85vh] relative">
         
-        {/* MODAL CUSTOMIZADO DE EXCLUSÃO (SEM DAR ERRO DE NAVEGADOR) */}
         {fornecedorToDelete && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4 rounded-xl">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center animate-fade-in-up">
@@ -823,18 +839,18 @@ const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEd
 // --- COMPONENTE DO GRÁFICO DE BARRAS ---
 const BarChart = ({ data, title, color = '#F4B41A' }) => {
   if (!data || data.length === 0) return null;
-  const maxValue = Math.max(...(data || []).map(d => d.value), 1);
+  const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
       <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
       <div className="space-y-3">
         {(data || []).map((item, index) => {
-          const percentage = (item.value / maxValue) * 100;
+          const percentage = ((item.value || 0) / maxValue) * 100;
           return (
             <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-gray-600 truncate mr-2" title={item.label}>{item.label}</span>
-                <span className="font-bold text-gray-800">{item.value}</span>
+                <span className="font-bold text-gray-800">{item.value || 0}</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-6 overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-1000 ease-out flex items-center" style={{ width: `${Math.max(percentage, 2)}%`, backgroundColor: item.color || color }}>
@@ -852,13 +868,13 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
 // --- COMPONENTE DO GRÁFICO DE PIZZA ---
 const PieChartComponent = ({ data, title }) => {
   if (!data || data.length === 0) return null;
-  const total = (data || []).reduce((sum, item) => sum + item.value, 0);
+  const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
   if (total === 0) return null;
   
   const colors = ['#F4B41A', '#ED7D31', '#5C3A21', '#22C55E', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
   let currentAngle = 0;
   const slices = (data || []).map((item, index) => {
-    const percentage = (item.value / total) * 100;
+    const percentage = ((item.value || 0) / total) * 100;
     const angle = (percentage / 100) * 360;
     const startAngle = currentAngle; currentAngle += angle;
     const startRad = ((startAngle - 90) * Math.PI) / 180, endRad = ((startAngle + angle - 90) * Math.PI) / 180;
@@ -896,8 +912,8 @@ const PieChartComponent = ({ data, title }) => {
 
 // --- MODAL DE AVALIAÇÃO DE STATUS ---
 const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
-  const [status, setStatus] = useState(registro.status || 'Pendente');
-  const [obs, setObs] = useState(registro.observacoesStatus || '');
+  const [status, setStatus] = useState(registro?.status || 'Pendente');
+  const [obs, setObs] = useState(registro?.observacoesStatus || '');
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
@@ -931,7 +947,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
 
         <div className="flex justify-end gap-3 mt-8">
           <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
-          <button onClick={() => onSave(registro.id, status, status === 'Não Liberado' ? obs : '')} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Avaliação</button>
+          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '')} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Avaliação</button>
         </div>
       </div>
     </div>
@@ -942,7 +958,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
 const RelatorioViewModal = ({ registro, onClose }) => {
   if (!registro) return null;
 
-  const tipoStr = registro.tipoRelatorio || ''; 
+  const tipoStr = String(registro.tipoRelatorio || ''); 
   const isCliente = tipoStr === 'Relatório de Não Conformidade - Cliente';
 
   const getTituloRelatorio = () => {
@@ -957,7 +973,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
   const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (tipoStr.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
   const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (tipoStr.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
 
-  const dataFormatada = registro.dataCriacao ? new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+  const dataFormatada = safeDate(registro.dataCriacao);
   const assinaturasRender = Array.isArray(registro.assinaturas) ? registro.assinaturas : [
     { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' }
   ];
@@ -1024,7 +1040,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
                       {registro.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
                         return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
                       })}
                     </div>
@@ -1050,10 +1066,10 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {assinaturasRender.map((assinatura, index) => (
+                    {assinaturasRender.filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold uppercase">Responsável: {assinatura.nome}</p>
-                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura.cargo}</p>
+                        <p className="font-bold uppercase">Responsável: {assinatura?.nome}</p>
+                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura?.cargo}</p>
                       </div>
                     ))}
                   </div>
@@ -1089,7 +1105,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
                       {registro.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
                         return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
                       })}
                     </div>
@@ -1107,10 +1123,10 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p className="text-[14px]">{registro.localData || `Aquiraz, ${dataFormatada}.`}</p></div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {assinaturasRender.map((assinatura, index) => (
+                    {assinaturasRender.filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold">{assinatura.nome}</p>
-                        <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+                        <p className="font-bold">{assinatura?.nome}</p>
+                        <p className="leading-snug whitespace-pre-line">{assinatura?.cargo}</p>
                       </div>
                     ))}
                   </div>
@@ -1157,7 +1173,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
 };
 
 // --- SISTEMA PRINCIPAL ---
-export default function App() {
+function App() {
   const [view, setView] = useState('welcome'); 
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
@@ -1228,7 +1244,6 @@ export default function App() {
 
   const [formData, setFormData] = useState(getEmptyForm());
 
-  // === SOLUÇÃO DE AUTENTICAÇÃO ===
   useEffect(() => {
     if (!auth) {
       setUser({ uid: 'modo-offline-aberto' });
@@ -1297,8 +1312,8 @@ export default function App() {
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setRegistros(prev => {
-        const existingIds = new Set(cloudData.map(r => r.id));
-        const localOnly = (prev || []).filter(r => r && !existingIds.has(r.id) && r._isUnsynced);
+        const existingIds = new Set(cloudData.map(r => String(r.id)));
+        const localOnly = (prev || []).filter(r => r && r.id && !existingIds.has(String(r.id)) && r._isUnsynced);
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
         localStorage.setItem('imac_registros', JSON.stringify(merged));
@@ -1311,7 +1326,6 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // FUNÇÕES DE FORNECEDORES (ADICIONAR, EDITAR, REMOVER)
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!(fornecedores || []).includes(nomeLimpo)) {
@@ -1332,11 +1346,8 @@ export default function App() {
     if (user && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
             const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
-            if (docToEdit) {
-                updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
-            } else {
-                addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: cleanNew, dataCriacao: new Date().toISOString() }).catch(()=>{});
-            }
+            if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
+            else addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: cleanNew, dataCriacao: new Date().toISOString() }).catch(()=>{});
         }).catch(()=>{});
     }
   };
@@ -1349,9 +1360,7 @@ export default function App() {
     if (user && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
             const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
-            if (docToDel) {
-                deleteDoc(docToDel.ref).catch(()=>{});
-            }
+            if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
         }).catch(()=>{});
     }
   };
@@ -1417,7 +1426,7 @@ export default function App() {
     setFormData({
       logo: registro.logo || localStorage.getItem('imac_logo_oficial') || null,
       tipoRelatorio: registro.tipoRelatorio || 'Problema com Fornecedor',
-      dataRelatorio: registro.dataRelatorio || (registro.dataCriacao ? new Date(registro.dataCriacao).toLocaleDateString('pt-BR') : ''),
+      dataRelatorio: registro.dataRelatorio || safeDate(registro.dataCriacao),
       dataOcorrencia: registro.dataOcorrencia || '',
       produto: registro.produto || '',
       ocorrencia: registro.ocorrencia || '',
@@ -1438,7 +1447,7 @@ export default function App() {
       acaoCorretiva: registro.acaoCorretiva || '',
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
-      localData: registro.localData || (registro.dataCriacao ? `Aquiraz, ${new Date(registro.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.` : ''),
+      localData: registro.localData || (registro.dataCriacao ? `Aquiraz, ${safeDate(registro.dataCriacao)}.` : ''),
       imagens: Array.isArray(registro.imagens) ? registro.imagens : [],
       fornecedor: registro.fornecedor || '',
       assinaturas: Array.isArray(registro.assinaturas) ? registro.assinaturas : [...defaultAssinaturas]
@@ -1463,13 +1472,13 @@ export default function App() {
     };
     
     setRegistros(prev => {
-      const updatedList = (prev || []).map(r => r.id === id ? { ...r, ...payload } : r);
+      const updatedList = (prev || []).map(r => r && r.id === id ? { ...r, ...payload } : r);
       localStorage.setItem('imac_registros', JSON.stringify(updatedList));
       return updatedList;
     });
     
     if (user && db && isConfigured) {
-      updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString()), payload)
+      updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)), payload)
         .then(() => setAppMessage("✅ Avaliação salva com sucesso!"))
         .catch(() => setAppMessage("💾 Avaliação salva localmente (offline)"));
     } else { setAppMessage("💾 Avaliação salva localmente"); }
@@ -1480,7 +1489,7 @@ export default function App() {
 
   const handleSaveReport = (action = 'save_and_preview') => {
     const registroData = {
-      tipoRelatorio: formData.tipoRelatorio || 'Problema com Fornecedor',
+      tipoRelatorio: String(formData.tipoRelatorio || 'Problema com Fornecedor'),
       dataRelatorio: formData.dataRelatorio || '',
       produto: formData.produto || 'Não especificado',
       ocorrencia: formData.ocorrencia || 'Sem descrição',
@@ -1506,13 +1515,13 @@ export default function App() {
       const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
       
       setRegistros(prev => {
-        const updatedList = (prev || []).map(r => r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
+        const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
         localStorage.setItem('imac_registros', JSON.stringify(updatedList));
         return updatedList;
       });
 
       if (user && db && isConfigured) {
-        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', editingReportId.toString()), payloadEdicao)
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), payloadEdicao)
           .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
           .catch(() => setAppMessage("💾 Atualização salva localmente"));
       } else { setAppMessage("💾 Edição salva localmente"); }
@@ -1547,12 +1556,12 @@ export default function App() {
 
   const confirmDeleteRegistro = (id) => {
     setRegistros(prev => { 
-      const newList = (prev || []).filter(r => r.id !== id); 
+      const newList = (prev || []).filter(r => r && r.id !== id); 
       localStorage.setItem('imac_registros', JSON.stringify(newList)); 
       return newList; 
     });
     if (user && db && isConfigured) {
-      deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', id.toString())).catch(()=>{});
+      deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id))).catch(()=>{});
     }
     setRegistroToDelete(null);
   };
@@ -1576,12 +1585,12 @@ export default function App() {
 
   const exportToCSV = () => {
     const records = getFilteredRecords();
-    const rows = records.map(r => [new Date(r.dataCriacao || 0).toLocaleDateString('pt-BR'), r.tipoRelatorio || '', r.produto || '', r.fornecedor || '', r.ocorrencia || '', r.lote || '', r.quantidade || '', r.autorNome || '']);
+    const rows = records.map(r => [safeDate(r.dataCriacao), r.tipoRelatorio || '', r.produto || '', r.fornecedor || '', r.ocorrencia || '', r.lote || '', r.quantidade || '', r.autorNome || '']);
     const csv = [['Data', 'Tipo', 'Produto', 'Fornecedor', 'Ocorrência', 'Lote', 'Quantidade', 'Autor'].join(';'), ...rows.map(row => row.join(';'))].join('\n');
     const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `relatorios_rnc.csv`; link.click();
   };
 
-  const tipoRelAtual = formData.tipoRelatorio || 'Problema com Fornecedor';
+  const tipoRelAtual = String(formData.tipoRelatorio || 'Problema com Fornecedor');
   const isFornecedor = tipoRelAtual === 'Problema com Fornecedor' || tipoRelAtual === 'Insumo ou Embalagem';
   const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
   const requiresHorario = tipoRelAtual.includes('Teste') || tipoRelAtual === 'Ocorrência Interna';
@@ -1600,7 +1609,6 @@ export default function App() {
   };
   const placeholders = getPlaceholders();
 
-  // ==================== TELA DE BOAS VINDAS ====================
   if (view === 'welcome') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -1659,7 +1667,6 @@ export default function App() {
     );
   }
 
-  // ==================== DASHBOARD ====================
   if (view === 'dashboard') {
     const filteredRecords = getFilteredRecords();
     const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0 };
@@ -1680,7 +1687,6 @@ export default function App() {
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} />}
         
-        {/* MODAL DE FORNECEDORES SEGURO (SEM WINDOW.CONFIRM) */}
         {isFornecedoresModalOpen && (
            <GerenciarFornecedoresModal 
              isOpen={isFornecedoresModalOpen} 
@@ -1754,10 +1760,10 @@ export default function App() {
                   {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
                     filteredRecords.map(reg => (
                       <tr key={reg.id || Math.random()} className="hover:bg-gray-50 transition">
-                        <td className="px-4 py-3 whitespace-nowrap text-xs">{reg.dataCriacao ? new Date(reg.dataCriacao).toLocaleDateString('pt-BR') : ''}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-xs">{safeDate(reg.dataCriacao)}</td>
                         <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? 'Cliente' : (reg.tipoRelatorio || 'Desconhecido')}</span></td>
                         <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto || ''}>{reg.produto || ''}</td>
-                        <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>{reg.autorNome ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
+                        <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>{typeof reg.autorNome === 'string' ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || ''}>{reg.ocorrencia || ''}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1.5 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
@@ -1789,12 +1795,11 @@ export default function App() {
     );
   }
 
-  // ==================== PREVIEW DO DOCUMENTO ====================
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
     let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
     
-    const tipoStr = formData.tipoRelatorio || '';
+    const tipoStr = String(formData.tipoRelatorio || '');
     
     if (tipoStr === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
     if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
@@ -1862,7 +1867,7 @@ export default function App() {
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
                       {formData.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
                         return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
                       })}
                     </div>
@@ -1888,10 +1893,10 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
+                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold uppercase">Responsável: {assinatura.nome}</p>
-                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura.cargo}</p>
+                        <p className="font-bold uppercase">Responsável: {assinatura?.nome}</p>
+                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura?.cargo}</p>
                       </div>
                     ))}
                   </div>
@@ -1926,7 +1931,7 @@ export default function App() {
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                     <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
                       {formData.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img.displaySrc;
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
                         return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
                       })}
                     </div>
@@ -1944,10 +1949,10 @@ export default function App() {
                   <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p>{formData.localData}</p></div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
+                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold">{assinatura.nome}</p>
-                        <p className="leading-snug whitespace-pre-line">{assinatura.cargo}</p>
+                        <p className="font-bold">{assinatura?.nome}</p>
+                        <p className="leading-snug whitespace-pre-line">{assinatura?.cargo}</p>
                       </div>
                     ))}
                   </div>
@@ -1961,14 +1966,10 @@ export default function App() {
     );
   }
 
-  // ==================== FORMULÁRIO PRINCIPAL ====================
-  const editingReport = editingReportId ? (registros || []).find(r => r.id === editingReportId) : null;
-
   return (
     <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
       {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
       
-      {/* RENDERIZAÇÃO DO ANOTADOR COM OS NOVOS PARÂMETROS */}
       {editingImageIndex !== null && (() => {
         const imgObj = formData.imagens && formData.imagens[editingImageIndex];
         if(!imgObj) return null;
@@ -1994,7 +1995,7 @@ export default function App() {
                 {editingReportId ? 'EDIÇÃO DE RNC' : 'SISTEMA DE EMISSÃO DE RNC'}
               </h1>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                {editingReportId ? `Editando registro ${editingReportId.substring(0,6)}...` : `Operador Atual: ${userName}`}
+                {editingReportId ? `Editando registro ${String(editingReportId).substring(0,6)}...` : `Operador Atual: ${userName}`}
               </p>
             </div>
           </div>
@@ -2094,7 +2095,7 @@ export default function App() {
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     {formData.imagens.map((img, index) => {
-                      const src = typeof img === 'string' ? img : img.displaySrc;
+                      const src = typeof img === 'string' ? img : img?.displaySrc;
                       return (
                         <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
                           <img src={src} alt="Preview" className="w-full h-32 object-cover" />
@@ -2177,7 +2178,7 @@ export default function App() {
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     {formData.imagens.map((img, index) => {
-                      const src = typeof img === 'string' ? img : img.displaySrc;
+                      const src = typeof img === 'string' ? img : img?.displaySrc;
                       return (
                         <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
                           <img src={src} alt="Preview" className="w-full h-32 object-cover" />
@@ -2201,8 +2202,8 @@ export default function App() {
               {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
                 <div key={index} className="bg-gray-50 border border-gray-200 p-4 rounded-lg relative">
                   <button onClick={() => removeAssinatura(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"><UserX size={18} /></button>
-                  <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura.nome || ''} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
-                  <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura.cargo || ''} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
+                  <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura?.nome || ''} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
+                  <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura?.cargo || ''} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
                 </div>
               ))}
             </div>
@@ -2215,7 +2216,7 @@ export default function App() {
 
         <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
            {editingReportId ? (
-             <span className="font-bold text-[#5C3A21]">Editando {editingReportId.substring(0, 8)}...</span>
+             <span className="font-bold text-[#5C3A21]">Editando {String(editingReportId).substring(0, 8)}...</span>
            ) : <span />}
           <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide"><FileText size={24} />VISUALIZAR DOCUMENTO</button>
         </div>
@@ -2223,4 +2224,43 @@ export default function App() {
       <div className="text-center mt-6 text-xs text-gray-400 no-print">Desenvolvido por: Cristiamberg</div>
     </div>
   );
+}
+
+// --- ERROR BOUNDARY ---
+export default class AppWithBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("App Error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+          <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full text-center border-t-8 border-red-500">
+            <h1 className="text-2xl font-black text-gray-800 mb-2">Algo deu errado 😔</h1>
+            <p className="text-gray-600 mb-6">A tela tentou ficar branca, mas capturamos o erro. Isso ocorreu devido a um dado corrompido no seu navegador.</p>
+            <div className="bg-gray-100 p-4 rounded text-left overflow-auto text-xs text-red-600 mb-6 h-32 border border-gray-200">
+              {this.state.error?.toString()}
+            </div>
+            <button 
+              onClick={() => { 
+                localStorage.removeItem('imac_registros'); 
+                window.location.reload(); 
+              }} 
+              className="bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-red-700 transition"
+            >
+              Limpar Erros e Reiniciar
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return <App />;
+  }
 }
