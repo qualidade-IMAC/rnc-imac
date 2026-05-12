@@ -1059,10 +1059,10 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                 {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
-                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                    <div className={`grid gap-4 ${registro.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {registro.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
                       })}
                     </div>
                   </div>
@@ -1124,10 +1124,10 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                 {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                    <div className={`grid gap-4 ${registro.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {registro.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
                       })}
                     </div>
                   </div>
@@ -1889,10 +1889,10 @@ function App() {
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
-                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                    <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
                       })}
                     </div>
                   </div>
@@ -1953,10 +1953,10 @@ function App() {
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                    <div className="grid grid-cols-2 print:grid-cols-2 gap-4">
+                    <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-56 print:h-64 object-cover border border-gray-300 shadow-sm rounded break-inside-avoid" />;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
                       })}
                     </div>
                   </div>
@@ -2124,7 +2124,7 @@ function App() {
                       const src = typeof img === 'string' ? img : img?.displaySrc;
                       return (
                         <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
-                          <img src={src} alt="Preview" className="w-full h-32 object-cover" />
+                          <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
                           <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
                           <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
                         </div>
@@ -2207,7 +2207,31 @@ function App() {
                       const src = typeof img === 'string' ? img : img?.displaySrc;
                       return (
                         <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
-                          <img src={src} alt="Preview" className="w-full h-32 object-cover" />
+                          <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
+                          <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                          <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4 pt-4">
+
+          <div className="space-y-4 pt-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
+              <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
+              <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
+            </div>
+====
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    {formData.imagens.map((img, index) => {
+                      const src = typeof img === 'string' ? img : img?.displaySrc;
+                      return (
+                        <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100">
+                          <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
                           <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
                           <button onClick={() => setEditingImageIndex(index)} className="absolute top-1 right-10 bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
                         </div>
@@ -2224,13 +2248,6 @@ function App() {
               <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
               <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
-                <div key={index} className="bg-gray-50 border border-gray-200 p-4 rounded-lg relative">
-                  <button onClick={() => removeAssinatura(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"><UserX size={18} /></button>
-                  <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura?.nome || ''} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
-                  <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura?.cargo || ''} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
-                </div>
               ))}
             </div>
           </div>
