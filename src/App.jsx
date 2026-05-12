@@ -1583,10 +1583,12 @@ function App() {
     if (action === 'save_and_preview') {
       setEditingReportId(currentId);
       setView('preview');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setFormData(getEmptyForm());
       setEditingReportId(null);
       setView('dashboard');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setTimeout(() => setAppMessage(null), 3000);
   };
@@ -1764,7 +1766,7 @@ function App() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
+              <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); window.scrollTo(0, 0); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
               
               <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
 
@@ -1834,6 +1836,177 @@ function App() {
     );
   }
 
+  if (view === 'preview') {
+    let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
+    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+    
+    const tipoStr = String(formData.tipoRelatorio || '');
+    
+    if (tipoStr === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
+    if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
+    if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
+    if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
+
+    return (
+      <div className="min-h-screen bg-gray-200 p-4 md:p-8 font-sans print:bg-white print:p-0">
+        <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
+          <button onClick={() => { setView('form'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
+          <div className="flex gap-3">
+            <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
+            <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> Imprimir / PDF</button>
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 font-bold shadow transition border border-red-200" title="Sair do Sistema"><LogOut size={18} /></button>
+          </div>
+        </div>
+
+        <div id="relatorio-preview-conteudo" className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
+          <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
+          <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
+            
+            <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
+              <div>
+                {formData.logo ? <img src={formData.logo} alt="Logo IMAC" className="h-[50px] object-contain mb-1" /> : <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
+                <p className="font-bold text-black text-[14px]">Controle de Qualidade</p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{tituloRelatorio}</p>
+                <p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {formData.dataRelatorio}</p>
+              </div>
+            </div>
+
+            {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">DADOS DO PRODUTO</p></div>
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
+                    <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
+                    <p className="text-[14px]"><strong>PRODUTO:</strong> {formData.produto}</p>
+                    <p className="text-[14px]"><strong>LOTE:</strong> {formData.lote}</p>
+                    <p className="text-[14px]"><strong>DATA DE FABRICAÇÃO:</strong> {formData.dataFabricacao}</p>
+                    <p className="text-[14px]"><strong>DATA VALIDADE:</strong> {formData.validade}</p>
+                    <p className="text-[14px] col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {formData.quantidade}</p>
+                  </div>
+                </div>
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">INFORMAÇÕES SOBRE A OCORRÊNCIA</p></div>
+                  
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+
+                  <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Sabor</span><span className="text-[14px] font-semibold">{formData.sabor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Odor</span><span className="text-[14px] font-semibold">{formData.odor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Cor</span><span className="text-[14px] font-semibold">{formData.cor || 'Não informado'}</span></div>
+                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Temp. °C</span><span className="text-[14px] font-semibold">{formData.temperatura || 'Não informado'}</span></div>
+                  </div>
+                </div>
+
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
+                    <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+                      {formData.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">PARECER TÉCNICO</p></div>
+                  
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
+                     <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
+                     <p className="text-[14px] font-semibold">({formData.statusParecer === 'PROCEDENTE' ? 'X' : '  '}) PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO PROCEDENTE' ? 'X' : '  '}) NÃO PROCEDENTE</p>
+                     <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
+                  </div>
+
+                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+
+                  <div className="mb-8">
+                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
+                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
+                      <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold uppercase">Responsável: {assinatura?.nome}</p>
+                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura?.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-5 print:mb-3 break-inside-avoid">
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
+                    {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
+                    {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
+                    {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
+                    {formData.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {formData.fornecedor}</p>}
+                    {formData.validade && showValidade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
+                    {formData.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {formData.dataRecebimento}</p>}
+                    {formData.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {formData.nf}</p>}
+                    {formData.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {formData.horarioEmbalamento}</p>}
+                  </div>
+                </div>
+
+                {formData.descricao && (
+                  <div className="mb-5 print:mb-3 w-full overflow-hidden">
+                    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
+                    <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+                  </div>
+                )}
+
+                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
+                  <div className="mb-6 mt-6 print:mt-4">
+                    <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                    <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+                      {formData.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
+                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="print:pt-4">
+                  {formData.consideracoes && (
+                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
+                      <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                    </div>
+                  )}
+
+                  <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p>{formData.localData}</p></div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
+                    {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
+                      <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
+                        <p className="font-bold">{assinatura?.nome}</p>
+                        <p className="leading-snug whitespace-pre-line">{assinatura?.cargo}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
 
   return (
@@ -1873,7 +2046,7 @@ function App() {
             {editingReportId && (
                <button onClick={cancelEditing} className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 transition">Cancelar Edição</button>
             )}
-            <button onClick={() => setView('dashboard')} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
+            <button onClick={() => { setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
             <button onClick={handleLogout} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 px-4 py-2 rounded-lg font-bold border border-gray-300 transition" title="Sair do Sistema"><LogOut size={18} /></button>
           </div>
         </div>
