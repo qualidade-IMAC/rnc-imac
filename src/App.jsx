@@ -82,7 +82,7 @@ const saveToLocalStorage = (key, data) => {
     console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}. Tentando reduzir o tamanho...`);
     if (key === 'imac_registros' && Array.isArray(data)) {
       try {
-        const lightweightData = data.slice(0, 30).map(item => ({
+        const lightweightData = data.slice(0, 20).map(item => ({
           ...item,
           imagens: [], // Removemos as imagens do cache local para liberar espaço
           logo: null
@@ -148,7 +148,7 @@ const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.3
 const LogOut = (p) => <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
 
 // --- FUNÇÃO DE COMPRESSÃO DE IMAGENS ---
-const compressImage = (file) => {
+const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -157,8 +157,8 @@ const compressImage = (file) => {
       img.src = event.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1000;
-        const MAX_HEIGHT = 1000;
+        const MAX_WIDTH = isLogo ? 400 : 800;
+        const MAX_HEIGHT = isLogo ? 400 : 800;
         let width = img.width;
         let height = img.height;
 
@@ -171,7 +171,7 @@ const compressImage = (file) => {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
       };
     };
     reader.onerror = error => reject(error);
@@ -612,7 +612,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     const ctx = canvas.getContext('2d');
     ctx.drawImage(imageRef.current, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
 
-    const newImageSrc = canvas.toDataURL('image/jpeg', 0.95);
+    const newImageSrc = canvas.toDataURL('image/jpeg', 0.6);
     const img = new Image();
     img.src = newImageSrc;
     img.onload = () => {
@@ -644,7 +644,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);
     setTimeout(() => { 
       if (canvasRef.current && imageRef.current) {
-        onSave(canvasRef.current.toDataURL('image/jpeg', 0.95), imageRef.current.src, shapesRef.current); 
+        onSave(canvasRef.current.toDataURL('image/jpeg', 0.6), imageRef.current.src, shapesRef.current); 
       }
     }, 50);
   };
@@ -1394,7 +1394,7 @@ function App() {
 
     if (isLogo) {
       try {
-        const compressedLogo = await compressImage(files[0]);
+        const compressedLogo = await compressImage(files[0], true);
         setFormData(prev => ({ ...prev, logo: compressedLogo }));
         try { localStorage.setItem('imac_logo_oficial', compressedLogo); } catch(e){}
       } catch (error) {}
@@ -1402,7 +1402,7 @@ function App() {
     }
 
     try {
-      const compressedImages = await Promise.all(files.map(file => compressImage(file)));
+      const compressedImages = await Promise.all(files.map(file => compressImage(file, false)));
       const newImageObjects = compressedImages.map(base64 => ({
         isObject: true,
         id: Date.now() + Math.random(),
@@ -1499,8 +1499,9 @@ function App() {
     });
     
     if (user && db && isConfigured) {
-      updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)), payload)
-        .then(() => setAppMessage("✅ Avaliação salva com sucesso!"))
+      const safePayload = JSON.parse(JSON.stringify(payload));
+      updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)), safePayload)
+        .then(() => setAppMessage("✅ Avaliação salva com sucesso e sincronizada!"))
         .catch(() => setAppMessage("💾 Avaliação salva localmente (offline)"));
     } else { setAppMessage("💾 Avaliação salva localmente"); }
     
@@ -1542,7 +1543,8 @@ function App() {
       });
 
       if (user && db && isConfigured) {
-        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), payloadEdicao)
+        const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload)
           .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
           .catch(() => setAppMessage("💾 Atualização salva localmente"));
       } else { setAppMessage("💾 Edição salva localmente"); }
@@ -1556,7 +1558,8 @@ function App() {
       
       if (user && db && isConfigured) {
         const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
-        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), registroParaNuvem)
+        const safePayload = JSON.parse(JSON.stringify(registroParaNuvem));
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload)
           .then(() => setAppMessage("✅ Relatório salvo na nuvem!"))
           .catch(() => setAppMessage("💾 Salvo localmente (offline)"));
       } else { setAppMessage("💾 Relatório salvo localmente"); }
