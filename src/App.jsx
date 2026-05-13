@@ -19,7 +19,6 @@ if (typeof __firebase_config !== 'undefined') {
     messagingSenderId: "858158161408",
     appId: "1:858158161408:web:68df68b9aafe57e4b142e5"
   };
-  
   if (firebaseConfig.apiKey !== "") {
     isConfigured = true;
   }
@@ -74,28 +73,15 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
   document.head.appendChild(style);
 }
 
-// --- FUNÇÃO SEGURA PARA SALVAR NO LOCALSTORAGE (PREVINE QUOTA EXCEEDED) ---
+// --- FUNÇÃO SEGURA PARA SALVAR NO LOCALSTORAGE ---
 const saveToLocalStorage = (key, data) => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
-    console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}. Tentando reduzir o tamanho...`);
-    if (key === 'imac_registros' && Array.isArray(data)) {
-      try {
-        const lightweightData = data.slice(0, 20).map(item => ({
-          ...item,
-          imagens: [], 
-          logo: null
-        }));
-        localStorage.setItem(key, JSON.stringify(lightweightData));
-      } catch (fallbackError) {
-        console.error("Falha definitiva ao salvar backup local.", fallbackError);
-      }
-    }
+    console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`);
   }
 };
 
-// --- FUNÇÃO SEGURA PARA DATAS ---
 const safeDate = (dateString) => {
   if (!dateString) return '';
   try {
@@ -137,6 +123,8 @@ const BoldIcon = (p) => <SvgIcon {...p} strokeWidth={3}><path d="M6 4h8a4 4 0 0 
 const ItalicIcon = (p) => <SvgIcon {...p}><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></SvgIcon>;
 const UnderlineIcon = (p) => <SvgIcon {...p}><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></SvgIcon>;
 const Truck = (p) => <SvgIcon {...p}><path d="M16 3H1v13h15M8 16h7v4H8zM21 16h-2v4H5"/><circle cx="6.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></SvgIcon>;
+const ShoppingBag = (p) => <SvgIcon {...p}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></SvgIcon>;
+const Store = (p) => <SvgIcon {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></SvgIcon>;
 const Eye = (p) => <SvgIcon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
 const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-5M7 10l5 5 5-5M12 15V3"/></SvgIcon>;
 const Filter = (p) => <SvgIcon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></SvgIcon>;
@@ -149,7 +137,6 @@ const LogOut = (p) => <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-
 const ChevronLeft = (p) => <SvgIcon {...p}><polyline points="15 18 9 12 15 6" /></SvgIcon>;
 const ChevronRight = (p) => <SvgIcon {...p}><polyline points="9 18 15 12 9 6" /></SvgIcon>;
 
-// --- FUNÇÃO DE COMPRESSÃO DE IMAGENS ---
 const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -180,7 +167,6 @@ const compressImage = (file, isLogo = false) => {
   });
 };
 
-// --- COMPONENTE DE TEXTO RICO (BLINDADO) ---
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = useRef(null);
 
@@ -258,7 +244,6 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// --- COMPONENTE DE EDIÇÃO DE IMAGEM ---
 const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
   const canvasRef = useRef(null);
   const [tool, setTool] = useState('arrow'); 
@@ -737,7 +722,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
   );
 };
 
-// --- COMPONENTE DE SELEÇÃO DE FORNECEDOR ---
 const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [novoFornecedor, setNovoFornecedor] = useState('');
@@ -787,7 +771,55 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
   );
 };
 
-// --- MODAL DE GERENCIAR FORNECEDORES ---
+const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const [novoCliente, setNovoCliente] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const clientesFiltrados = (clientes || []).filter(c => c && typeof c === 'string' && c.toLowerCase().includes((searchTerm || '').toLowerCase()));
+
+  const handleSelect = (cliente) => { onChange(cliente); setIsAdding(false); setSearchTerm(''); };
+  const handleAddNew = () => { if (novoCliente.trim()) { onAddCliente(novoCliente.trim()); onChange(novoCliente.trim()); setNovoCliente(''); setIsAdding(false); setSearchTerm(''); } };
+
+  return (
+    <div className="relative">
+      {!isAdding ? (
+        <div>
+          <div className="flex gap-2 mb-2">
+            <div className="relative flex-1">
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar cliente/loja..." className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm pr-8" />
+              {value && <button onClick={() => { onChange(''); setSearchTerm(''); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><X size={16} /></button>}
+            </div>
+            <button type="button" onClick={() => setIsAdding(true)} className="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition font-bold text-sm flex items-center gap-1" title="Cadastrar novo cliente"><Plus size={16} /> Novo</button>
+          </div>
+          {searchTerm && (
+            <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {clientesFiltrados.length > 0 ? (
+                clientesFiltrados.map((cliente, idx) => (
+                  <button key={idx} type="button" onClick={() => handleSelect(cliente)} className={`w-full text-left px-4 py-2 hover:bg-indigo-50 transition flex items-center gap-2 ${value === cliente ? 'bg-indigo-100 font-bold' : ''}`}>
+                    <ShoppingBag size={16} className="text-gray-500" /> {cliente} {value === cliente && <Check size={16} className="text-indigo-600 ml-auto" />}
+                  </button>
+                ))
+              ) : <div className="px-4 py-3 text-gray-500 text-sm">Nenhum cliente encontrado</div>}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <input type="text" value={novoCliente} onChange={(e) => setNovoCliente(e.target.value)} placeholder="Nome do novo cliente" className="flex-1 border border-indigo-500 p-2.5 rounded focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm font-medium" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddNew(); if (e.key === 'Escape') setIsAdding(false); }} />
+          <button type="button" onClick={handleAddNew} className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition font-bold"><Check size={18} /></button>
+          <button type="button" onClick={() => setIsAdding(false)} className="bg-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-400 transition"><X size={18} /></button>
+        </div>
+      )}
+      {value && !isAdding && (
+        <div className="mt-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
+          <Store size={16} className="text-indigo-800" /> <span className="font-bold text-indigo-800 text-sm">Cliente: {value}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEdit, onRemove }) => {
   const [editingName, setEditingName] = useState(null);
   const [editValue, setEditValue] = useState('');
@@ -859,7 +891,77 @@ const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEd
   );
 };
 
-// --- COMPONENTE DO GRÁFICO DE BARRAS ---
+const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRemove }) => {
+  const [editingName, setEditingName] = useState(null);
+  const [editValue, setEditValue] = useState('');
+  const [newCliente, setNewCliente] = useState('');
+  const [clienteToDelete, setClienteToDelete] = useState(null);
+
+  if (!isOpen) return null;
+
+  const handleSaveEdit = (oldName) => {
+    onEdit(oldName, editValue);
+    setEditingName(null);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up flex flex-col max-h-[85vh] relative">
+        
+        {clienteToDelete && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4 rounded-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center animate-fade-in-up">
+              <AlertCircle size={40} className="text-red-500 mx-auto mb-4" />
+              <p className="font-bold text-gray-800 text-lg mb-2">Excluir Cliente?</p>
+              <p className="text-gray-600 text-sm mb-6">Tem certeza que deseja apagar "{clienteToDelete}" da lista?</p>
+              <div className="flex justify-center gap-3">
+                <button onClick={() => setClienteToDelete(null)} className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold text-gray-700 transition">Cancelar</button>
+                <button onClick={() => { onRemove(clienteToDelete); setClienteToDelete(null); }} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg font-bold text-white transition shadow-md">Sim, Apagar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
+          <h3 className="text-xl font-black text-indigo-900 flex items-center gap-2"><ShoppingBag size={24}/> Gerenciar Clientes</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition"><X size={20}/></button>
+        </div>
+
+        <div className="flex gap-2 mb-5">
+          <input type="text" value={newCliente} onChange={(e) => setNewCliente(e.target.value)} placeholder="Nome do novo cliente..." className="flex-1 border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm font-medium" onKeyDown={(e) => { if (e.key === 'Enter') { onAdd(newCliente.trim()); setNewCliente(''); } }} />
+          <button onClick={() => { if(newCliente.trim()) { onAdd(newCliente.trim()); setNewCliente(''); } }} className="bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition font-bold flex items-center gap-1 shadow-sm"><Plus size={18}/><span className="hidden sm:inline">Adicionar</span></button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 border border-gray-200 rounded-lg p-2 bg-gray-50">
+          {(clientes || []).length === 0 ? <p className="text-center text-gray-500 py-6 text-sm font-medium">Nenhum cliente cadastrado.</p> :
+            <ul className="space-y-2">
+              {(clientes || []).filter(c => typeof c === 'string').sort().map((c, idx) => (
+                <li key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm transition hover:shadow-md">
+                  {editingName === c ? (
+                    <div className="flex flex-1 gap-2 items-center">
+                      <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus className="flex-1 border-b-2 border-indigo-500 outline-none px-1 text-sm font-bold bg-indigo-50" onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(c); if (e.key === 'Escape') setEditingName(null); }} />
+                      <button onClick={() => handleSaveEdit(c)} className="text-white bg-green-500 hover:bg-green-600 p-1.5 rounded transition"><Check size={16}/></button>
+                      <button onClick={() => setEditingName(null)} className="text-gray-500 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition"><X size={16}/></button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="font-bold text-gray-700 text-sm truncate pr-2" title={c}>{c}</span>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => { setEditingName(c); setEditValue(c); }} className="text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 p-1.5 rounded transition" title="Editar nome"><Edit3 size={16}/></button>
+                        <button onClick={() => setClienteToDelete(c)} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-1.5 rounded transition" title="Excluir"><Trash2 size={16}/></button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const BarChart = ({ data, title, color = '#F4B41A' }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
@@ -888,7 +990,6 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
   );
 };
 
-// --- COMPONENTE DO GRÁFICO DE PIZZA ---
 const PieChartComponent = ({ data, title }) => {
   if (!data || data.length === 0) return null;
   const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
@@ -933,7 +1034,6 @@ const PieChartComponent = ({ data, title }) => {
   );
 };
 
-// --- MODAL DE AVALIAÇÃO DE STATUS ---
 const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
@@ -977,7 +1077,6 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
   );
 };
 
-// --- MODAL DE VISUALIZAÇÃO DO RELATÓRIO ---
 const RelatorioViewModal = ({ registro, onClose }) => {
   if (!registro) return null;
 
@@ -1169,7 +1268,6 @@ const RelatorioViewModal = ({ registro, onClose }) => {
   );
 };
 
-// --- FILTROS DO DASHBOARD ---
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
@@ -1195,7 +1293,6 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   );
 };
 
-// --- SISTEMA PRINCIPAL ---
 function App() {
   const [view, setView] = useState('welcome'); 
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
@@ -1205,15 +1302,16 @@ function App() {
   const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
   const [editingReportId, setEditingReportId] = useState(null);
   const [isFornecedoresModalOpen, setFornecedoresModalOpen] = useState(false);
+  const [isClientesModalOpen, setClientesModalOpen] = useState(false);
 
   const [dbError, setDbError] = useState(false); 
   const [fornecedores, setFornecedores] = useState([]);
+  const [clientes, setClientes] = useState([]);
   
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
 
-  // ESTADOS DE IDENTIFICAÇÃO DO USUÁRIO
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
   
@@ -1304,18 +1402,42 @@ function App() {
         if (Array.isArray(parsed)) setFornecedores(parsed);
       } catch (e) {}
     }
+
+    const savedClientes = localStorage.getItem('imac_clientes');
+    if (!savedClientes) {
+      const defaultClientes = ['Loja Matriz', 'Filial Centro', 'Distribuidora ABC', 'Mercado São Luiz'];
+      saveToLocalStorage('imac_clientes', defaultClientes);
+      setClientes(defaultClientes);
+    } else {
+      try {
+        const parsed = JSON.parse(savedClientes);
+        if (Array.isArray(parsed)) setClientes(parsed);
+      } catch (e) {}
+    }
   }, []);
 
   useEffect(() => {
     if (!user || !db || !isConfigured) return;
-    const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
+    const unsubscribeFornecedores = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { 
         setFornecedores(data); 
         saveToLocalStorage('imac_fornecedores', data); 
       }
     });
-    return () => unsubscribe();
+
+    const unsubscribeClientes = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), (snapshot) => {
+      const data = snapshot.docs.map(doc => doc.data().nome);
+      if (data.length > 0) { 
+        setClientes(data); 
+        saveToLocalStorage('imac_clientes', data); 
+      }
+    });
+
+    return () => {
+      unsubscribeFornecedores();
+      unsubscribeClientes();
+    };
   }, [user]);
 
   useEffect(() => {
@@ -1382,6 +1504,45 @@ function App() {
 
     if (user && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
+            const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
+            if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
+        }).catch(()=>{});
+    }
+  };
+
+  const addCliente = async (nome) => {
+    const nomeLimpo = nome.trim();
+    if (!(clientes || []).includes(nomeLimpo)) {
+      setClientes(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_clientes', newList); return newList; });
+      if (user && db && isConfigured) {
+        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
+      }
+    }
+  };
+
+  const editClienteObj = async (oldName, newName) => {
+    if(!newName.trim() || oldName === newName) return;
+    const cleanNew = newName.trim();
+    const newList = (clientes || []).map(c => c === oldName ? cleanNew : c);
+    setClientes(newList);
+    saveToLocalStorage('imac_clientes', newList);
+
+    if (user && db && isConfigured) {
+        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
+            const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
+            if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
+            else addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), { nome: cleanNew, dataCriacao: new Date().toISOString() }).catch(()=>{});
+        }).catch(()=>{});
+    }
+  };
+
+  const removeClienteObj = async (nomeToRemove) => {
+    const newList = (clientes || []).filter(c => c !== nomeToRemove);
+    setClientes(newList);
+    saveToLocalStorage('imac_clientes', newList);
+
+    if (user && db && isConfigured) {
+        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
             const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
             if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
         }).catch(()=>{});
@@ -1712,16 +1873,36 @@ function App() {
     const filteredRecords = getFilteredRecords();
     const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0 };
     const fornecedorCounts = {};
+    const clienteCounts = {};
+    const produtoCounts = {};
+    const statusCounts = { 'Pendente': 0, 'Liberado': 0, 'Não Liberado': 0 };
     
     filteredRecords.forEach(r => {
       const tipo = r.tipoRelatorio || 'Problema com Fornecedor';
       if (countsPorTipo[tipo] !== undefined) countsPorTipo[tipo]++;
       if (r.fornecedor) fornecedorCounts[r.fornecedor] = (fornecedorCounts[r.fornecedor] || 0) + 1;
+      
+      const st = r.status || 'Pendente';
+      if (statusCounts[st] !== undefined) statusCounts[st]++;
+
+      if (r.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' && r.lojaLocal) {
+         clienteCounts[r.lojaLocal] = (clienteCounts[r.lojaLocal] || 0) + 1;
+      }
+
+      if (r.produto && r.produto !== 'Não especificado') {
+         produtoCounts[r.produto] = (produtoCounts[r.produto] || 0) + 1;
+      }
     });
 
     const pieData = Object.entries(countsPorTipo).filter(([_, v]) => v > 0).map(([label, value]) => ({ label, value }));
     const barData = Object.entries(fornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
     const tipoBarras = Object.entries(countsPorTipo).map(([nome, valor]) => ({ label: nome, value: valor, color: nome.includes('Fornecedor') ? '#EF4444' : nome.includes('Insumo') ? '#F59E0B' : nome.includes('Interna') ? '#3B82F6' : nome.includes('Produto') ? '#22C55E' : '#8B5CF6' }));
+
+    const pieStatusData = Object.entries(statusCounts).filter(([_, v]) => v > 0).map(([label, value]) => ({ 
+      label, value, color: label === 'Liberado' ? '#22C55E' : label === 'Não Liberado' ? '#EF4444' : '#F59E0B' 
+    }));
+    const clienteBarData = Object.entries(clienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
+    const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
@@ -1736,6 +1917,17 @@ function App() {
              onAdd={addFornecedor}
              onEdit={editFornecedorObj}
              onRemove={removeFornecedorObj}
+           />
+        )}
+
+        {isClientesModalOpen && (
+           <GerenciarClientesModal 
+             isOpen={isClientesModalOpen} 
+             onClose={() => setClientesModalOpen(false)} 
+             clientes={clientes}
+             onAdd={addCliente}
+             onEdit={editClienteObj}
+             onRemove={removeClienteObj}
            />
         )}
 
@@ -1767,9 +1959,8 @@ function App() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); window.scrollTo(0, 0); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
-              
               <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
-
+              <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-2 text-sm border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={16} /><span className="hidden md:inline">Clientes</span></button>
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
               <button onClick={handleLogout} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-50 hover:text-red-600 transition flex items-center gap-2 text-sm border border-gray-200" title="Sair do Sistema"><LogOut size={16} /></button>
             </div>
@@ -1788,7 +1979,16 @@ function App() {
             {pieData.length > 0 && <PieChartComponent data={pieData} title="Distribuição por Tipo" />}
             {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" />}
           </div>
-          {barData.length > 0 && <div className="mb-6"><BarChart data={barData} title="Top 10 Fornecedores" color="#EF4444" /></div>}
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {pieStatusData.length > 0 && <PieChartComponent data={pieStatusData} title="Status dos Relatórios" />}
+            {produtoBarData.length > 0 && <BarChart data={produtoBarData} title="Top 5 Produtos Problemáticos" color="#8B5CF6" />}
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {barData.length > 0 && <BarChart data={barData} title="Top 10 Fornecedores" color="#EF4444" />}
+            {clienteBarData.length > 0 && <BarChart data={clienteBarData} title="Top 10 Clientes" color="#4F46E5" />}
+          </div>
 
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -2096,7 +2296,13 @@ function App() {
               <div className="space-y-4">
                 <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Cliente / Loja ou Local</label><input type="text" maxLength={80} name="lojaLocal" value={formData.lojaLocal || ''} onChange={handleChange} placeholder={placeholders.lojaLocal} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  <div>
+                     <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
+                       <Store size={16} className="text-[#5C3A21]" /> Cliente / Loja ou Local
+                     </label>
+                     <ClienteSelect value={formData.lojaLocal || ''} onChange={(c) => setFormData(prev => ({ ...prev, lojaLocal: c }))} clientes={clientes} onAddCliente={addCliente} />
+                  </div>
+                  
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                   <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
@@ -2287,7 +2493,6 @@ function App() {
   );
 }
 
-// --- ERROR BOUNDARY ---
 export default class AppWithBoundary extends React.Component {
   constructor(props) {
     super(props);
