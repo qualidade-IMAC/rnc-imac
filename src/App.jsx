@@ -1182,10 +1182,17 @@ const RelatorioViewModal = ({ registro, onClose }) => {
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes || '' }} />
 
-                  <div className="mb-8">
+                  <div className="mb-5">
                      <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: registro.acaoCorretiva || '-' }} />
                   </div>
+
+                  {registro.conclusaoParecer && (
+                    <div className="mb-8">
+                       <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
+                       <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: registro.conclusaoParecer || '-' }} />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {assinaturasRender.filter(Boolean).map((assinatura, index) => (
@@ -1358,7 +1365,7 @@ function App() {
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
     dataOcorrencia: '', produto: '', ocorrencia: '', lote: '', quantidade: '', validade: '',
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
-    lojaLocal: '', dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '',
+    lojaLocal: '', dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '', conclusaoParecer: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
     imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
   });
@@ -1642,6 +1649,7 @@ function App() {
       temperatura: registro.temperatura || '',
       statusParecer: registro.statusParecer || '',
       acaoCorretiva: registro.acaoCorretiva || '',
+      conclusaoParecer: registro.conclusaoParecer || '',
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || (registro.dataCriacao ? `Aquiraz, ${safeDate(registro.dataCriacao)}.` : ''),
@@ -1697,7 +1705,7 @@ function App() {
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
       lojaLocal: formData.lojaLocal || '', dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
       sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
-      statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '',
+      statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '', conclusaoParecer: formData.conclusaoParecer || '',
       imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
       assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
       logo: formData.logo || null, localData: formData.localData || '',
@@ -2128,10 +2136,17 @@ function App() {
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
 
-                  <div className="mb-8">
+                  <div className="mb-5">
                      <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
                   </div>
+
+                  {formData.conclusaoParecer && (
+                    <div className="mb-8">
+                       <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
+                       <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
@@ -2387,6 +2402,11 @@ function App() {
                 <div>
                   <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
                   <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
+                </div>
+
+                <div>
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
+                  <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
                 </div>
               </div>
             </>
