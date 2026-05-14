@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs } from 'firebase/firestore';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
 
 let firebaseConfig;
 let isConfigured = false;
@@ -115,6 +115,16 @@ const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }
     {children}
   </svg>
 );
+
+const GoogleIcon = (p) => (
+  <svg viewBox="0 0 24 24" width={p.size || 24} height={p.size || 24} xmlns="http://www.w3.org/2000/svg" className={p.className}>
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
 const Printer = (p) => <SvgIcon {...p}><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" /></SvgIcon>;
 const Edit3 = (p) => <SvgIcon {...p}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></SvgIcon>;
 const ImagePlus = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v4M21 9h-6M18 6v6M3 16l5-5c.928-.893 2.072-.893 3 0l5 5M14 14l1-1c.928-.893 2.072-.893 3 0l3 3" /></SvgIcon>;
@@ -154,6 +164,8 @@ const ChevronRight = (p) => <SvgIcon {...p}><polyline points="9 18 15 12 9 6" />
 const MessageCircle = (p) => <SvgIcon {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></SvgIcon>;
 const Mail = (p) => <SvgIcon {...p}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></SvgIcon>;
 const Clock = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></SvgIcon>;
+const Lock = (p) => <SvgIcon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></SvgIcon>;
+const User = (p) => <SvgIcon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></SvgIcon>;
 
 const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
@@ -1324,7 +1336,9 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
 };
 
 function App() {
-  const [view, setView] = useState('welcome'); 
+  const [view, setView] = useState('loading'); // welcome (login), complete_profile, dashboard, form, preview
+  const [authLoading, setAuthLoading] = useState(true);
+  
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
@@ -1342,38 +1356,12 @@ function App() {
   const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
 
+  // User Profile
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
   
-  useEffect(() => {
-    const savedName = localStorage.getItem('imac_user_name');
-    const savedRole = localStorage.getItem('imac_user_role');
-    if (savedName && savedRole) {
-      setUserName(savedName);
-      setUserRole(savedRole);
-      setView('dashboard');
-    }
-  }, []);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (userName.trim() && userRole.trim()) {
-      localStorage.setItem('imac_user_name', userName.trim());
-      localStorage.setItem('imac_user_role', userRole.trim());
-      setView('dashboard');
-    } else {
-      setAppMessage("⚠️ Por favor, preencha nome e setor/cargo.");
-      setTimeout(() => setAppMessage(null), 3000);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('imac_user_name');
-    localStorage.removeItem('imac_user_role');
-    setUserName('');
-    setUserRole('');
-    setView('welcome');
-  };
+  // Auth Error State
+  const [authError, setAuthError] = useState('');
 
   const defaultAssinaturas = [
     { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' },
@@ -1397,7 +1385,7 @@ function App() {
 
   useEffect(() => {
     if (!auth) {
-      setUser({ uid: 'modo-offline-aberto' });
+      setAuthLoading(false);
       return;
     }
     
@@ -1405,20 +1393,88 @@ function App() {
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
-        } else { 
+        } else {
+          // If no custom token is provided by environment, we MUST use anonymous as fallback 
+          // to appease firestore rules initially, but we will force real login UI.
           await signInAnonymously(auth); 
         }
       } catch (error) { 
-        setUser({ uid: 'banco-aberto-publico' }); 
+        console.error("Auth Init Error:", error);
       }
     };
     initAuth();
     
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser ? currentUser : { uid: 'banco-aberto-publico' });
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser && !currentUser.isAnonymous) {
+         try {
+           const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'info');
+           const profileSnap = await getDoc(profileRef);
+           
+           if (profileSnap.exists()) {
+              const data = profileSnap.data();
+              setUserName(data.nome || currentUser.displayName || '');
+              setUserRole(data.cargo || '');
+              localStorage.setItem('imac_user_name', data.nome || currentUser.displayName || '');
+              localStorage.setItem('imac_user_role', data.cargo || '');
+              setView('dashboard');
+           } else {
+              if (currentUser.displayName) setUserName(currentUser.displayName);
+              setView('complete_profile');
+           }
+         } catch (e) {
+           console.error("Error fetching profile:", e);
+           if (currentUser.displayName) setUserName(currentUser.displayName);
+           setView('complete_profile');
+         }
+      } else {
+         setView('welcome');
+      }
+      setAuthLoading(false);
     });
+    
     return () => unsubscribe();
   }, []);
+
+  const handleGoogleLogin = async () => {
+    setAuthError('');
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged irá gerenciar a transição
+    } catch (error) {
+      console.error("Login Google Error:", error);
+      setAuthError("Erro ao fazer login com o Google: " + error.message);
+    }
+  };
+
+  const handleCompleteProfile = async (e) => {
+    e.preventDefault();
+    if (!userName.trim() || !userRole.trim() || !user) return;
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info'), {
+        nome: userName.trim(),
+        cargo: userRole.trim()
+      });
+    } catch (e) {
+      console.warn("Aviso: Falha ao salvar no Firestore, usando fallback local.", e);
+    }
+    // Sempre salva localmente e libera acesso ao painel (Resolve o erro "preso na tela")
+    localStorage.setItem('imac_user_name', userName.trim());
+    localStorage.setItem('imac_user_role', userRole.trim());
+    setView('dashboard');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUserName('');
+      setUserRole('');
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+  };
 
   useEffect(() => {
     const savedFornecedores = localStorage.getItem('imac_fornecedores');
@@ -1447,7 +1503,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!user || !db || !isConfigured) return;
+    if (!user || user.isAnonymous || !db || !isConfigured) return;
+    
     const unsubscribeFornecedores = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
       if (data.length > 0) { 
@@ -1482,7 +1539,7 @@ function App() {
       } catch (e) {}
     }
     
-    if (!user || !db || !isConfigured) return; 
+    if (!user || user.isAnonymous || !db || !isConfigured) return; 
     
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -1505,7 +1562,7 @@ function App() {
     const nomeLimpo = nome.trim();
     if (!(fornecedores || []).includes(nomeLimpo)) {
       setFornecedores(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_fornecedores', newList); return newList; });
-      if (user && db && isConfigured) {
+      if (user && !user.isAnonymous && db && isConfigured) {
         addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
       }
     }
@@ -1518,7 +1575,7 @@ function App() {
     setFornecedores(newList);
     saveToLocalStorage('imac_fornecedores', newList);
 
-    if (user && db && isConfigured) {
+    if (user && !user.isAnonymous && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
             const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
             if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
@@ -1532,7 +1589,7 @@ function App() {
     setFornecedores(newList);
     saveToLocalStorage('imac_fornecedores', newList);
 
-    if (user && db && isConfigured) {
+    if (user && !user.isAnonymous && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
             const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
             if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
@@ -1544,7 +1601,7 @@ function App() {
     const nomeLimpo = nome.trim();
     if (!(clientes || []).includes(nomeLimpo)) {
       setClientes(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_clientes', newList); return newList; });
-      if (user && db && isConfigured) {
+      if (user && !user.isAnonymous && db && isConfigured) {
         addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
       }
     }
@@ -1557,7 +1614,7 @@ function App() {
     setClientes(newList);
     saveToLocalStorage('imac_clientes', newList);
 
-    if (user && db && isConfigured) {
+    if (user && !user.isAnonymous && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
             const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
             if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
@@ -1571,7 +1628,7 @@ function App() {
     setClientes(newList);
     saveToLocalStorage('imac_clientes', newList);
 
-    if (user && db && isConfigured) {
+    if (user && !user.isAnonymous && db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
             const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
             if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
@@ -1705,7 +1762,7 @@ function App() {
       return updatedList;
     });
     
-    if (user && db && isConfigured) {
+    if (user && !user.isAnonymous && db && isConfigured) {
       const safePayload = JSON.parse(JSON.stringify(payload));
       updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)), safePayload)
         .then(() => setAppMessage("✅ Avaliação salva com sucesso e sincronizada!"))
@@ -1749,7 +1806,7 @@ function App() {
         return updatedList;
       });
 
-      if (user && db && isConfigured) {
+      if (user && !user.isAnonymous && db && isConfigured) {
         const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
         updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload)
           .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
@@ -1763,7 +1820,7 @@ function App() {
 
       setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; saveToLocalStorage('imac_registros', newList); return newList; });
       
-      if (user && db && isConfigured) {
+      if (user && !user.isAnonymous && db && isConfigured) {
         const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
         const safePayload = JSON.parse(JSON.stringify(registroParaNuvem));
         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload)
@@ -1793,7 +1850,7 @@ function App() {
       saveToLocalStorage('imac_registros', newList); 
       return newList; 
     });
-    if (user && db && isConfigured) {
+    if (user && !user.isAnonymous && db && isConfigured) {
       deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id))).catch(()=>{});
     }
     setRegistroToDelete(null);
@@ -1846,59 +1903,76 @@ function App() {
   };
   const placeholders = getPlaceholders();
 
+  if (authLoading || view === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="w-16 h-16 border-4 border-[#F4B41A] border-t-[#5C3A21] rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600 font-bold animate-pulse">Carregando sistema seguro...</p>
+      </div>
+    );
+  }
+
   if (view === 'welcome') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#F4B41A] opacity-20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#5C3A21] opacity-10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft" style={{animationDelay: '1s'}}></div>
         
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 relative z-10 border-t-[8px] border-[#5C3A21] animate-fade-in-up">
-          <div className="text-center mb-8">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden relative z-10 border-t-[8px] border-[#5C3A21] animate-fade-in-up">
+          <div className="bg-gray-50 p-8 text-center border-b border-gray-100">
             {localStorage.getItem('imac_logo_oficial') ? (
               <img src={localStorage.getItem('imac_logo_oficial')} alt="IMAC" className="max-h-20 object-contain mx-auto mb-4" />
             ) : (
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-gray-200">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md border border-gray-200">
                 <h1 className="text-3xl font-black text-[#5C3A21]">IMAC</h1>
               </div>
             )}
-            <h2 className="text-2xl font-black text-gray-800 mt-4">Controle de Qualidade</h2>
-            <p className="text-gray-500 mt-2 text-sm">Identifique-se para acessar o sistema de Relatórios de Não Conformidade.</p>
+            <h2 className="text-2xl font-black text-gray-800">Controle de Qualidade</h2>
+            <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-1"><Lock size={14}/> Acesso Seguro Corporativo</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <div className="p-8 text-center">
+            {authError && (
+              <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-3 rounded text-sm text-red-700 animate-fade-in-up flex items-start gap-2 text-left">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <button 
+              onClick={handleGoogleLogin}
+              className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3.5 px-4 rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition flex justify-center items-center gap-3 text-lg"
+            >
+              <GoogleIcon size={24} /> Entrar com o Google
+            </button>
+            <p className="text-xs text-gray-400 mt-6">Use seu e-mail para acessar o sistema.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'complete_profile') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border-t-4 border-[#F4B41A] animate-fade-in-up text-center">
+          <User size={48} className="text-[#F4B41A] mx-auto mb-4" />
+          <h2 className="text-2xl font-black text-gray-800 mb-2">Quase lá!</h2>
+          <p className="text-gray-500 mb-6 text-sm">Precisamos do seu Nome e Cargo para assinar os relatórios gerados por você.</p>
+          
+          <form onSubmit={handleCompleteProfile} className="space-y-4 text-left">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Seu Nome Completo</label>
-              <input 
-                type="text" 
-                required
-                value={userName} 
-                onChange={(e) => setUserName(e.target.value)} 
-                placeholder="Ex: João Silva" 
-                className="w-full border-2 border-gray-200 p-3.5 rounded-xl focus:border-[#F4B41A] focus:ring-4 focus:ring-[#F4B41A]/20 outline-none transition font-medium text-gray-800" 
-              />
+              <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>
+              <input type="text" required value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Ex: Maria Oliveira" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Setor ou Cargo</label>
-              <input 
-                type="text" 
-                required
-                value={userRole} 
-                onChange={(e) => setUserRole(e.target.value)} 
-                placeholder="Ex: Analista de Qualidade" 
-                className="w-full border-2 border-gray-200 p-3.5 rounded-xl focus:border-[#F4B41A] focus:ring-4 focus:ring-[#F4B41A]/20 outline-none transition font-medium text-gray-800" 
-              />
+              <input type="text" required value={userRole} onChange={(e) => setUserRole(e.target.value)} placeholder="Ex: Supervisor de Produção" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none autoFocus" />
             </div>
-            <button 
-              type="submit" 
-              className="w-full bg-[#5C3A21] text-[#F4B41A] font-black p-4 rounded-xl shadow-lg hover:bg-[#4a2e1a] hover:shadow-xl transition transform active:scale-95 flex justify-center items-center gap-2 mt-4 text-lg"
-            >
-              ACESSAR SISTEMA <ArrowUpRight size={20} />
+            <button type="submit" className="w-full bg-[#5C3A21] text-[#F4B41A] font-black py-3 rounded-lg shadow hover:bg-[#4a2e1a] transition mt-4">
+              CONCLUIR E ACESSAR
             </button>
           </form>
-          
-          <div className="mt-8 text-center text-xs text-gray-400 font-medium">
-            <p>Os relatórios gerados serão assinados como <strong>{userName || '...'}</strong></p>
-          </div>
         </div>
       </div>
     );
@@ -1999,7 +2073,7 @@ function App() {
               <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
               <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-2 text-sm border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={16} /><span className="hidden md:inline">Clientes</span></button>
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
-              <button onClick={handleLogout} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-50 hover:text-red-600 transition flex items-center gap-2 text-sm border border-gray-200" title="Sair do Sistema"><LogOut size={16} /></button>
+              <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2 text-sm border border-red-200" title="Sair do Sistema"><LogOut size={16} /></button>
             </div>
           </div>
 
@@ -2123,7 +2197,6 @@ function App() {
             <button onClick={() => shareViaWhatsApp(formData)} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded font-bold shadow hover:bg-green-600 transition"><MessageCircle size={18} /> WhatsApp</button>
             <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> Imprimir / PDF</button>
-            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 font-bold shadow transition border border-red-200" title="Sair do Sistema"><LogOut size={18} /></button>
           </div>
         </div>
 
@@ -2323,7 +2396,6 @@ function App() {
                <button onClick={cancelEditing} className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 transition">Cancelar Edição</button>
             )}
             <button onClick={() => { setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
-            <button onClick={handleLogout} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 px-4 py-2 rounded-lg font-bold border border-gray-300 transition" title="Sair do Sistema"><LogOut size={18} /></button>
           </div>
         </div>
 
