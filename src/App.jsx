@@ -992,6 +992,52 @@ const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRe
   );
 };
 
+const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave }) => {
+  const [name, setName] = useState(initialName || '');
+  const [role, setRole] = useState(initialRole || '');
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialName || '');
+      setRole(initialRole || '');
+    }
+  }, [isOpen, initialName, initialRole]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (name.trim() && role.trim()) {
+      onSave(name.trim(), role.trim());
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up">
+        <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
+          <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2"><User size={24}/> Editar Perfil</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition"><X size={20}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>
+            <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Setor ou Cargo</label>
+            <input type="text" required value={role} onChange={(e) => setRole(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
+            <button type="submit" className="px-5 py-2.5 bg-[#5C3A21] text-[#F4B41A] rounded-lg hover:bg-[#4a2e1a] font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const BarChart = ({ data, title, color = '#F4B41A' }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
@@ -1347,6 +1393,7 @@ function App() {
   const [editingReportId, setEditingReportId] = useState(null);
   const [isFornecedoresModalOpen, setFornecedoresModalOpen] = useState(false);
   const [isClientesModalOpen, setClientesModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const [dbError, setDbError] = useState(false); 
   const [fornecedores, setFornecedores] = useState([]);
@@ -1474,6 +1521,30 @@ function App() {
     } catch (error) {
       console.error("Logout error", error);
     }
+  };
+
+  const handleUpdateProfile = async (newName, newRole) => {
+    setUserName(newName);
+    setUserRole(newRole);
+    localStorage.setItem('imac_user_name', newName);
+    localStorage.setItem('imac_user_role', newRole);
+
+    if (user && !user.isAnonymous && db && isConfigured) {
+      try {
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info'), {
+          nome: newName,
+          cargo: newRole
+        });
+        setAppMessage("✅ Perfil atualizado com sucesso!");
+      } catch (e) {
+        console.error("Erro ao atualizar perfil:", e);
+        setAppMessage("💾 Perfil salvo localmente.");
+      }
+    } else {
+      setAppMessage("💾 Perfil salvo localmente.");
+    }
+    setIsProfileModalOpen(false);
+    setTimeout(() => setAppMessage(null), 3000);
   };
 
   useEffect(() => {
@@ -2020,6 +2091,14 @@ function App() {
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} />}
         
+        <EditProfileModal 
+          isOpen={isProfileModalOpen} 
+          onClose={() => setIsProfileModalOpen(false)} 
+          initialName={userName} 
+          initialRole={userRole} 
+          onSave={handleUpdateProfile} 
+        />
+
         {isFornecedoresModalOpen && (
            <GerenciarFornecedoresModal 
              isOpen={isFornecedoresModalOpen} 
@@ -2073,6 +2152,7 @@ function App() {
               <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
               <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-2 text-sm border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={16} /><span className="hidden md:inline">Clientes</span></button>
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
+              <button onClick={() => setIsProfileModalOpen(true)} className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm border border-gray-300" title="Editar Perfil"><User size={16} /><span className="hidden md:inline">Perfil</span></button>
               <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2 text-sm border border-red-200" title="Sair do Sistema"><LogOut size={16} /></button>
             </div>
           </div>
