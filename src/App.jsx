@@ -3,7 +3,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs } from 'firebase/firestore';
 
-// --- CONFIGURAÇÃO DO BANCO DE DADOS FIREBASE ---
 let firebaseConfig;
 let isConfigured = false;
 
@@ -29,7 +28,6 @@ const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
 
-// --- ESTILOS GLOBAIS COM PROTEÇÃO ---
 if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
   const style = document.createElement('style');
   style.id = 'imac-global-styles';
@@ -73,13 +71,8 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
   document.head.appendChild(style);
 }
 
-// --- FUNÇÃO SEGURA PARA SALVAR NO LOCALSTORAGE ---
 const saveToLocalStorage = (key, data) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (error) {
-    console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`);
-  }
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch (error) { console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`); }
 };
 
 const safeDate = (dateString) => {
@@ -88,12 +81,34 @@ const safeDate = (dateString) => {
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('pt-BR');
-  } catch (error) {
-    return '';
-  }
+  } catch (error) { return ''; }
 };
 
-// --- ÍCONES SVG ---
+const getShareText = (registro) => {
+  const id = String(registro?.id || '').substring(0, 8);
+  const title = registro?.tipoRelatorio || 'Ocorrência';
+  const prod = registro?.produto || 'Não informado';
+  const prob = registro?.ocorrencia || 'Sem descrição';
+  return `*Aviso de Relatório RNC*\n\n*ID:* ${id}\n*Tipo:* ${title}\n*Produto:* ${prod}\n*Problema:* ${prob}\n\nPor favor, verifique este relatório no sistema IMAC.`;
+};
+
+const shareViaWhatsApp = (registro) => {
+  const text = encodeURIComponent(getShareText(registro));
+  window.open(`https://wa.me/?text=${text}`, '_blank');
+};
+
+const shareViaEmail = (registro) => {
+  const text = encodeURIComponent(getShareText(registro).replace(/\*/g, ''));
+  const subject = encodeURIComponent(`Relatório RNC Pendente - ${String(registro?.id || '').substring(0,8)}`);
+  window.open(`mailto:?subject=${subject}&body=${text}`, '_blank');
+};
+
+const getPendingDays = (dateString) => {
+  if (!dateString) return 0;
+  const diffTime = Math.abs(new Date() - new Date(dateString));
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
+
 const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     {title && <title>{title}</title>}
@@ -136,6 +151,9 @@ const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.3
 const LogOut = (p) => <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
 const ChevronLeft = (p) => <SvgIcon {...p}><polyline points="15 18 9 12 15 6" /></SvgIcon>;
 const ChevronRight = (p) => <SvgIcon {...p}><polyline points="9 18 15 12 9 6" /></SvgIcon>;
+const MessageCircle = (p) => <SvgIcon {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></SvgIcon>;
+const Mail = (p) => <SvgIcon {...p}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></SvgIcon>;
+const Clock = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></SvgIcon>;
 
 const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
@@ -1106,7 +1124,9 @@ const RelatorioViewModal = ({ registro, onClose }) => {
         <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-lg no-print">
           <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada} {registro.autorNome ? `por ${registro.autorNome}` : ''}</p></div>
           <div className="flex gap-2">
-            <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm"><Printer size={16} /> Imprimir / PDF</button>
+            <button onClick={() => shareViaWhatsApp(registro)} className="flex items-center gap-1 px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition text-sm shadow" title="Cobrar por WhatsApp"><MessageCircle size={16} /> WhatsApp</button>
+            <button onClick={() => shareViaEmail(registro)} className="flex items-center gap-1 px-4 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition text-sm shadow hidden sm:flex" title="Enviar Email"><Mail size={16} /> Email</button>
+            <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm shadow"><Printer size={16} /> Imprimir / PDF</button>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20} /></button>
           </div>
         </div>
@@ -1276,7 +1296,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
 };
 
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
-  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
+  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
 
   return (
@@ -1285,6 +1305,9 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
       <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
         <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
+      </select>
+      <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+        <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
       </select>
       <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="">Todos Fornecedores</option>
@@ -1317,7 +1340,7 @@ function App() {
   
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
-  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '' });
+  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
 
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -1789,6 +1812,10 @@ function App() {
       else if (dashboardFilters.periodo === 'ano') { if (d.getFullYear() !== now.getFullYear()) return false; }
       if (dashboardFilters.fornecedor && r.fornecedor !== dashboardFilters.fornecedor) return false;
       if (dashboardFilters.tipo && r.tipoRelatorio !== dashboardFilters.tipo) return false;
+      
+      const recordStatus = r.status || 'Pendente';
+      if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters.status === 'Pendente' && !r.status)) return false;
+
       return true;
     });
   };
@@ -1912,6 +1939,8 @@ function App() {
     const clienteBarData = Object.entries(clienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
     const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
+    const pendingRecords = (registros || []).filter(r => r.status === 'Pendente' || !r.status);
+
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
@@ -1976,6 +2005,36 @@ function App() {
 
           <div className="mb-6"><DashboardFilters onFilterChange={setDashboardFilters} fornecedores={fornecedores} /></div>
 
+          {pendingRecords.length > 0 && (
+            <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl shadow-sm animate-fade-in-up">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock size={20} className="text-orange-600" />
+                <h2 className="text-lg font-bold text-orange-800">Atenção: Relatórios Pendentes ({pendingRecords.length})</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {pendingRecords.map(reg => {
+                  const dias = getPendingDays(reg.dataCriacao);
+                  return (
+                    <div key={reg.id} className="bg-white p-3 rounded-lg border border-orange-200 shadow-sm flex flex-col gap-2">
+                      <div className="flex justify-between items-start">
+                        <span className="text-xs font-bold bg-orange-100 text-orange-800 px-2 py-1 rounded">ID: {String(reg.id).substring(0, 6)}</span>
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${dias > 3 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {dias === 0 ? 'Criado hoje' : `${dias} dia${dias > 1 ? 's' : ''} parado`}
+                        </span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-800 truncate" title={reg.produto}>{reg.produto || 'Produto não informado'}</p>
+                      <p className="text-xs text-gray-600 truncate" title={reg.ocorrencia}>{reg.ocorrencia}</p>
+                      <div className="mt-2 flex gap-2">
+                        <button onClick={() => setEvaluatingRegistro(reg)} className="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 py-1.5 rounded text-xs font-bold transition flex justify-center items-center gap-1"><CheckCircle size={14}/> Avaliar</button>
+                        <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1.5 rounded text-xs transition flex justify-center items-center" title="Cobrar por WhatsApp"><MessageCircle size={14}/></button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-[#5C3A21]"><p className="text-xs font-bold text-gray-500 uppercase">Total no Período</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{filteredRecords.length}</p></div>
             <div className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-[#EF4444]"><p className="text-xs font-bold text-gray-500 uppercase">Fornecedores</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{Object.keys(fornecedorCounts).length}</p></div>
@@ -2026,6 +2085,7 @@ function App() {
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Liberar"><CheckCircle size={16} /></button>
+                            <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
                             <button onClick={() => setRegistroToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar"><Eye size={16} /></button>
                             <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
                             <button onClick={() => setRegistroToDelete(reg.id)} className="text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition" title="Apagar"><Trash2 size={16} /></button>
@@ -2059,7 +2119,8 @@ function App() {
       <div className="min-h-screen bg-gray-200 p-4 md:p-8 font-sans print:bg-white print:p-0">
         <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
           <button onClick={() => { setView('form'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <button onClick={() => shareViaWhatsApp(formData)} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded font-bold shadow hover:bg-green-600 transition"><MessageCircle size={18} /> WhatsApp</button>
             <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> Imprimir / PDF</button>
             <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 font-bold shadow transition border border-red-200" title="Sair do Sistema"><LogOut size={18} /></button>
