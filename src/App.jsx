@@ -1091,7 +1091,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
     return "RELATÓRIO DE OCORRÊNCIA PRODUTO";
   };
   
-  const getTituloSecao1 = () => isCliente ? "DADOS DO PRODUTO" : (tipoStr.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
+  const getTituloSecao1 = () => isCliente ? "DADOS DA OCORRÊNCIA" : (tipoStr.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
   const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (tipoStr.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
   const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (tipoStr.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
 
@@ -1431,7 +1431,7 @@ function App() {
         setFornecedores(data); 
         saveToLocalStorage('imac_fornecedores', data); 
       }
-    });
+    }, (error) => {});
 
     const unsubscribeClientes = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
@@ -1439,7 +1439,7 @@ function App() {
         setClientes(data); 
         saveToLocalStorage('imac_clientes', data); 
       }
-    });
+    }, (error) => {});
 
     return () => {
       unsubscribeFornecedores();
@@ -2050,7 +2050,7 @@ function App() {
     
     const tipoStr = String(formData.tipoRelatorio || '');
     
-    if (tipoStr === 'Relatório de Não Conformidade - Cliente') tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
+    if (tipoStr === 'Relatório de Não Conformidade - Cliente') { tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; tituloSecao1 = "DADOS DA OCORRÊNCIA"; }
     if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
@@ -2084,7 +2084,7 @@ function App() {
             {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">DADOS DO PRODUTO</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
