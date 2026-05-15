@@ -1506,7 +1506,6 @@ function App() {
 
   // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
-  const [isDirectoryLoaded, setIsDirectoryLoaded] = useState(false);
   const [appUser, setAppUser] = useState(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -1556,7 +1555,7 @@ function App() {
         }
       } catch (error) { 
         console.error("Auth Init Error:", error);
-        setAuthLoading(false); // Previne loop infinito em caso de erro
+        setAuthLoading(false); 
       }
     };
     initAuth();
@@ -1565,56 +1564,81 @@ function App() {
       setUser(currentUser);
       setAuthLoading(false);
     });
-    
-    return () => unsubscribe();
-  }, []);
 
-  useEffect(() => {
-    if (authLoading) return; // Aguarda o carregamento inicial
-
-    if (!user || !db || !isConfigured) {
-      setIsDirectoryLoaded(true); // Sai da tela de load mesmo sem conexão
-      if (!user) setAuthError("Conexão bloqueada: O domínio atual (GitHub Pages) não está autorizado no Firebase.");
-      return;
-    }
-    
-    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), 
-      (snapshot) => {
-        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setUsersDirectory(docs);
-        setIsDirectoryLoaded(true);
-      },
-      (error) => {
-        console.error("Directory fetch error:", error);
-        setIsDirectoryLoaded(true);
-        setAuthError("Erro de permissão no banco de dados. Atualize suas regras do Firestore.");
-      }
-    );
-
-    return () => unsubscribeUsers();
-  }, [user, authLoading, db, isConfigured]);
-
-  // Custom Auth Session Manager
-  useEffect(() => {
-    if (!isDirectoryLoaded) return;
-    const sessionId = localStorage.getItem('imac_app_session');
-    
-    if (sessionId) {
-      const foundUser = usersDirectory.find(u => u.id === sessionId);
-      if (foundUser) {
-        setAppUser(foundUser);
-        setUserName(foundUser.nome);
-        setUserRole(foundUser.cargo);
-        setIsAdmin(foundUser.isAdmin === true);
+    // 1. Prioridade Máxima: Carrega a sessão local imediatamente (Evita loading infinito)
+    const sessionUserStr = localStorage.getItem('imac_app_session_user');
+    if (sessionUserStr) {
+      try {
+        const sessionUser = JSON.parse(sessionUserStr);
+        setAppUser(sessionUser);
+        setUserName(sessionUser.nome);
+        setUserRole(sessionUser.cargo);
+        setIsAdmin(sessionUser.isAdmin === true);
         setView('dashboard');
-      } else {
-         handleLogout();
-         setAuthError("Sua conta não possui acesso ao sistema ou foi revogada.");
+      } catch (e) {
+        setView('welcome');
       }
     } else {
       setView('welcome');
     }
-  }, [isDirectoryLoaded, usersDirectory]);
+
+    // 2. Carrega o diretório salvo localmente
+    const savedDir = localStorage.getItem('imac_users_directory');
+    if (savedDir) {
+      try { setUsersDirectory(JSON.parse(savedDir)); } catch(e) {}
+    }
+    
+    return () => unsubscribe();
+  }, []);
+
+  // Sincronização do Diretório de Usuários com a Nuvem (Background)
+  useEffect(() => {
+    if (!db || !isConfigured) return;
+    
+    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), 
+      (snapshot) => {
+        const cloudData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setUsersDirectory(prev => {
+          // Mantém os usuários criados localmente que ainda não foram aceitos pela nuvem (Garante que não sumam da lista)
+          const cloudIds = new Set(cloudData.map(u => u.id));
+          const localOnly = (prev || []).filter(u => !cloudIds.has(u.id) && u._isUnsynced);
+          const merged = [...cloudData, ...localOnly];
+          localStorage.setItem('imac_users_directory', JSON.stringify(merged));
+
+          // Verifica se o usuário logado foi revogado ativamente pela nuvem
+          const sessionUserStr = localStorage.getItem('imac_app_session_user');
+          if (sessionUserStr && cloudData.length > 0) {
+             try {
+               const currentUser = JSON.parse(sessionUserStr);
+               const stillExists = merged.find(u => u.id === currentUser.id);
+               if (!stillExists) {
+                  localStorage.removeItem('imac_app_session_user');
+                  window.location.reload(); // Força a saída se foi deletado
+               } else {
+                  localStorage.setItem('imac_app_session_user', JSON.stringify(stillExists));
+               }
+             } catch(e){}
+          }
+
+          return merged;
+        });
+      },
+      (error) => {
+        console.error("Directory fetch error (Ignorado para manter o app offline):", error);
+      }
+    );
+
+    return () => unsubscribeUsers();
+  }, [db, isConfigured]);
+
+  const loginUser = (userObj) => {
+    localStorage.setItem('imac_app_session_user', JSON.stringify(userObj));
+    setAppUser(userObj);
+    setUserName(userObj.nome);
+    setUserRole(userObj.cargo);
+    setIsAdmin(userObj.isAdmin === true);
+    setView('dashboard');
+  };
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -1622,12 +1646,7 @@ function App() {
     const foundUser = usersDirectory.find(u => u.email === loginEmail && u.password === loginPassword);
     
     if (foundUser) {
-      localStorage.setItem('imac_app_session', foundUser.id);
-      setAppUser(foundUser);
-      setUserName(foundUser.nome);
-      setUserRole(foundUser.cargo);
-      setIsAdmin(foundUser.isAdmin === true);
-      setView('dashboard');
+      loginUser(foundUser);
     } else {
       setAuthError("E-mail ou senha incorretos. Verifique suas credenciais.");
     }
@@ -1649,16 +1668,19 @@ function App() {
         email: loginEmail.trim(),
         password: loginPassword,
         isAdmin: true,
-        dataCriacao: new Date().toISOString()
+        dataCriacao: new Date().toISOString(),
+        _isUnsynced: true // Flag de segurança para não ser apagado por erros da nuvem
       };
       
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser);
-      localStorage.setItem('imac_app_session', newId);
-      setAppUser(newUser);
-      setUserName(newUser.nome);
-      setUserRole(newUser.cargo);
-      setIsAdmin(true);
-      setView('dashboard');
+      const newDirectory = [...usersDirectory, newUser];
+      setUsersDirectory(newDirectory);
+      localStorage.setItem('imac_users_directory', JSON.stringify(newDirectory));
+      
+      if (db && isConfigured) {
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser).catch(()=>{});
+      }
+      
+      loginUser(newUser);
     } catch (error) {
       setAuthError("Erro ao configurar a conta mestre: " + error.message);
     }
@@ -1673,14 +1695,26 @@ function App() {
       }
       
       const newId = "user_" + Date.now();
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), {
+      const newUser = {
+        id: newId,
         nome: newNome,
         cargo: newCargo,
         email: newEmail,
         password: newPassword,
         isAdmin: newIsAdmin,
-        dataCriacao: new Date().toISOString()
+        dataCriacao: new Date().toISOString(),
+        _isUnsynced: true // Flag de segurança para não sumir da lista
+      };
+
+      setUsersDirectory(prev => {
+        const newList = [...prev, newUser];
+        localStorage.setItem('imac_users_directory', JSON.stringify(newList));
+        return newList;
       });
+
+      if (db && isConfigured) {
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser).catch(()=>{});
+      }
 
       setAppMessage("✅ Usuário criado com sucesso!");
       return true;
@@ -1692,7 +1726,15 @@ function App() {
 
   const handleRemoveUser = async (uidToRemove) => {
     try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uidToRemove));
+      setUsersDirectory(prev => {
+        const newList = prev.filter(u => u.id !== uidToRemove);
+        localStorage.setItem('imac_users_directory', JSON.stringify(newList));
+        return newList;
+      });
+
+      if (db && isConfigured) {
+        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uidToRemove)).catch(()=>{});
+      }
       setAppMessage("✅ Usuário revogado do sistema.");
     } catch (e) {
       setAppMessage("❌ Erro ao remover acesso do usuário.");
@@ -1706,7 +1748,7 @@ function App() {
     setIsAdmin(false);
     setLoginEmail('');
     setLoginPassword('');
-    localStorage.removeItem('imac_app_session');
+    localStorage.removeItem('imac_app_session_user');
     setView('welcome');
   };
 
@@ -1716,16 +1758,24 @@ function App() {
     localStorage.setItem('imac_user_name', newName);
     localStorage.setItem('imac_user_role', newRole);
 
-    if (appUser && db && isConfigured) {
-      try {
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', appUser.id), {
+    if (appUser) {
+      const updatedUser = { ...appUser, nome: newName, cargo: newRole };
+      loginUser(updatedUser); // Atualiza sessão instantaneamente
+
+      setUsersDirectory(prev => {
+        const newList = prev.map(u => u.id === appUser.id ? updatedUser : u);
+        localStorage.setItem('imac_users_directory', JSON.stringify(newList));
+        return newList;
+      });
+
+      if (db && isConfigured) {
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', appUser.id), {
           nome: newName,
           cargo: newRole
-        });
-        setAppMessage("✅ Perfil atualizado com sucesso!");
-      } catch (e) {
-        console.error("Erro ao atualizar perfil:", e);
-        setAppMessage("💾 Erro ao salvar na nuvem.");
+        }).then(() => setAppMessage("✅ Perfil atualizado com sucesso!"))
+          .catch(() => setAppMessage("💾 Perfil salvo localmente."));
+      } else {
+        setAppMessage("💾 Perfil salvo localmente.");
       }
     }
     setIsProfileModalOpen(false);
@@ -1759,7 +1809,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!user || user.isAnonymous || !db || !isConfigured) return;
+    if (!db || !isConfigured) return;
     
     const unsubscribeFornecedores = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
@@ -1781,7 +1831,7 @@ function App() {
       unsubscribeFornecedores();
       unsubscribeClientes();
     };
-  }, [user]);
+  }, [db, isConfigured]);
 
   useEffect(() => {
     const savedLocal = localStorage.getItem('imac_registros');
@@ -1795,7 +1845,7 @@ function App() {
       } catch (e) {}
     }
     
-    if (!user || user.isAnonymous || !db || !isConfigured) return; 
+    if (!db || !isConfigured) return; 
     
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -1812,13 +1862,13 @@ function App() {
       if (error.code === 'permission-denied') setDbError(true);
     });
     return () => unsubscribe();
-  }, [user]);
+  }, [db, isConfigured]);
 
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
     if (!(fornecedores || []).includes(nomeLimpo)) {
       setFornecedores(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_fornecedores', newList); return newList; });
-      if (user && !user.isAnonymous && db && isConfigured) {
+      if (db && isConfigured) {
         addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
       }
     }
@@ -1831,7 +1881,7 @@ function App() {
     setFornecedores(newList);
     saveToLocalStorage('imac_fornecedores', newList);
 
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
             const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
             if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
@@ -1845,7 +1895,7 @@ function App() {
     setFornecedores(newList);
     saveToLocalStorage('imac_fornecedores', newList);
 
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
             const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
             if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
@@ -1857,7 +1907,7 @@ function App() {
     const nomeLimpo = nome.trim();
     if (!(clientes || []).includes(nomeLimpo)) {
       setClientes(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_clientes', newList); return newList; });
-      if (user && !user.isAnonymous && db && isConfigured) {
+      if (db && isConfigured) {
         addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
       }
     }
@@ -1870,7 +1920,7 @@ function App() {
     setClientes(newList);
     saveToLocalStorage('imac_clientes', newList);
 
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
             const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
             if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
@@ -1884,7 +1934,7 @@ function App() {
     setClientes(newList);
     saveToLocalStorage('imac_clientes', newList);
 
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (db && isConfigured) {
         getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
             const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
             if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
@@ -2018,7 +2068,7 @@ function App() {
       return updatedList;
     });
     
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (db && isConfigured) {
       const safePayload = JSON.parse(JSON.stringify(payload));
       updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)), safePayload)
         .then(() => setAppMessage("✅ Avaliação salva com sucesso e sincronizada!"))
@@ -2062,7 +2112,7 @@ function App() {
         return updatedList;
       });
 
-      if (user && !user.isAnonymous && db && isConfigured) {
+      if (db && isConfigured) {
         const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
         updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload)
           .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
@@ -2076,7 +2126,7 @@ function App() {
 
       setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; saveToLocalStorage('imac_registros', newList); return newList; });
       
-      if (user && !user.isAnonymous && db && isConfigured) {
+      if (db && isConfigured) {
         const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
         const safePayload = JSON.parse(JSON.stringify(registroParaNuvem));
         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload)
@@ -2106,7 +2156,7 @@ function App() {
       saveToLocalStorage('imac_registros', newList); 
       return newList; 
     });
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (db && isConfigured) {
       deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id))).catch(()=>{});
     }
     setRegistroToDelete(null);
@@ -2159,7 +2209,7 @@ function App() {
   };
   const placeholders = getPlaceholders();
 
-  if (authLoading || view === 'loading' || !isDirectoryLoaded) {
+  if (authLoading || view === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="w-16 h-16 border-4 border-[#F4B41A] border-t-[#5C3A21] rounded-full animate-spin mb-4"></div>
@@ -2893,6 +2943,35 @@ function App() {
                     })}
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-6">
+                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
+                
+                <div>
+                   <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
+                   <select name="statusParecer" value={formData.statusParecer || ''} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
+                      <option value="">Selecione uma opção...</option>
+                      <option value="PROCEDENTE">Procedente</option>
+                      <option value="NÃO PROCEDENTE">Não Procedente</option>
+                      <option value="NÃO APLICADO">Não Aplicado</option>
+                   </select>
+                </div>
+
+                <div>
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
+                  <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
+                </div>
+
+                <div>
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
+                  <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
+                </div>
+
+                <div>
+                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
+                  <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
+                </div>
               </div>
             </>
           )}
