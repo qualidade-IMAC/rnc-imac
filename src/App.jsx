@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
 
 let firebaseConfig;
@@ -130,6 +130,7 @@ const Edit3 = (p) => <SvgIcon {...p}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 01
 const ImagePlus = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v4M21 9h-6M18 6v6M3 16l5-5c.928-.893 2.072-.893 3 0l5 5M14 14l1-1c.928-.893 2.072-.893 3 0l3 3" /></SvgIcon>;
 const Trash2 = (p) => <SvgIcon {...p}><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></SvgIcon>;
 const FileText = (p) => <SvgIcon {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></SvgIcon>;
+const Users = (p) => <SvgIcon {...p}><path d="M17 21v-2a4 4 0 00-4-4H5c-1.1 0-2 .9-2 2v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></SvgIcon>;
 const ClipboardList = (p) => <SvgIcon {...p}><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M15 2H9a1 1 0 00-1 1v2a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1zM12 11h4M12 16h4M8 11h.01M8 16h.01" /></SvgIcon>;
 const Upload = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h4M17 8l-5-5-5 5M12 3v12" /></SvgIcon>;
 const Plus = (p) => <SvgIcon {...p}><path d="M12 5v14M5 12h14" /></SvgIcon>;
@@ -138,6 +139,7 @@ const UserX = (p) => <SvgIcon {...p}><path d="M16 21v-2a4 4 0 00-4-4H5c-1.1 0-2 
 const ArrowUpRight = (p) => <SvgIcon {...p}><path d="M7 17L17 7M7 7h10v10" /></SvgIcon>;
 const Circle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10" /></SvgIcon>;
 const Undo = (p) => <SvgIcon {...p}><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" /></SvgIcon>;
+
 const Check = (p) => <SvgIcon {...p}><path d="M20 6L9 17l-5-5" /></SvgIcon>;
 const X = (p) => <SvgIcon {...p}><path d="M18 6L6 18M6 6l12 12" /></SvgIcon>;
 const PenTool = (p) => <SvgIcon {...p}><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.586 7.586M11 11l2 2" /></SvgIcon>;
@@ -992,6 +994,104 @@ const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRe
   );
 };
 
+const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, onAddUser, onRemoveUser }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [nome, setNome] = useState('');
+  const [cargo, setCargo] = useState('');
+  const [isNewAdmin, setIsNewAdmin] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (password.length < 6) {
+      alert('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    setIsSubmitting(true);
+    const success = await onAddUser(email, password, nome, cargo, isNewAdmin);
+    setIsSubmitting(false);
+    if (success) {
+      setEmail(''); setPassword(''); setNome(''); setCargo(''); setIsNewAdmin(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full animate-fade-in-up flex flex-col md:flex-row gap-6 max-h-[90vh] overflow-y-auto">
+        
+        <div className="flex-1 border-r border-gray-200 pr-6">
+          <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
+            <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2"><Plus size={24}/> Criar Novo Usuário</h3>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>
+                <input type="text" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: João Silva" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Cargo / Setor</label>
+                <input type="text" required value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ex: Analista de Qualidade" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">E-mail de Acesso</label>
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Senha Provisória</label>
+                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" minLength="6" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 mt-2">
+              <input type="checkbox" id="isAdmin" checked={isNewAdmin} onChange={(e) => setIsNewAdmin(e.target.checked)} className="w-5 h-5 accent-[#5C3A21] cursor-pointer" />
+              <label htmlFor="isAdmin" className="font-bold text-gray-700 cursor-pointer">Acesso de Administrador</label>
+              <span className="text-xs text-gray-500 ml-2">(Pode criar e excluir usuários)</span>
+            </div>
+
+            <button type="submit" disabled={isSubmitting} className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-[#4a2e1a] transition mt-4 disabled:opacity-50">
+              {isSubmitting ? 'Criando Conta...' : 'Adicionar Usuário ao Sistema'}
+            </button>
+          </form>
+        </div>
+
+        <div className="flex-1 flex flex-col">
+          <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
+            <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2"><Users size={24}/> Usuários Cadastrados</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition"><X size={20}/></button>
+          </div>
+          
+          <div className="overflow-y-auto flex-1 bg-gray-50 rounded-lg p-2 border border-gray-200">
+            <ul className="space-y-2">
+              {usersDirectory.map(u => (
+                <li key={u.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
+                      {u.nome} {u.isAdmin && <span className="bg-[#5C3A21] text-[#F4B41A] text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Admin</span>}
+                    </p>
+                    <p className="text-xs text-gray-500">{u.email} • {u.cargo}</p>
+                  </div>
+                  {u.id !== currentUid && (
+                    <button onClick={() => { if(window.confirm(`Remover o acesso de ${u.nome}?`)) onRemoveUser(u.id); }} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-2 rounded transition" title="Revogar Acesso">
+                      <Trash2 size={16}/>
+                    </button>
+                  )}
+                  {u.id === currentUid && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">Você</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
 const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave }) => {
   const [name, setName] = useState(initialName || '');
   const [role, setRole] = useState(initialRole || '');
@@ -1382,7 +1482,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
 };
 
 function App() {
-  const [view, setView] = useState('loading'); // welcome (login), complete_profile, dashboard, form, preview
+  const [view, setView] = useState('loading'); // welcome (login), dashboard, form, preview
   const [authLoading, setAuthLoading] = useState(true);
   
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
@@ -1394,6 +1494,7 @@ function App() {
   const [isFornecedoresModalOpen, setFornecedoresModalOpen] = useState(false);
   const [isClientesModalOpen, setClientesModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
   const [dbError, setDbError] = useState(false); 
   const [fornecedores, setFornecedores] = useState([]);
@@ -1402,6 +1503,15 @@ function App() {
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
+
+  // Users Directory & Auth
+  const [usersDirectory, setUsersDirectory] = useState([]);
+  const [isDirectoryLoaded, setIsDirectoryLoaded] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginNome, setLoginNome] = useState('');
+  const [loginCargo, setLoginCargo] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // User Profile
   const [userName, setUserName] = useState('');
@@ -1441,8 +1551,6 @@ function App() {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
-          // If no custom token is provided by environment, we MUST use anonymous as fallback 
-          // to appease firestore rules initially, but we will force real login UI.
           await signInAnonymously(auth); 
         }
       } catch (error) { 
@@ -1453,64 +1561,109 @@ function App() {
     
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      
-      if (currentUser && !currentUser.isAnonymous) {
-         try {
-           const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'info');
-           const profileSnap = await getDoc(profileRef);
-           
-           if (profileSnap.exists()) {
-              const data = profileSnap.data();
-              setUserName(data.nome || currentUser.displayName || '');
-              setUserRole(data.cargo || '');
-              localStorage.setItem('imac_user_name', data.nome || currentUser.displayName || '');
-              localStorage.setItem('imac_user_role', data.cargo || '');
-              setView('dashboard');
-           } else {
-              if (currentUser.displayName) setUserName(currentUser.displayName);
-              setView('complete_profile');
-           }
-         } catch (e) {
-           console.error("Error fetching profile:", e);
-           if (currentUser.displayName) setUserName(currentUser.displayName);
-           setView('complete_profile');
-         }
-      } else {
-         setView('welcome');
-      }
       setAuthLoading(false);
     });
     
     return () => unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
+  useEffect(() => {
+    if (!user || !db || !isConfigured) return;
+    
+    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsersDirectory(docs);
+      setIsDirectoryLoaded(true);
+
+      if (user && !user.isAnonymous) {
+        const myProfile = docs.find(d => d.id === user.uid);
+        if (myProfile) {
+          setUserName(myProfile.nome);
+          setUserRole(myProfile.cargo);
+          setIsAdmin(myProfile.isAdmin === true);
+          localStorage.setItem('imac_user_name', myProfile.nome);
+          localStorage.setItem('imac_user_role', myProfile.cargo);
+          setView('dashboard');
+        } else {
+           // O usuário logou mas não está no diretório (foi apagado pelo admin)
+           signOut(auth);
+           setAuthError("Sua conta não possui acesso ao sistema ou foi revogada.");
+           setView('welcome');
+        }
+      } else {
+        setView('welcome');
+      }
+    });
+
+    return () => unsubscribeUsers();
+  }, [user]);
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
     setAuthError('');
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      // onAuthStateChanged irá gerenciar a transição
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
     } catch (error) {
-      console.error("Login Google Error:", error);
-      setAuthError("Erro ao fazer login com o Google: " + error.message);
+      console.error("Login Error:", error);
+      setAuthError("E-mail ou senha incorretos. Verifique suas credenciais.");
     }
   };
 
-  const handleCompleteProfile = async (e) => {
+  const handleBootstrapAdmin = async (e) => {
     e.preventDefault();
-    if (!userName.trim() || !userRole.trim() || !user) return;
-    try {
-      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info'), {
-        nome: userName.trim(),
-        cargo: userRole.trim()
-      });
-    } catch (e) {
-      console.warn("Aviso: Falha ao salvar no Firestore, usando fallback local.", e);
+    setAuthError('');
+    if (loginPassword.length < 6) {
+      setAuthError("A senha deve ter pelo menos 6 caracteres.");
+      return;
     }
-    // Sempre salva localmente e libera acesso ao painel (Resolve o erro "preso na tela")
-    localStorage.setItem('imac_user_name', userName.trim());
-    localStorage.setItem('imac_user_role', userRole.trim());
-    setView('dashboard');
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', cred.user.uid), {
+        nome: loginNome.trim(),
+        cargo: loginCargo.trim(),
+        email: loginEmail.trim(),
+        isAdmin: true, // O primeiro usuário é automaticamente Admin
+        dataCriacao: new Date().toISOString()
+      });
+      // O onSnapshot capturará a alteração e fará o redirecionamento
+    } catch (error) {
+      console.error("Bootstrap Error:", error);
+      setAuthError("Erro ao configurar a conta mestre: " + error.message);
+    }
+  };
+
+  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin) => {
+    try {
+      // Usamos uma aplicação secundária para não deslogar o administrador atual
+      const secApp = initializeApp(firebaseConfig, "Secondary" + Date.now());
+      const secAuth = getAuth(secApp);
+      const cred = await createUserWithEmailAndPassword(secAuth, newEmail, newPassword);
+
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', cred.user.uid), {
+        nome: newNome,
+        cargo: newCargo,
+        email: newEmail,
+        isAdmin: newIsAdmin,
+        dataCriacao: new Date().toISOString()
+      });
+
+      await signOut(secAuth);
+      setAppMessage("✅ Usuário criado com sucesso!");
+      return true;
+    } catch (error) {
+      console.error("Erro ao criar usuario:", error);
+      setAppMessage("❌ Erro ao criar usuário: " + (error.code === 'auth/email-already-in-use' ? 'E-mail já está em uso.' : error.message));
+      return false;
+    }
+  };
+
+  const handleRemoveUser = async (uidToRemove) => {
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uidToRemove));
+      setAppMessage("✅ Usuário revogado do sistema.");
+    } catch (e) {
+      setAppMessage("❌ Erro ao remover acesso do usuário.");
+    }
   };
 
   const handleLogout = async () => {
@@ -1518,6 +1671,8 @@ function App() {
       await signOut(auth);
       setUserName('');
       setUserRole('');
+      setLoginEmail('');
+      setLoginPassword('');
     } catch (error) {
       console.error("Logout error", error);
     }
@@ -1531,17 +1686,15 @@ function App() {
 
     if (user && !user.isAnonymous && db && isConfigured) {
       try {
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info'), {
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid), {
           nome: newName,
           cargo: newRole
         });
         setAppMessage("✅ Perfil atualizado com sucesso!");
       } catch (e) {
         console.error("Erro ao atualizar perfil:", e);
-        setAppMessage("💾 Perfil salvo localmente.");
+        setAppMessage("💾 Erro ao salvar na nuvem.");
       }
-    } else {
-      setAppMessage("💾 Perfil salvo localmente.");
     }
     setIsProfileModalOpen(false);
     setTimeout(() => setAppMessage(null), 3000);
@@ -1974,7 +2127,7 @@ function App() {
   };
   const placeholders = getPlaceholders();
 
-  if (authLoading || view === 'loading') {
+  if (authLoading || view === 'loading' || !isDirectoryLoaded) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="w-16 h-16 border-4 border-[#F4B41A] border-t-[#5C3A21] rounded-full animate-spin mb-4"></div>
@@ -1984,6 +2137,8 @@ function App() {
   }
 
   if (view === 'welcome') {
+    const isFirstSetup = usersDirectory.length === 0;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#F4B41A] opacity-20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft"></div>
@@ -1999,7 +2154,7 @@ function App() {
               </div>
             )}
             <h2 className="text-2xl font-black text-gray-800">Controle de Qualidade</h2>
-            <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-1"><Lock size={14}/> Acesso Seguro Corporativo</p>
+            <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-1"><Lock size={14}/> Acesso Restrito Corporativo</p>
           </div>
 
           <div className="p-8 text-center">
@@ -2010,40 +2165,45 @@ function App() {
               </div>
             )}
 
-            <button 
-              onClick={handleGoogleLogin}
-              className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3.5 px-4 rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition flex justify-center items-center gap-3 text-lg"
-            >
-              <GoogleIcon size={24} /> Entrar com o Google
-            </button>
-            <p className="text-xs text-gray-400 mt-6">Use seu e-mail para acessar o sistema.</p>
+            {isFirstSetup ? (
+              <form onSubmit={handleBootstrapAdmin} className="space-y-4 text-left animate-fade-in-up">
+                <div className="bg-[#F4B41A]/20 p-3 rounded-lg border border-[#F4B41A] mb-4 text-sm font-bold text-[#5C3A21] text-center flex items-center justify-center gap-2">
+                  <AlertCircle size={18} /> Configuração Inicial do Sistema
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Seu Nome Completo</label>
+                  <input type="text" required value={loginNome} onChange={(e) => setLoginNome(e.target.value)} placeholder="Ex: Maria Administradora" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Seu Cargo</label>
+                  <input type="text" required value={loginCargo} onChange={(e) => setLoginCargo(e.target.value)} placeholder="Ex: Gerente de Qualidade" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">E-mail para Login</label>
+                  <input type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="email@empresa.com" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Crie uma Senha Forte</label>
+                  <input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Mínimo 6 caracteres" minLength="6" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <button type="submit" className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition mt-2">Criar Conta Mestre</button>
+              </form>
+            ) : (
+              <form onSubmit={handleEmailLogin} className="space-y-4 text-left animate-fade-in-up">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">E-mail corporativo</label>
+                  <input type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Digite seu e-mail" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Senha</label>
+                  <input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Sua senha de acesso" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <button type="submit" className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition mt-2 flex items-center justify-center gap-2"><Check size={20}/> Entrar no Sistema</button>
+              </form>
+            )}
+            
+            <p className="text-xs text-gray-400 mt-6">Este sistema é de uso exclusivo para colaboradores autorizados.</p>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (view === 'complete_profile') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border-t-4 border-[#F4B41A] animate-fade-in-up text-center">
-          <User size={48} className="text-[#F4B41A] mx-auto mb-4" />
-          <h2 className="text-2xl font-black text-gray-800 mb-2">Quase lá!</h2>
-          <p className="text-gray-500 mb-6 text-sm">Precisamos do seu Nome e Cargo para assinar os relatórios gerados por você.</p>
-          
-          <form onSubmit={handleCompleteProfile} className="space-y-4 text-left">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>
-              <input type="text" required value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Ex: Maria Oliveira" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Setor ou Cargo</label>
-              <input type="text" required value={userRole} onChange={(e) => setUserRole(e.target.value)} placeholder="Ex: Supervisor de Produção" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none autoFocus" />
-            </div>
-            <button type="submit" className="w-full bg-[#5C3A21] text-[#F4B41A] font-black py-3 rounded-lg shadow hover:bg-[#4a2e1a] transition mt-4">
-              CONCLUIR E ACESSAR
-            </button>
-          </form>
         </div>
       </div>
     );
@@ -2099,6 +2259,15 @@ function App() {
           onSave={handleUpdateProfile} 
         />
 
+        <GerenciarUsuariosModal
+          isOpen={isUsersModalOpen}
+          onClose={() => setIsUsersModalOpen(false)}
+          usersDirectory={usersDirectory}
+          currentUid={user?.uid}
+          onAddUser={handleCreateNewUser}
+          onRemoveUser={handleRemoveUser}
+        />
+
         {isFornecedoresModalOpen && (
            <GerenciarFornecedoresModal 
              isOpen={isFornecedoresModalOpen} 
@@ -2149,6 +2318,9 @@ function App() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); window.scrollTo(0, 0); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
+              {isAdmin && (
+                <button onClick={() => setIsUsersModalOpen(true)} className="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-lg font-bold hover:bg-purple-100 hover:text-purple-800 transition flex items-center gap-2 text-sm border border-purple-200" title="Gerenciar Usuários"><Users size={16} /><span className="hidden md:inline">Usuários</span></button>
+              )}
               <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
               <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-2 text-sm border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={16} /><span className="hidden md:inline">Clientes</span></button>
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
