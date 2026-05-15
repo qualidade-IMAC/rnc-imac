@@ -139,6 +139,7 @@ const UserX = (p) => <SvgIcon {...p}><path d="M16 21v-2a4 4 0 00-4-4H5c-1.1 0-2 
 const ArrowUpRight = (p) => <SvgIcon {...p}><path d="M7 17L17 7M7 7h10v10" /></SvgIcon>;
 const Circle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10" /></SvgIcon>;
 const Undo = (p) => <SvgIcon {...p}><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" /></SvgIcon>;
+const Send = (p) => <SvgIcon {...p}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></SvgIcon>;
 
 const Check = (p) => <SvgIcon {...p}><path d="M20 6L9 17l-5-5" /></SvgIcon>;
 const X = (p) => <SvgIcon {...p}><path d="M18 6L6 18M6 6l12 12" /></SvgIcon>;
@@ -1213,6 +1214,7 @@ const PieChartComponent = ({ data, title }) => {
 const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
+  const [enviado, setEnviado] = useState(registro?.enviado || false);
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
@@ -1227,6 +1229,14 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
               <option value="Pendente">⏳ Aguardando / Pendente</option>
               <option value="Liberado">✅ Liberado (Aprovado)</option>
               <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Status de Envio (WhatsApp/Email)</label>
+            <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
+              <option value="nao">📥 Não Enviado</option>
+              <option value="sim">📤 Enviado</option>
             </select>
           </div>
           
@@ -1246,7 +1256,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
 
         <div className="flex justify-end gap-3 mt-8">
           <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
-          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '')} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Avaliação</button>
+          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Avaliação</button>
         </div>
       </div>
     </div>
@@ -1593,7 +1603,7 @@ function App() {
 
   // Sincronização do Diretório de Usuários com a Nuvem (Background)
   useEffect(() => {
-    if (!db || !isConfigured) return;
+    if (!db || !isConfigured || !user) return;
     
     const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), 
       (snapshot) => {
@@ -1629,7 +1639,7 @@ function App() {
     );
 
     return () => unsubscribeUsers();
-  }, [db, isConfigured]);
+  }, [db, isConfigured, user]);
 
   const loginUser = (userObj) => {
     localStorage.setItem('imac_app_session_user', JSON.stringify(userObj));
@@ -1809,7 +1819,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!db || !isConfigured) return;
+    if (!db || !isConfigured || !user) return;
     
     const unsubscribeFornecedores = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
       const data = snapshot.docs.map(doc => doc.data().nome);
@@ -1831,7 +1841,7 @@ function App() {
       unsubscribeFornecedores();
       unsubscribeClientes();
     };
-  }, [db, isConfigured]);
+  }, [db, isConfigured, user]);
 
   useEffect(() => {
     const savedLocal = localStorage.getItem('imac_registros');
@@ -1845,7 +1855,7 @@ function App() {
       } catch (e) {}
     }
     
-    if (!db || !isConfigured) return; 
+    if (!db || !isConfigured || !user) return; 
     
     const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
       const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -1862,7 +1872,7 @@ function App() {
       if (error.code === 'permission-denied') setDbError(true);
     });
     return () => unsubscribe();
-  }, [db, isConfigured]);
+  }, [db, isConfigured, user]);
 
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
@@ -2054,10 +2064,11 @@ function App() {
     setView('dashboard');
   };
 
-  const handleUpdateStatus = (id, newStatus, newObs) => {
+  const handleUpdateStatus = (id, newStatus, newObs, newEnviado) => {
     const payload = { 
       status: newStatus, 
       observacoesStatus: newObs, 
+      enviado: newEnviado,
       dataModificacao: new Date().toISOString(),
       avaliadorNome: userName
     };
@@ -2097,7 +2108,8 @@ function App() {
       logo: formData.logo || null, localData: formData.localData || '',
       userId: appUser?.id || 'anonimo',
       autorNome: userName || 'Desconhecido',
-      autorCargo: userRole || ''
+      autorCargo: userRole || '',
+      enviado: false
     };
 
     let currentId = editingReportId;
@@ -2105,6 +2117,11 @@ function App() {
     if (editingReportId) {
       const updatedAt = new Date().toISOString();
       const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
+      // Quando for edição mantemos o status de envio original se já existisse na base (para não resetar acidentalmente)
+      const existingReport = registros.find(r => r.id === editingReportId);
+      if (existingReport && typeof existingReport.enviado !== 'undefined') {
+         payloadEdicao.enviado = existingReport.enviado;
+      }
       
       setRegistros(prev => {
         const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
@@ -2425,12 +2442,17 @@ function App() {
                   return (
                     <div key={reg.id} className="bg-white p-3 rounded-lg border border-orange-200 shadow-sm flex flex-col gap-2">
                       <div className="flex justify-between items-start">
-                        <span className="text-xs font-bold bg-orange-100 text-orange-800 px-2 py-1 rounded">ID: {String(reg.id).substring(0, 6)}</span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="text-xs font-bold bg-orange-100 text-orange-800 px-2 py-1 rounded">ID: {String(reg.id).substring(0, 6)}</span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border ${reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                            <Send size={10} /> {reg.enviado ? 'Enviado' : 'Não Enviado'}
+                          </span>
+                        </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded ${dias > 3 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
                           {dias === 0 ? 'Criado hoje' : `${dias} dia${dias > 1 ? 's' : ''} parado`}
                         </span>
                       </div>
-                      <p className="text-sm font-bold text-gray-800 truncate" title={reg.produto}>{reg.produto || 'Produto não informado'}</p>
+                      <p className="text-sm font-bold text-gray-800 truncate mt-1" title={reg.produto}>{reg.produto || 'Produto não informado'}</p>
                       <p className="text-xs text-gray-600 truncate" title={reg.ocorrencia}>{reg.ocorrencia}</p>
                       <div className="mt-2 flex gap-2">
                         <button onClick={() => setEvaluatingRegistro(reg)} className="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 py-1.5 rounded text-xs font-bold transition flex justify-center items-center gap-1"><CheckCircle size={14}/> Avaliar</button>
@@ -2482,17 +2504,24 @@ function App() {
                         <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>{typeof reg.autorNome === 'string' ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
                         <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || ''}>{reg.ocorrencia || ''}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1.5 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
-                            (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                            reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
-                            'bg-red-50 text-red-700 border-red-200'
-                          }`}>
-                            {reg.status || 'Pendente'}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
+                              (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                              reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
+                              'bg-red-50 text-red-700 border-red-200'
+                            }`}>
+                              {reg.status || 'Pendente'}
+                            </span>
+                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
+                              reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
+                            }`}>
+                              <Send size={10} /> {reg.enviado ? 'Enviado' : 'Não Enviado'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Liberar"><CheckCircle size={16} /></button>
+                            <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Marcar Envio"><CheckCircle size={16} /></button>
                             <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
                             <button onClick={() => setRegistroToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar"><Eye size={16} /></button>
                             <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
@@ -2513,7 +2542,7 @@ function App() {
   }
 
   if (view === 'preview') {
-    let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
+    let tituloRelatorio = "RELATÓRIO DE OCORRência PRODUTO";
     let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
     
     const tipoStr = String(formData.tipoRelatorio || '');
@@ -2552,7 +2581,7 @@ function App() {
             {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
@@ -2592,7 +2621,7 @@ function App() {
                 )}
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">PARECER TÉCNICO</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
                      <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
