@@ -1556,6 +1556,7 @@ function App() {
         }
       } catch (error) { 
         console.error("Auth Init Error:", error);
+        setAuthLoading(false); // Previne loop infinito em caso de erro
       }
     };
     initAuth();
@@ -1569,16 +1570,29 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!user || !db || !isConfigured) return;
+    if (authLoading) return; // Aguarda o carregamento inicial
+
+    if (!user || !db || !isConfigured) {
+      setIsDirectoryLoaded(true); // Sai da tela de load mesmo sem conexão
+      if (!user) setAuthError("Conexão bloqueada: O domínio atual (GitHub Pages) não está autorizado no Firebase.");
+      return;
+    }
     
-    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setUsersDirectory(docs);
-      setIsDirectoryLoaded(true);
-    });
+    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), 
+      (snapshot) => {
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setUsersDirectory(docs);
+        setIsDirectoryLoaded(true);
+      },
+      (error) => {
+        console.error("Directory fetch error:", error);
+        setIsDirectoryLoaded(true);
+        setAuthError("Erro de permissão no banco de dados. Atualize suas regras do Firestore.");
+      }
+    );
 
     return () => unsubscribeUsers();
-  }, [user]);
+  }, [user, authLoading, db, isConfigured]);
 
   // Custom Auth Session Manager
   useEffect(() => {
