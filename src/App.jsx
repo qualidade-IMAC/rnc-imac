@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
 
 let firebaseConfig;
@@ -1504,9 +1504,10 @@ function App() {
   const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
 
-  // Users Directory & Auth
+  // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
   const [isDirectoryLoaded, setIsDirectoryLoaded] = useState(false);
+  const [appUser, setAppUser] = useState(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginNome, setLoginNome] = useState('');
@@ -1574,37 +1575,46 @@ function App() {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setUsersDirectory(docs);
       setIsDirectoryLoaded(true);
-
-      if (user && !user.isAnonymous) {
-        const myProfile = docs.find(d => d.id === user.uid);
-        if (myProfile) {
-          setUserName(myProfile.nome);
-          setUserRole(myProfile.cargo);
-          setIsAdmin(myProfile.isAdmin === true);
-          localStorage.setItem('imac_user_name', myProfile.nome);
-          localStorage.setItem('imac_user_role', myProfile.cargo);
-          setView('dashboard');
-        } else {
-           // O usuário logou mas não está no diretório (foi apagado pelo admin)
-           signOut(auth);
-           setAuthError("Sua conta não possui acesso ao sistema ou foi revogada.");
-           setView('welcome');
-        }
-      } else {
-        setView('welcome');
-      }
     });
 
     return () => unsubscribeUsers();
   }, [user]);
 
+  // Custom Auth Session Manager
+  useEffect(() => {
+    if (!isDirectoryLoaded) return;
+    const sessionId = localStorage.getItem('imac_app_session');
+    
+    if (sessionId) {
+      const foundUser = usersDirectory.find(u => u.id === sessionId);
+      if (foundUser) {
+        setAppUser(foundUser);
+        setUserName(foundUser.nome);
+        setUserRole(foundUser.cargo);
+        setIsAdmin(foundUser.isAdmin === true);
+        setView('dashboard');
+      } else {
+         handleLogout();
+         setAuthError("Sua conta não possui acesso ao sistema ou foi revogada.");
+      }
+    } else {
+      setView('welcome');
+    }
+  }, [isDirectoryLoaded, usersDirectory]);
+
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
-    try {
-      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
-    } catch (error) {
-      console.error("Login Error:", error);
+    const foundUser = usersDirectory.find(u => u.email === loginEmail && u.password === loginPassword);
+    
+    if (foundUser) {
+      localStorage.setItem('imac_app_session', foundUser.id);
+      setAppUser(foundUser);
+      setUserName(foundUser.nome);
+      setUserRole(foundUser.cargo);
+      setIsAdmin(foundUser.isAdmin === true);
+      setView('dashboard');
+    } else {
       setAuthError("E-mail ou senha incorretos. Verifique suas credenciais.");
     }
   };
@@ -1617,42 +1627,51 @@ function App() {
       return;
     }
     try {
-      const cred = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', cred.user.uid), {
+      const newId = "admin_" + Date.now();
+      const newUser = {
+        id: newId,
         nome: loginNome.trim(),
         cargo: loginCargo.trim(),
         email: loginEmail.trim(),
-        isAdmin: true, // O primeiro usuário é automaticamente Admin
+        password: loginPassword,
+        isAdmin: true,
         dataCriacao: new Date().toISOString()
-      });
-      // O onSnapshot capturará a alteração e fará o redirecionamento
+      };
+      
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser);
+      localStorage.setItem('imac_app_session', newId);
+      setAppUser(newUser);
+      setUserName(newUser.nome);
+      setUserRole(newUser.cargo);
+      setIsAdmin(true);
+      setView('dashboard');
     } catch (error) {
-      console.error("Bootstrap Error:", error);
       setAuthError("Erro ao configurar a conta mestre: " + error.message);
     }
   };
 
   const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin) => {
     try {
-      // Usamos uma aplicação secundária para não deslogar o administrador atual
-      const secApp = initializeApp(firebaseConfig, "Secondary" + Date.now());
-      const secAuth = getAuth(secApp);
-      const cred = await createUserWithEmailAndPassword(secAuth, newEmail, newPassword);
-
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', cred.user.uid), {
+      const existingUser = usersDirectory.find(u => u.email === newEmail);
+      if (existingUser) {
+        setAppMessage("❌ E-mail já está em uso.");
+        return false;
+      }
+      
+      const newId = "user_" + Date.now();
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), {
         nome: newNome,
         cargo: newCargo,
         email: newEmail,
+        password: newPassword,
         isAdmin: newIsAdmin,
         dataCriacao: new Date().toISOString()
       });
 
-      await signOut(secAuth);
       setAppMessage("✅ Usuário criado com sucesso!");
       return true;
     } catch (error) {
-      console.error("Erro ao criar usuario:", error);
-      setAppMessage("❌ Erro ao criar usuário: " + (error.code === 'auth/email-already-in-use' ? 'E-mail já está em uso.' : error.message));
+      setAppMessage("❌ Erro ao criar usuário: " + error.message);
       return false;
     }
   };
@@ -1667,15 +1686,14 @@ function App() {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUserName('');
-      setUserRole('');
-      setLoginEmail('');
-      setLoginPassword('');
-    } catch (error) {
-      console.error("Logout error", error);
-    }
+    setAppUser(null);
+    setUserName('');
+    setUserRole('');
+    setIsAdmin(false);
+    setLoginEmail('');
+    setLoginPassword('');
+    localStorage.removeItem('imac_app_session');
+    setView('welcome');
   };
 
   const handleUpdateProfile = async (newName, newRole) => {
@@ -1684,9 +1702,9 @@ function App() {
     localStorage.setItem('imac_user_name', newName);
     localStorage.setItem('imac_user_role', newRole);
 
-    if (user && !user.isAnonymous && db && isConfigured) {
+    if (appUser && db && isConfigured) {
       try {
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', user.uid), {
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', appUser.id), {
           nome: newName,
           cargo: newRole
         });
@@ -2013,7 +2031,7 @@ function App() {
       imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
       assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
       logo: formData.logo || null, localData: formData.localData || '',
-      userId: user?.uid || 'anonimo',
+      userId: appUser?.id || 'anonimo',
       autorNome: userName || 'Desconhecido',
       autorCargo: userRole || ''
     };
@@ -2263,7 +2281,7 @@ function App() {
           isOpen={isUsersModalOpen}
           onClose={() => setIsUsersModalOpen(false)}
           usersDirectory={usersDirectory}
-          currentUid={user?.uid}
+          currentUid={appUser?.id}
           onAddUser={handleCreateNewUser}
           onRemoveUser={handleRemoveUser}
         />
@@ -2547,7 +2565,7 @@ function App() {
             ) : (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
                     {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
