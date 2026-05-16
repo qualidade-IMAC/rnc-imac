@@ -276,6 +276,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
   const [textInput, setTextInput] = useState(null);
   const [forceRender, setForceRender] = useState(0); 
   const [cropRect, setCropRect] = useState(null);
+  const [cropRatio, setCropRatio] = useState(null); // Estado para proporção de corte
   
   const shapesRef = useRef(Array.isArray(initialShapes) ? JSON.parse(JSON.stringify(initialShapes)) : []);
   const imageRef = useRef(null);
@@ -403,22 +404,36 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     ctx.stroke(); ctx.setLineDash([]); 
   };
 
-  const drawCropOverlay = (ctx, start, current) => {
-    const minX = Math.min(start.x, current.x);
-    const minY = Math.min(start.y, current.y);
-    const w = Math.abs(current.x - start.x);
-    const h = Math.abs(current.y - start.y);
+  const drawCropOverlay = (ctx, start, current, ratio = null) => {
+    let w = current.x - start.x;
+    let h = current.y - start.y;
+
+    // Aplica restrição de proporção se houver
+    if (ratio) {
+      const absW = Math.abs(w);
+      const absH = Math.abs(h);
+      if (absW / ratio > absH) {
+        h = (Math.sign(h) || 1) * (absW / ratio);
+      } else {
+        w = (Math.sign(w) || 1) * (absH * ratio);
+      }
+    }
+
+    const minX = Math.min(start.x, start.x + w);
+    const minY = Math.min(start.y, start.y + h);
+    const finalW = Math.abs(w);
+    const finalH = Math.abs(h);
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, canvasRef.current.width, minY);
-    ctx.fillRect(0, minY, minX, h);
-    ctx.fillRect(minX + w, minY, canvasRef.current.width - (minX + w), h);
-    ctx.fillRect(0, minY + h, canvasRef.current.width, canvasRef.current.height - (minY + h));
+    ctx.fillRect(0, minY, minX, finalH);
+    ctx.fillRect(minX + finalW, minY, canvasRef.current.width - (minX + finalW), finalH);
+    ctx.fillRect(0, minY + finalH, canvasRef.current.width, canvasRef.current.height - (minY + finalH));
 
     ctx.setLineDash([6, 6]);
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 2;
-    ctx.strokeRect(minX, minY, w, h);
+    ctx.strokeRect(minX, minY, finalW, finalH);
     ctx.setLineDash([]);
   };
 
@@ -457,9 +472,9 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     }
 
     if (tool === 'crop' && isDrawing.current) {
-      drawCropOverlay(ctx, startPos.current, currentPos.current);
+      drawCropOverlay(ctx, startPos.current, currentPos.current, cropRatio);
     } else if (cropRect) {
-      drawCropOverlay(ctx, {x: cropRect.x, y: cropRect.y}, {x: cropRect.x + cropRect.w, y: cropRect.y + cropRect.h});
+      drawCropOverlay(ctx, {x: cropRect.x, y: cropRect.y}, {x: cropRect.x + cropRect.w, y: cropRect.y + cropRect.h}, null);
     }
   };
 
@@ -562,13 +577,28 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
 
     if (tool === 'crop' && isDrawing.current) {
       isDrawing.current = false;
-      const w = Math.abs(currentPos.current.x - startPos.current.x);
-      const h = Math.abs(currentPos.current.y - startPos.current.y);
-      if (w > 20 && h > 20) {
+      let w = currentPos.current.x - startPos.current.x;
+      let h = currentPos.current.y - startPos.current.y;
+      
+      // Aplica a proporção antes de salvar o retângulo
+      if (cropRatio) {
+        const absW = Math.abs(w);
+        const absH = Math.abs(h);
+        if (absW / cropRatio > absH) {
+          h = (Math.sign(h) || 1) * (absW / cropRatio);
+        } else {
+          w = (Math.sign(w) || 1) * (absH * cropRatio);
+        }
+      }
+
+      const finalW = Math.abs(w);
+      const finalH = Math.abs(h);
+
+      if (finalW > 20 && finalH > 20) {
         setCropRect({
-          x: Math.min(startPos.current.x, currentPos.current.x),
-          y: Math.min(startPos.current.y, currentPos.current.y),
-          w, h
+          x: Math.min(startPos.current.x, startPos.current.x + w),
+          y: Math.min(startPos.current.y, startPos.current.y + h),
+          w: finalW, h: finalH
         });
       }
       redraw(null);
@@ -659,6 +689,12 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     }, 50);
   };
 
+  const handleRatioChange = (ratio) => {
+    setCropRatio(ratio);
+    setCropRect(null); // Reseta qualquer seleção anterior para evitar confusão visual
+    redraw(null);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-gray-900 p-4 rounded-xl shadow-2xl flex flex-col h-full max-h-[90vh] relative">
@@ -673,6 +709,16 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
               <button onClick={() => {setTool('circle'); setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'circle' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Desenhar Círculo"><Circle size={20} strokeWidth={3} /></button>
               <button onClick={() => {setTool('text'); setSelectedShapeIndex(null); setCropRect(null); redraw(null);}} className={`p-2 rounded ${tool === 'text' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`} title="Escrever Texto"><TypeIcon size={20} strokeWidth={3} /></button>
             </div>
+
+            {tool === 'crop' && (
+              <div className="flex items-center gap-1 bg-gray-700 px-2 py-1.5 rounded-lg border border-gray-600">
+                <span className="text-gray-400 text-[10px] font-bold mr-1 uppercase tracking-wider hidden sm:inline">Proporção:</span>
+                <button onClick={() => handleRatioChange(null)} className={`px-2 py-1 text-xs font-bold rounded transition ${cropRatio === null ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`}>Livre</button>
+                <button onClick={() => handleRatioChange(1)} className={`px-2 py-1 text-xs font-bold rounded transition ${cropRatio === 1 ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`}>1:1</button>
+                <button onClick={() => handleRatioChange(4/3)} className={`px-2 py-1 text-xs font-bold rounded transition ${cropRatio === 4/3 ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`}>4:3</button>
+                <button onClick={() => handleRatioChange(16/9)} className={`px-2 py-1 text-xs font-bold rounded transition ${cropRatio === 16/9 ? 'bg-[#F4B41A] text-[#5C3A21]' : 'text-white hover:bg-gray-600'}`}>16:9</button>
+              </div>
+            )}
 
             {cropRect && (
               <button onClick={applyCrop} className="ml-2 px-3 py-1.5 bg-green-500 text-white font-bold rounded hover:bg-green-600 transition flex items-center gap-1 animate-pulse">
