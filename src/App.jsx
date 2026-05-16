@@ -1579,6 +1579,8 @@ function App() {
   // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
   const [checkingDirectory, setCheckingDirectory] = useState(true);
+  const [isDbConfirmedEmpty, setIsDbConfirmedEmpty] = useState(false);
+  const [dbSyncError, setDbSyncError] = useState(false);
   const [appUser, setAppUser] = useState(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -1671,10 +1673,11 @@ function App() {
       return;
     }
 
-    // Timeout de segurança: Se a internet estiver muito lenta ou offline, não trava o app.
+    // Timeout de segurança: Se a internet estiver muito lenta ou offline, exibe erro em vez de criar conta
     const timeout = setTimeout(() => {
       setCheckingDirectory(false);
-    }, 5000);
+      setDbSyncError(true);
+    }, 12000); // 12 segundos para garantir o carregamento em redes móveis
 
     if (!db || !user) return;
     
@@ -1682,6 +1685,15 @@ function App() {
       (snapshot) => {
         clearTimeout(timeout);
         const cloudData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Confirma com 100% de certeza se o banco está vazio (para habilitar o Admin setup)
+        if (cloudData.length === 0) {
+          setIsDbConfirmedEmpty(true);
+        } else {
+          setIsDbConfirmedEmpty(false);
+        }
+        setDbSyncError(false);
+
         setUsersDirectory(prev => {
           // Mantém os usuários criados localmente que ainda não foram aceitos pela nuvem (Garante que não sumam da lista)
           const cloudIds = new Set(cloudData.map(u => u.id));
@@ -1712,6 +1724,7 @@ function App() {
         clearTimeout(timeout);
         console.error("Directory fetch error (Ignorado para manter o app offline):", error);
         setCheckingDirectory(false);
+        setDbSyncError(true);
       }
     );
 
@@ -2316,7 +2329,9 @@ function App() {
   }
 
   if (view === 'welcome') {
-    const isFirstSetup = usersDirectory.length === 0;
+    // Só é primeira configuração se garantirmos na nuvem que não há usuários
+    const isFirstSetup = usersDirectory.length === 0 && isDbConfirmedEmpty;
+    const isOfflineEmpty = usersDirectory.length === 0 && dbSyncError;
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -2349,6 +2364,15 @@ function App() {
                 <div className="w-12 h-12 border-4 border-[#F4B41A] border-t-[#5C3A21] rounded-full animate-spin mb-4"></div>
                 <p className="text-gray-600 font-bold">Sincronizando segurança...</p>
                 <p className="text-gray-400 text-xs mt-2">Verificando banco de dados na nuvem</p>
+              </div>
+            ) : isOfflineEmpty ? (
+              <div className="flex flex-col items-center justify-center py-6 animate-fade-in-up text-center">
+                <AlertCircle size={40} className="text-red-500 mb-4" />
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Conexão Lenta</h3>
+                <p className="text-gray-600 text-sm mb-6">O banco de dados demorou muito a responder. Por segurança, o acesso foi temporariamente bloqueado.</p>
+                <button onClick={() => window.location.reload()} className="bg-[#5C3A21] text-[#F4B41A] font-bold py-3 px-6 rounded-xl shadow-md hover:bg-[#4a2e1a] transition w-full">
+                  Tentar Novamente
+                </button>
               </div>
             ) : isFirstSetup ? (
               <form onSubmit={handleBootstrapAdmin} className="space-y-4 text-left animate-fade-in-up">
