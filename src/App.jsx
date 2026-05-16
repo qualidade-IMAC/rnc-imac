@@ -2621,7 +2621,7 @@ function App() {
             {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
@@ -2634,7 +2634,7 @@ function App() {
                 </div>
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">INFORMAÇÕES SOBRE A OCORRÊNCIA</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao2}</p></div>
                   
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
@@ -2661,7 +2661,7 @@ function App() {
                 )}
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao3}</p></div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
                      <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
@@ -2698,7 +2698,7 @@ function App() {
             ) : (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
                     {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
