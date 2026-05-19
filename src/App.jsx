@@ -159,6 +159,7 @@ const Mail = (p) => <SvgIcon {...p}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 
 const Clock = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></SvgIcon>;
 const Lock = (p) => <SvgIcon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></SvgIcon>;
 const User = (p) => <SvgIcon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></SvgIcon>;
+const Key = (p) => <SvgIcon {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></SvgIcon>;
 
 const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
@@ -276,7 +277,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
   const [textInput, setTextInput] = useState(null);
   const [forceRender, setForceRender] = useState(0); 
   const [cropRect, setCropRect] = useState(null);
-  const [cropRatio, setCropRatio] = useState(null); // Estado para proporção de corte
+  const [cropRatio, setCropRatio] = useState(null); 
   
   const shapesRef = useRef(Array.isArray(initialShapes) ? JSON.parse(JSON.stringify(initialShapes)) : []);
   const imageRef = useRef(null);
@@ -408,7 +409,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     let w = current.x - start.x;
     let h = current.y - start.y;
 
-    // Aplica restrição de proporção se houver
     if (ratio) {
       const absW = Math.abs(w);
       const absH = Math.abs(h);
@@ -580,7 +580,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
       let w = currentPos.current.x - startPos.current.x;
       let h = currentPos.current.y - startPos.current.y;
       
-      // Aplica a proporção antes de salvar o retângulo
       if (cropRatio) {
         const absW = Math.abs(w);
         const absH = Math.abs(h);
@@ -691,7 +690,7 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
 
   const handleRatioChange = (ratio) => {
     setCropRatio(ratio);
-    setCropRect(null); // Reseta qualquer seleção anterior para evitar confusão visual
+    setCropRect(null); 
     redraw(null);
   };
 
@@ -845,10 +844,25 @@ const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
   const [novoCliente, setNovoCliente] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const selectedList = Array.isArray(value) ? value : (value ? [value] : []);
   const clientesFiltrados = (clientes || []).filter(c => c && typeof c === 'string' && c.toLowerCase().includes((searchTerm || '').toLowerCase()));
 
-  const handleSelect = (cliente) => { onChange(cliente); setIsAdding(false); setSearchTerm(''); };
-  const handleAddNew = () => { if (novoCliente.trim()) { onAddCliente(novoCliente.trim()); onChange(novoCliente.trim()); setNovoCliente(''); setIsAdding(false); setSearchTerm(''); } };
+  const handleSelect = (cliente) => { 
+    onChange(cliente); // No formulário nós interceptamos para adicionar à lista
+    setIsAdding(false); 
+    setSearchTerm(''); 
+  };
+  
+  const handleAddNew = () => { 
+    if (novoCliente.trim()) { 
+        const n = novoCliente.trim();
+        onAddCliente(n); 
+        onChange(n); 
+        setNovoCliente(''); 
+        setIsAdding(false); 
+        setSearchTerm(''); 
+    } 
+  };
 
   return (
     <div className="relative">
@@ -857,7 +871,7 @@ const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
           <div className="flex gap-2 mb-2">
             <div className="relative flex-1">
               <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar cliente/loja..." className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm pr-8" />
-              {value && <button onClick={() => { onChange(''); setSearchTerm(''); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><X size={16} /></button>}
+              {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><X size={16} /></button>}
             </div>
             <button type="button" onClick={() => setIsAdding(true)} className="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition font-bold text-sm flex items-center gap-1" title="Cadastrar novo cliente"><Plus size={16} /> Novo</button>
           </div>
@@ -865,8 +879,8 @@ const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
             <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {clientesFiltrados.length > 0 ? (
                 clientesFiltrados.map((cliente, idx) => (
-                  <button key={idx} type="button" onClick={() => handleSelect(cliente)} className={`w-full text-left px-4 py-2 hover:bg-indigo-50 transition flex items-center gap-2 ${value === cliente ? 'bg-indigo-100 font-bold' : ''}`}>
-                    <ShoppingBag size={16} className="text-gray-500" /> {cliente} {value === cliente && <Check size={16} className="text-indigo-600 ml-auto" />}
+                  <button key={idx} type="button" onClick={() => handleSelect(cliente)} className={`w-full text-left px-4 py-2 hover:bg-indigo-50 transition flex items-center gap-2 ${selectedList.includes(cliente) ? 'bg-indigo-100 font-bold' : ''}`}>
+                    <ShoppingBag size={16} className="text-gray-500" /> {cliente} {selectedList.includes(cliente) && <Check size={16} className="text-indigo-600 ml-auto" />}
                   </button>
                 ))
               ) : <div className="px-4 py-3 text-gray-500 text-sm">Nenhum cliente encontrado</div>}
@@ -878,11 +892,6 @@ const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
           <input type="text" value={novoCliente} onChange={(e) => setNovoCliente(e.target.value)} placeholder="Nome do novo cliente" className="flex-1 border border-indigo-500 p-2.5 rounded focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm font-medium" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddNew(); if (e.key === 'Escape') setIsAdding(false); }} />
           <button type="button" onClick={handleAddNew} className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition font-bold"><Check size={18} /></button>
           <button type="button" onClick={() => setIsAdding(false)} className="bg-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-400 transition"><X size={18} /></button>
-        </div>
-      )}
-      {value && !isAdding && (
-        <div className="mt-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2">
-          <Store size={16} className="text-indigo-800" /> <span className="font-bold text-indigo-800 text-sm">Cliente: {value}</span>
         </div>
       )}
     </div>
@@ -1031,18 +1040,20 @@ const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRe
   );
 };
 
-const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, onAddUser, onRemoveUser }) => {
+const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, onAddUser, onRemoveUser, onResetPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nome, setNome] = useState('');
   const [cargo, setCargo] = useState('');
   const [isNewAdmin, setIsNewAdmin] = useState(false);
   const [isCanApprove, setIsCanApprove] = useState(false);
+  const [isManager, setIsManager] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Substituição de alerts/confirms:
   const [modalMessage, setModalMessage] = useState('');
   const [userToRemove, setUserToRemove] = useState(null);
+  const [userToReset, setUserToReset] = useState(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
 
   if (!isOpen) return null;
 
@@ -1054,11 +1065,24 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
       return;
     }
     setIsSubmitting(true);
-    const success = await onAddUser(email, password, nome, cargo, isNewAdmin, isCanApprove);
+    const success = await onAddUser(email, password, nome, cargo, isNewAdmin, isCanApprove, isManager);
     setIsSubmitting(false);
     if (success) {
-      setEmail(''); setPassword(''); setNome(''); setCargo(''); setIsNewAdmin(false); setIsCanApprove(false);
+      setEmail(''); setPassword(''); setNome(''); setCargo(''); setIsNewAdmin(false); setIsCanApprove(false); setIsManager(false);
     }
+  };
+
+  const handleConfirmReset = () => {
+      if(newResetPassword.length < 6) {
+          setModalMessage('A nova senha deve ter 6 caracteres no mínimo.');
+          setTimeout(() => setModalMessage(''), 3000);
+          return;
+      }
+      onResetPassword(userToReset.id, newResetPassword);
+      setUserToReset(null);
+      setNewResetPassword('');
+      setModalMessage('Senha atualizada com sucesso!');
+      setTimeout(() => setModalMessage(''), 3000);
   };
 
   return (
@@ -1079,13 +1103,28 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
           </div>
         )}
 
+        {userToReset && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4 rounded-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center animate-fade-in-up">
+              <Key size={40} className="text-blue-500 mx-auto mb-4" />
+              <p className="font-bold text-gray-800 text-lg mb-2">Resetar Senha</p>
+              <p className="text-gray-600 text-sm mb-4">Digite a nova senha para <strong>{userToReset.nome}</strong>:</p>
+              <input type="password" value={newResetPassword} onChange={(e) => setNewResetPassword(e.target.value)} placeholder="Nova senha (min. 6)" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" />
+              <div className="flex justify-center gap-3">
+                <button onClick={() => {setUserToReset(null); setNewResetPassword('');}} className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold text-gray-700 transition">Cancelar</button>
+                <button onClick={handleConfirmReset} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-white transition shadow-md">Salvar Senha</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 border-r border-gray-200 pr-6">
           <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
             <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2"><Plus size={24}/> Criar Novo Usuário</h3>
           </div>
           
           {modalMessage && (
-            <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded text-sm text-red-700 animate-fade-in-up flex items-start gap-2">
+            <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-3 rounded text-sm text-blue-700 animate-fade-in-up flex items-start gap-2">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <span>{modalMessage}</span>
             </div>
@@ -1122,6 +1161,11 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
                 <label htmlFor="canApprove" className={`font-bold cursor-pointer ${isNewAdmin ? 'text-gray-400' : 'text-gray-700'}`}>Pode Liberar Relatórios</label>
                 <span className="text-xs text-gray-500 ml-2 hidden sm:inline">(Muda status para Liberado/Pendente)</span>
               </div>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="checkbox" id="isManager" checked={isManager} onChange={(e) => setIsManager(e.target.checked)} className="w-5 h-5 accent-pink-600 cursor-pointer" />
+                <label htmlFor="isManager" className="font-bold text-gray-700 cursor-pointer">É Gerente Industrial</label>
+                <span className="text-xs text-gray-500 ml-2 hidden sm:inline">(Pode adicionar Visto da Gerência)</span>
+              </div>
             </div>
 
             <button type="submit" disabled={isSubmitting} className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-[#4a2e1a] transition mt-4 disabled:opacity-50">
@@ -1145,15 +1189,20 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
                       {u.nome} 
                       {u.isAdmin && <span className="bg-[#5C3A21] text-[#F4B41A] text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Admin</span>}
                       {!u.isAdmin && u.canApprove && <span className="bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Aprovador</span>}
+                      {u.isManager && <span className="bg-pink-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Gerente</span>}
                     </p>
                     <p className="text-xs text-gray-500">{u.email} • {u.cargo}</p>
                   </div>
-                  {u.id !== currentUid && (
-                    <button onClick={() => setUserToRemove(u)} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-2 rounded transition" title="Revogar Acesso">
-                      <Trash2 size={16}/>
+                  <div className="flex gap-2">
+                    <button onClick={() => setUserToReset(u)} className="text-blue-500 hover:text-white bg-blue-50 hover:bg-blue-600 p-2 rounded transition" title="Resetar Senha">
+                      <Key size={16}/>
                     </button>
-                  )}
-                  {u.id === currentUid && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">Você</span>}
+                    {u.id !== currentUid && (
+                      <button onClick={() => setUserToRemove(u)} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-2 rounded transition" title="Revogar Acesso">
+                        <Trash2 size={16}/>
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -1265,202 +1314,30 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
   );
 };
 
-const RelatorioViewModal = ({ registro, onClose }) => {
-  if (!registro) return null;
-
-  const tipoStr = String(registro.tipoRelatorio || ''); 
-  const isCliente = tipoStr === 'Relatório de Não Conformidade - Cliente';
-
-  const getTituloRelatorio = () => {
-    if (isCliente) return "RELATÓRIO DE DESVIO PADRÃO";
-    if (tipoStr === 'Insumo ou Embalagem') return "RELATÓRIO DE OCORRÊNCIA INSUMO";
-    if (tipoStr === 'Ocorrência Interna') return "RELATÓRIO INTERNO DE OCORRÊNCIA";
-    if (tipoStr.includes('Teste')) return "RELATÓRIO DE TESTES";
-    return "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-  };
-  
-  const getTituloSecao1 = () => isCliente ? "DADOS DA OCORRÊNCIA" : (tipoStr.includes('Teste') ? "1. DADOS DO ESTUDO" : "1. INFORMAÇÕES GERAIS E RASTREABILIDADE");
-  const getTituloSecao2 = () => isCliente ? "INFORMAÇÕES SOBRE A OCORRÊNCIA" : (tipoStr.includes('Teste') ? "2. METODOLOGIA E RESULTADOS" : "2. DESCRIÇÃO DA OCORRência");
-  const getTituloSecao3 = () => isCliente ? "PARECER TÉCNICO" : (tipoStr.includes('Teste') ? "3. CONCLUSÃO E RECOMENDAÇÕES" : "3. CONSIDERAÇÕES FINAIS");
-
-  const dataFormatada = safeDate(registro.dataCriacao);
-  const assinaturasRender = Array.isArray(registro.assinaturas) ? registro.assinaturas : [
-    { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' }
-  ];
+const DashboardFilters = ({ onFilterChange, fornecedores }) => {
+  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
+  const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-[200] flex items-start justify-center p-4 pt-10 backdrop-blur-sm overflow-y-auto modal-overlay-print">
-      <div className="max-w-[210mm] w-full bg-white shadow-2xl print:shadow-none mb-10 print:mb-0 animate-fade-in-up relative">
-        <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-lg no-print">
-          <div><h2 className="text-lg font-black text-[#5C3A21]">Visualização do Relatório</h2><p className="text-xs text-gray-500">Emitido em {dataFormatada} {registro.autorNome ? `por ${registro.autorNome}` : ''}</p></div>
-          <div className="flex gap-2">
-            <button onClick={() => shareViaWhatsApp(registro)} className="flex items-center gap-1 px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition text-sm shadow" title="Cobrar por WhatsApp"><MessageCircle size={16} /> WhatsApp</button>
-            <button onClick={() => shareViaEmail(registro)} className="flex items-center gap-1 px-4 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition text-sm shadow hidden sm:flex" title="Enviar Email"><Mail size={16} /> Email</button>
-            <button onClick={() => window.print()} className="flex items-center gap-1 px-5 py-2 bg-[#5C3A21] text-[#F4B41A] rounded-lg font-bold hover:bg-[#4a2e1a] transition text-sm shadow"><Printer size={16} /> Imprimir / PDF</button>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition"><X size={20} /></button>
-          </div>
-        </div>
-
-        <div id="relatorio-modal-conteudo" className="text-black text-[15px] leading-relaxed bg-white">
-          <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
-          <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm]">
-            
-            <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
-              <div>
-                <img src={registro.logo || null} alt="Logo" className="h-[50px] object-contain mb-1" style={{ display: registro.logo ? 'block' : 'none' }} />
-                {!registro.logo && <h1 className="text-[38px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
-                <p className="font-bold text-black text-[14px]">Controle de Qualidade</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold uppercase tracking-wide text-[16px] text-[#5C3A21]">{getTituloRelatorio()}</p>
-                <p className="font-bold text-[14px] text-gray-500 mt-1">Emissão: {dataFormatada}</p>
-              </div>
-            </div>
-
-            {isCliente ? (
-              <>
-                <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
-                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <p className="text-[14px]"><strong>CLIENTE:</strong> {registro.lojaLocal}</p>
-                    <p className="text-[14px]"><strong>SUPERVISOR:</strong> {registro.supervisor}</p>
-                    <p className="text-[14px]"><strong>PRODUTO:</strong> {registro.produto}</p>
-                    <p className="text-[14px]"><strong>LOTE:</strong> {registro.lote}</p>
-                    <p className="text-[14px]"><strong>DATA DE FABRICAÇÃO:</strong> {registro.dataFabricacao}</p>
-                    <p className="text-[14px]"><strong>DATA VALIDADE:</strong> {registro.validade}</p>
-                    <p className="text-[14px] col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {registro.quantidade}</p>
-                  </div>
-                </div>
-
-                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
-                  
-                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: registro.descricao || '' }} />
-
-                  <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
-                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Sabor</span><span className="text-[14px] font-semibold">{registro.sabor || 'Não informado'}</span></div>
-                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Odor</span><span className="text-[14px] font-semibold">{registro.odor || 'Não informado'}</span></div>
-                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Cor</span><span className="text-[14px] font-semibold">{registro.cor || 'Não informado'}</span></div>
-                     <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Temp. °C</span><span className="text-[14px] font-semibold">{registro.temperatura || 'Não informado'}</span></div>
-                  </div>
-                </div>
-
-                {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
-                  <div className="mb-6 mt-6 print:mt-4">
-                    <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
-                    <div className={`grid gap-4 ${registro.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
-                      {registro.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
-                  
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
-                     <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
-                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'PROCEDENTE' ? 'X' : '  '}) PROCEDENTE</p>
-                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'NÃO PROCEDENTE' ? 'X' : '  '}) NÃO PROCEDENTE</p>
-                     <p className="text-[14px] font-semibold">({registro.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
-                  </div>
-
-                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: registro.consideracoes || '' }} />
-
-                  <div className="mb-5">
-                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
-                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: registro.acaoCorretiva || '-' }} />
-                  </div>
-
-                  {registro.conclusaoParecer && (
-                    <div className="mb-8">
-                       <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
-                       <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: registro.conclusaoParecer || '-' }} />
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {assinaturasRender.filter(Boolean).map((assinatura, index) => (
-                      <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold uppercase">Responsável: {assinatura?.nome}</p>
-                        <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura?.cargo}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao1()}</p></div>
-                  <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <p className="text-[14px]"><strong>Produto / Material:</strong> {registro.produto || 'Não especificado'}</p>
-                    <p className="text-[14px]"><strong>Resumo do Problema:</strong> {registro.ocorrencia || 'Não informado'}</p>
-                    {registro.dataOcorrencia && <p className="text-[14px]"><strong>Data da Ocorrência:</strong> {registro.dataOcorrencia}</p>}
-                    {registro.lote && <p className="text-[14px]"><strong>Lote:</strong> {registro.lote}</p>}
-                    {registro.quantidade && <p className="text-[14px]"><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
-                    {registro.fornecedor && <p className="text-[14px]"><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
-                    {registro.validade && <p className="text-[14px]"><strong>Data de Validade:</strong> {registro.validade}</p>}
-                    {registro.dataRecebimento && <p className="text-[14px]"><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
-                    {registro.nf && <p className="text-[14px]"><strong>Nota Fiscal:</strong> {registro.nf}</p>}
-                    {registro.horarioEmbalamento && <p className="text-[14px]"><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
-                  </div>
-                </div>
-
-                {registro.descricao && (
-                  <div className="mb-5 print:mb-3 w-full overflow-hidden">
-                    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao2()}</p></div>
-                    <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.descricao || '' }} />
-                  </div>
-                )}
-
-                {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
-                  <div className="mb-6 mt-6 print:mt-4">
-                    <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                    <div className={`grid gap-4 ${registro.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
-                      {registro.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="print:pt-4">
-                  {registro.consideracoes && (
-                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
-                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{getTituloSecao3()}</p></div>
-                      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: registro.consideracoes || '' }} />
-                    </div>
-                  )}
-
-                  <div className="mb-8 print:mb-5 ml-1 break-inside-avoid"><p className="text-[14px]">{registro.localData || `Aquiraz, ${dataFormatada}.`}</p></div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
-                    {assinaturasRender.filter(Boolean).map((assinatura, index) => (
-                      <div key={index} className={assinaturasRender.length % 2 !== 0 && index === assinaturasRender.length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold">{assinatura?.nome}</p>
-                        <p className="leading-snug whitespace-pre-line">{assinatura?.cargo}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-            
-          </div>
-        </div>
-
-        <div className="border-t-2 border-gray-200 p-4 flex justify-between items-center bg-gray-50 no-print rounded-b-lg">
-          <span className="text-xs text-gray-400">ID: {registro.id}</span>
-          <button onClick={onClose} className="px-6 py-2 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-700 transition text-sm">Fechar</button>
-        </div>
-      </div>
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-3 items-center">
+      <Filter size={18} className="text-gray-500" />
+      <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+        <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
+        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
+      </select>
+      <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+        <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
+      </select>
+      <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+        <option value="">Todos Fornecedores</option>
+        {(fornecedores || []).filter(f => typeof f === 'string').map((f, i) => <option key={i} value={f}>{f}</option>)}
+      </select>
+      <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+        <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
+        <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
+        <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
+        <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
+      </select>
     </div>
   );
 };
@@ -1537,36 +1414,8 @@ const PieChartComponent = ({ data, title }) => {
   );
 };
 
-const DashboardFilters = ({ onFilterChange, fornecedores }) => {
-  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
-  const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
-
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-3 items-center">
-      <Filter size={18} className="text-gray-500" />
-      <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
-        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
-      </select>
-      <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
-      </select>
-      <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="">Todos Fornecedores</option>
-        {(fornecedores || []).filter(f => typeof f === 'string').map((f, i) => <option key={i} value={f}>{f}</option>)}
-      </select>
-      <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
-        <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
-        <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
-        <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
-      </select>
-    </div>
-  );
-};
-
 function App() {
-  const [view, setView] = useState('loading'); // welcome (login), dashboard, form, preview
+  const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
   
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
@@ -1600,12 +1449,17 @@ function App() {
   const [loginCargo, setLoginCargo] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [canApprove, setCanApprove] = useState(false);
+  
+  // Login e Solicitação Pública (Welcome Screen)
+  const [welcomeMode, setWelcomeMode] = useState('choice'); // choice, login, solicitar
+  const [solicitacoes, setSolicitacoes] = useState([]);
+  const [solicitacaoForm, setSolicitacaoForm] = useState({
+    tipoRelatorio: 'Problema com Fornecedor', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: []
+  });
 
   // User Profile
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
-  
-  // Auth Error State
   const [authError, setAuthError] = useState('');
 
   const defaultAssinaturas = [
@@ -1621,7 +1475,7 @@ function App() {
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
     dataOcorrencia: '', produto: '', ocorrencia: '', lote: '', quantidade: '', validade: '',
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
-    lojaLocal: '', dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '', conclusaoParecer: '',
+    lojasLocais: [], dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '', conclusaoParecer: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
     imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
   });
@@ -1653,7 +1507,6 @@ function App() {
       setAuthLoading(false);
     });
 
-    // 1. Prioridade Máxima: Carrega a sessão local imediatamente (Evita loading infinito)
     const sessionUserStr = localStorage.getItem('imac_app_session_user');
     if (sessionUserStr) {
       try {
@@ -1671,7 +1524,6 @@ function App() {
       setView('welcome');
     }
 
-    // 2. Carrega o diretório salvo localmente
     const savedDir = localStorage.getItem('imac_users_directory');
     if (savedDir) {
       try { setUsersDirectory(JSON.parse(savedDir)); } catch(e) {}
@@ -1680,18 +1532,16 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Sincronização do Diretório de Usuários com a Nuvem (Background)
   useEffect(() => {
     if (!isConfigured) {
       setCheckingDirectory(false);
       return;
     }
 
-    // Timeout de segurança: Se a internet estiver muito lenta ou offline, exibe erro em vez de criar conta
     const timeout = setTimeout(() => {
       setCheckingDirectory(false);
       setDbSyncError(true);
-    }, 12000); // 12 segundos para garantir o carregamento em redes móveis
+    }, 12000); 
 
     if (!db || !user) return;
     
@@ -1700,7 +1550,6 @@ function App() {
         clearTimeout(timeout);
         const cloudData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // Confirma com 100% de certeza se o banco está vazio (para habilitar o Admin setup)
         if (cloudData.length === 0) {
           setIsDbConfirmedEmpty(true);
         } else {
@@ -1709,13 +1558,11 @@ function App() {
         setDbSyncError(false);
 
         setUsersDirectory(prev => {
-          // Mantém os usuários criados localmente que ainda não foram aceitos pela nuvem (Garante que não sumam da lista)
           const cloudIds = new Set(cloudData.map(u => u.id));
           const localOnly = (prev || []).filter(u => !cloudIds.has(u.id) && u._isUnsynced);
           const merged = [...cloudData, ...localOnly];
           localStorage.setItem('imac_users_directory', JSON.stringify(merged));
 
-          // Verifica se o usuário logado foi revogado ativamente pela nuvem
           const sessionUserStr = localStorage.getItem('imac_app_session_user');
           if (sessionUserStr && cloudData.length > 0) {
              try {
@@ -1723,20 +1570,18 @@ function App() {
                const stillExists = merged.find(u => u.id === currentUser.id);
                if (!stillExists) {
                   localStorage.removeItem('imac_app_session_user');
-                  window.location.reload(); // Força a saída se foi deletado
+                  window.location.reload(); 
                } else {
                   localStorage.setItem('imac_app_session_user', JSON.stringify(stillExists));
                }
              } catch(e){}
           }
-
           return merged;
         });
-        setCheckingDirectory(false); // Nuvem confirmada
+        setCheckingDirectory(false); 
       },
       (error) => {
         clearTimeout(timeout);
-        console.error("Directory fetch error (Ignorado para manter o app offline):", error);
         setCheckingDirectory(false);
         setDbSyncError(true);
       }
@@ -1787,8 +1632,9 @@ function App() {
         password: loginPassword,
         isAdmin: true,
         canApprove: true,
+        isManager: true,
         dataCriacao: new Date().toISOString(),
-        _isUnsynced: true // Flag de segurança para não ser apagado por erros da nuvem
+        _isUnsynced: true
       };
       
       const newDirectory = [...usersDirectory, newUser];
@@ -1805,7 +1651,7 @@ function App() {
     }
   };
 
-  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin, newCanApprove) => {
+  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin, newCanApprove, newIsManager) => {
     try {
       const existingUser = usersDirectory.find(u => u.email === newEmail);
       if (existingUser) {
@@ -1822,8 +1668,9 @@ function App() {
         password: newPassword,
         isAdmin: newIsAdmin,
         canApprove: newCanApprove,
+        isManager: newIsManager || false,
         dataCriacao: new Date().toISOString(),
-        _isUnsynced: true // Flag de segurança para não sumir da lista
+        _isUnsynced: true
       };
 
       setUsersDirectory(prev => {
@@ -1842,6 +1689,20 @@ function App() {
       setAppMessage("❌ Erro ao criar usuário: " + error.message);
       return false;
     }
+  };
+
+  const handleResetPassword = async (uid, newPass) => {
+    try {
+      setUsersDirectory(prev => {
+        const newList = prev.map(u => u.id === uid ? { ...u, password: newPass } : u);
+        localStorage.setItem('imac_users_directory', JSON.stringify(newList));
+        return newList;
+      });
+
+      if (db && isConfigured) {
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid), { password: newPass }).catch(()=>{});
+      }
+    } catch (e) {}
   };
 
   const handleRemoveUser = async (uidToRemove) => {
@@ -1876,12 +1737,10 @@ function App() {
   const handleUpdateProfile = async (newName, newRole) => {
     setUserName(newName);
     setUserRole(newRole);
-    localStorage.setItem('imac_user_name', newName);
-    localStorage.setItem('imac_user_role', newRole);
 
     if (appUser) {
       const updatedUser = { ...appUser, nome: newName, cargo: newRole };
-      loginUser(updatedUser); // Atualiza sessão instantaneamente
+      loginUser(updatedUser);
 
       setUsersDirectory(prev => {
         const newList = prev.map(u => u.id === appUser.id ? updatedUser : u);
@@ -1952,37 +1811,6 @@ function App() {
       unsubscribeFornecedores();
       unsubscribeClientes();
     };
-  }, [db, isConfigured, user]);
-
-  useEffect(() => {
-    const savedLocal = localStorage.getItem('imac_registros');
-    if (savedLocal) {
-      try {
-        const parsed = JSON.parse(savedLocal);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          parsed.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
-          setRegistros(parsed);
-        }
-      } catch (e) {}
-    }
-    
-    if (!db || !isConfigured || !user) return; 
-    
-    const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
-      const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      setRegistros(prev => {
-        const existingIds = new Set(cloudData.map(r => String(r.id)));
-        const localOnly = (prev || []).filter(r => r && r.id && !existingIds.has(String(r.id)) && r._isUnsynced);
-        const merged = [...cloudData, ...localOnly];
-        merged.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
-        saveToLocalStorage('imac_registros', merged);
-        return merged;
-      });
-      setDbError(false);
-    }, (error) => {
-      if (error.code === 'permission-denied') setDbError(true);
-    });
-    return () => unsubscribe();
   }, [db, isConfigured, user]);
 
   const addFornecedor = async (nome) => {
@@ -2062,6 +1890,82 @@ function App() {
         }).catch(()=>{});
     }
   };
+
+  useEffect(() => {
+    const savedSolicitacoes = localStorage.getItem('imac_solicitacoes');
+    if (savedSolicitacoes) {
+        try { setSolicitacoes(JSON.parse(savedSolicitacoes)); } catch (e) {}
+    }
+    
+    if (!db || !isConfigured || !user) return; 
+    
+    const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (snapshot) => {
+        const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        setSolicitacoes(cloudData.sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao)));
+        saveToLocalStorage('imac_solicitacoes', cloudData);
+    }, (error) => {});
+    return () => unsub();
+  }, [db, isConfigured, user]);
+
+  const submitSolicitacao = async (e) => {
+    e.preventDefault();
+    try {
+      const newSol = { 
+        ...solicitacaoForm, 
+        id: 'sol_' + Date.now(), 
+        dataCriacao: new Date().toISOString(),
+        status: 'Pendente' 
+      };
+      
+      setSolicitacoes(prev => {
+        const list = [newSol, ...prev];
+        saveToLocalStorage('imac_solicitacoes', list);
+        return list;
+      });
+
+      if (db && isConfigured) {
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', newSol.id), newSol).catch(()=>{});
+      }
+      
+      setAppMessage("✅ Solicitação enviada com sucesso!");
+      setSolicitacaoForm({ tipoRelatorio: 'Problema com Fornecedor', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: [] });
+      setWelcomeMode('choice');
+      setTimeout(() => setAppMessage(null), 3000);
+    } catch(e) {
+      setAppMessage("❌ Erro ao enviar solicitação.");
+    }
+  };
+
+  useEffect(() => {
+    const savedLocal = localStorage.getItem('imac_registros');
+    if (savedLocal) {
+      try {
+        const parsed = JSON.parse(savedLocal);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          parsed.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
+          setRegistros(parsed);
+        }
+      } catch (e) {}
+    }
+    
+    if (!db || !isConfigured || !user) return; 
+    
+    const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
+      const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      setRegistros(prev => {
+        const existingIds = new Set(cloudData.map(r => String(r.id)));
+        const localOnly = (prev || []).filter(r => r && r.id && !existingIds.has(String(r.id)) && r._isUnsynced);
+        const merged = [...cloudData, ...localOnly];
+        merged.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
+        saveToLocalStorage('imac_registros', merged);
+        return merged;
+      });
+      setDbError(false);
+    }, (error) => {
+      if (error.code === 'permission-denied') setDbError(true);
+    });
+    return () => unsubscribe();
+  }, [db, isConfigured, user]);
 
   const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
 
@@ -2147,7 +2051,7 @@ function App() {
       dataRecebimento: registro.dataRecebimento || '',
       nf: registro.nf || '',
       horarioEmbalamento: registro.horarioEmbalamento || '',
-      lojaLocal: registro.lojaLocal || '',
+      lojasLocais: registro.lojasLocais || (registro.lojaLocal ? [registro.lojaLocal] : []),
       dataFabricacao: registro.dataFabricacao || '',
       supervisor: registro.supervisor || '',
       sabor: registro.sabor || '',
@@ -2173,6 +2077,33 @@ function App() {
     setEditingReportId(null);
     setFormData(getEmptyForm());
     setView('dashboard');
+  };
+
+  const handleDarVisto = (reg) => {
+    if (!appUser?.isManager) return;
+    const currentAssinaturas = Array.isArray(reg.assinaturas) ? reg.assinaturas : [];
+    const jaAssinou = currentAssinaturas.some(a => a.nome === userName);
+    if (jaAssinou) {
+       setAppMessage("⚠️ Você já assinou este relatório.");
+       setTimeout(() => setAppMessage(null), 3000);
+       return;
+    }
+
+    const newAssinaturas = [...currentAssinaturas, { nome: userName, cargo: userRole }];
+    const payload = { assinaturas: newAssinaturas, dataModificacao: new Date().toISOString() };
+    
+    setRegistros(prev => {
+      const updatedList = (prev || []).map(r => r && r.id === reg.id ? { ...r, ...payload } : r);
+      saveToLocalStorage('imac_registros', updatedList);
+      return updatedList;
+    });
+    
+    if (db && isConfigured) {
+      updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(reg.id)), payload)
+        .then(() => setAppMessage("✅ Visto adicionado com sucesso!"))
+        .catch(() => setAppMessage("💾 Visto adicionado localmente"));
+    } else { setAppMessage("💾 Visto adicionado localmente"); }
+    setTimeout(() => setAppMessage(null), 3000);
   };
 
   const handleUpdateStatus = (id, newStatus, newObs, newEnviado) => {
@@ -2211,7 +2142,7 @@ function App() {
       lote: formData.lote || '', quantidade: formData.quantidade || '', validade: formData.validade || '',
       dataRecebimento: formData.dataRecebimento || '', nf: formData.nf || '', horarioEmbalamento: formData.horarioEmbalamento || '',
       dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
-      lojaLocal: formData.lojaLocal || '', dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
+      lojasLocais: formData.lojasLocais || [], dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
       sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
       statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '', conclusaoParecer: formData.conclusaoParecer || '',
       imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
@@ -2228,7 +2159,6 @@ function App() {
     if (editingReportId) {
       const updatedAt = new Date().toISOString();
       const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
-      // Quando for edição mantemos o status de envio original se já existisse na base (para não resetar acidentalmente)
       const existingReport = registros.find(r => r.id === editingReportId);
       if (existingReport && typeof existingReport.enviado !== 'undefined') {
          payloadEdicao.enviado = existingReport.enviado;
@@ -2347,12 +2277,13 @@ function App() {
   }
 
   if (view === 'welcome') {
-    // Só é primeira configuração se garantirmos na nuvem que não há usuários
     const isFirstSetup = usersDirectory.length === 0 && isDbConfirmedEmpty;
     const isOfflineEmpty = usersDirectory.length === 0 && dbSyncError;
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
+        {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
+        
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#F4B41A] opacity-20 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-[#5C3A21] opacity-10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-soft" style={{animationDelay: '1s'}}></div>
         
@@ -2366,7 +2297,8 @@ function App() {
               </div>
             )}
             <h2 className="text-2xl font-black text-gray-800">Controle de Qualidade</h2>
-            <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-1"><Lock size={14}/> Acesso Restrito Corporativo</p>
+            {welcomeMode === 'login' && <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-1"><Lock size={14}/> Acesso Restrito Corporativo</p>}
+            {welcomeMode === 'solicitar' && <p className="text-gray-500 mt-2 text-sm">Solicitação de Relatório de Não Conformidade</p>}
           </div>
 
           <div className="p-8 text-center">
@@ -2415,6 +2347,70 @@ function App() {
                 </div>
                 <button type="submit" className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition mt-2">Criar Conta Mestre</button>
               </form>
+            ) : welcomeMode === 'choice' ? (
+              <div className="space-y-4 animate-fade-in-up">
+                <button onClick={() => setWelcomeMode('solicitar')} className="w-full bg-white border-2 border-[#F4B41A] text-[#5C3A21] font-bold py-4 px-4 rounded-xl shadow-sm hover:bg-[#F4B41A]/10 transition flex items-center justify-center gap-2">
+                  <FileText size={20}/> Solicitar Relatório (Público)
+                </button>
+                <button onClick={() => setWelcomeMode('login')} className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-4 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition flex items-center justify-center gap-2">
+                  <Lock size={20}/> Entrar no Sistema Restrito
+                </button>
+              </div>
+            ) : welcomeMode === 'solicitar' ? (
+              <form onSubmit={submitSolicitacao} className="space-y-4 text-left animate-fade-in-up text-sm max-h-[50vh] overflow-y-auto pr-2 pb-2">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Tipo de Problema</label>
+                  <select required value={solicitacaoForm.tipoRelatorio} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, tipoRelatorio: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none">
+                    <option value="Problema com Fornecedor">Problema com Fornecedor / Matéria-prima</option>
+                    <option value="Relatório de Não Conformidade - Cliente">Reclamação de Cliente / Loja</option>
+                    <option value="Ocorrência Interna">Problema Interno</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Produto / Material Afetado</label>
+                  <input type="text" required value={solicitacaoForm.produto} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, produto: e.target.value})} placeholder="Qual o produto?" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Lote</label>
+                    <input type="text" value={solicitacaoForm.lote} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, lote: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Nota Fiscal</label>
+                    <input type="text" value={solicitacaoForm.nf} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, nf: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Recebimento</label>
+                    <input type="text" value={solicitacaoForm.dataRecebimento} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataRecebimento: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Validade</label>
+                    <input type="text" value={solicitacaoForm.validade} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, validade: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Descreva o problema</label>
+                  <textarea required rows="3" value={solicitacaoForm.descricao} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, descricao: e.target.value})} placeholder="Detalhe o que aconteceu..." className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none resize-y"></textarea>
+                </div>
+                <div className="bg-gray-50 border border-dashed border-gray-300 p-4 rounded-lg text-center cursor-pointer hover:bg-gray-100 transition">
+                   <label className="cursor-pointer flex flex-col items-center justify-center">
+                      <ImagePlus size={24} className="text-[#5C3A21] mb-2" />
+                      <span className="font-bold text-sm text-[#5C3A21]">Anexar Fotos ({solicitacaoForm.imagens?.length || 0})</span>
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={async (e) => {
+                         const files = Array.from(e.target.files);
+                         if (files.length === 0) return;
+                         try {
+                           const compressedImages = await Promise.all(files.map(f => compressImage(f, false)));
+                           setSolicitacaoForm(prev => ({...prev, imagens: [...prev.imagens, ...compressedImages]}));
+                         } catch(err){}
+                      }} />
+                   </label>
+                </div>
+                <div className="flex gap-2 pt-2">
+                   <button type="button" onClick={() => setWelcomeMode('choice')} className="flex-1 bg-gray-200 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-300 transition">Voltar</button>
+                   <button type="submit" className="flex-1 bg-[#F4B41A] text-[#5C3A21] font-bold py-3 rounded-xl hover:bg-[#e0a210] transition shadow-md">Enviar</button>
+                </div>
+              </form>
             ) : (
               <form onSubmit={handleEmailLogin} className="space-y-4 text-left animate-fade-in-up">
                 <div>
@@ -2425,11 +2421,14 @@ function App() {
                   <label className="block text-sm font-bold text-gray-700 mb-1">Senha</label>
                   <input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Sua senha de acesso" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                 </div>
-                <button type="submit" className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition mt-2 flex items-center justify-center gap-2"><Check size={20}/> Entrar no Sistema</button>
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={() => setWelcomeMode('choice')} className="px-4 bg-gray-200 text-gray-800 font-bold rounded-xl hover:bg-gray-300 transition"><ChevronLeft size={20}/></button>
+                  <button type="submit" className="flex-1 bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition flex items-center justify-center gap-2"><Check size={20}/> Entrar no Sistema</button>
+                </div>
               </form>
             )}
             
-            <p className="text-xs text-gray-400 mt-6">Este sistema é de uso exclusivo para colaboradores autorizados.</p>
+            <p className="text-xs text-gray-400 mt-6 pt-4 border-t border-gray-100">Controle de Qualidade • IMAC</p>
           </div>
         </div>
       </div>
@@ -2452,8 +2451,12 @@ function App() {
       const st = r.status || 'Pendente';
       if (statusCounts[st] !== undefined) statusCounts[st]++;
 
-      if (r.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' && r.lojaLocal) {
-         clienteCounts[r.lojaLocal] = (clienteCounts[r.lojaLocal] || 0) + 1;
+      if (r.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') {
+          if(r.lojasLocais && r.lojasLocais.length > 0) {
+              r.lojasLocais.forEach(l => clienteCounts[l] = (clienteCounts[l] || 0) + 1);
+          } else if (r.lojaLocal) {
+              clienteCounts[r.lojaLocal] = (clienteCounts[r.lojaLocal] || 0) + 1;
+          }
       }
 
       if (r.produto && r.produto !== 'Não especificado') {
@@ -2493,6 +2496,7 @@ function App() {
           currentUid={appUser?.id}
           onAddUser={handleCreateNewUser}
           onRemoveUser={handleRemoveUser}
+          onResetPassword={handleResetPassword}
         />
 
         {isFornecedoresModalOpen && (
@@ -2558,11 +2562,41 @@ function App() {
 
           <div className="mb-6"><DashboardFilters onFilterChange={setDashboardFilters} fornecedores={fornecedores} /></div>
 
+          {solicitacoes.filter(s => s.status === 'Pendente').length > 0 && (
+            <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm animate-fade-in-up">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText size={20} className="text-blue-600" />
+                <h2 className="text-lg font-bold text-blue-800">Solicitações Recebidas ({solicitacoes.filter(s => s.status === 'Pendente').length})</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {solicitacoes.filter(s => s.status === 'Pendente').map(sol => (
+                  <div key={sol.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold px-2 py-1 rounded bg-blue-100 text-blue-800">{safeDate(sol.dataCriacao)}</span>
+                      <span className="text-xs font-bold text-gray-500">{sol.tipoRelatorio}</span>
+                    </div>
+                    <p className="text-sm font-bold text-gray-800 truncate">{sol.produto}</p>
+                    <p className="text-xs text-gray-600 line-clamp-2">{sol.descricao}</p>
+                    <button onClick={() => {
+                       const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [] }));
+                       setFormData({ ...getEmptyForm(), ...sol, imagens: formImages });
+                       setEditingReportId(null);
+                       setView('form');
+                       window.scrollTo(0, 0);
+                       if(db && isConfigured) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', sol.id), { status: 'Atendido' }).catch(()=>{});
+                       setSolicitacoes(prev => { const n = prev.map(s => s.id === sol.id ? {...s, status: 'Atendido'} : s); saveToLocalStorage('imac_solicitacoes', n); return n;});
+                    }} className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1"><Plus size={14}/> Criar Relatório</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {pendingRecords.length > 0 && (
             <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl shadow-sm animate-fade-in-up">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={20} className="text-orange-600" />
-                <h2 className="text-lg font-bold text-orange-800">Atenção: Relatórios Pendentes ({pendingRecords.length})</h2>
+                <h2 className="text-lg font-bold text-orange-800">Atenção: Relatórios Pendentes de Avaliação ({pendingRecords.length})</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {pendingRecords.map(reg => {
@@ -2649,6 +2683,9 @@ function App() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            {appUser?.isManager && (
+                               <button onClick={() => handleDarVisto(reg)} className="text-pink-600 hover:text-pink-800 bg-pink-50 hover:bg-pink-100 p-2 rounded-lg transition" title="Dar Visto (Assinar)"><PenTool size={16} /></button>
+                            )}
                             <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Marcar Envio"><CheckCircle size={16} /></button>
                             <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
                             <button onClick={() => setRegistroToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar"><Eye size={16} /></button>
@@ -2669,9 +2706,318 @@ function App() {
     );
   }
 
+  if (view === 'form') {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
+        {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
+        
+        {editingImageIndex !== null && (() => {
+          const imgObj = formData.imagens && formData.imagens[editingImageIndex];
+          if(!imgObj) return null;
+          const baseSrc = typeof imgObj === 'string' ? imgObj : imgObj.baseSrc;
+          const initialShapes = typeof imgObj === 'string' ? [] : imgObj.shapes;
+          
+          return (
+            <ImageAnnotator 
+              baseImageSrc={baseSrc} 
+              initialShapes={initialShapes}
+              onSave={updateAnnotatedImage} 
+              onCancel={() => setEditingImageIndex(null)} 
+            />
+          );
+        })()}
+
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border-t-[10px] border-[#5C3A21]">
+          <div className="bg-white px-8 py-6 flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-[#F4B41A] p-2.5 rounded-lg shadow-sm"><ClipboardList size={28} className="text-[#5C3A21]" /></div>
+              <div>
+                <h1 className="text-2xl font-black tracking-wide text-[#5C3A21]">
+                  {editingReportId ? 'EDIÇÃO DE RNC' : 'SISTEMA DE EMISSÃO DE RNC'}
+                </h1>
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                  {editingReportId ? `Editando registro ${String(editingReportId).substring(0,6)}...` : `Operador Atual: ${userName}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {editingReportId && (
+                 <button onClick={cancelEditing} className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 transition">Cancelar Edição</button>
+              )}
+              <button onClick={() => { setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8 space-y-8">
+            {editingReport && editingReport.status === 'Não Liberado' && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm animate-fade-in-up">
+                <div className="flex items-start">
+                  <AlertCircle className="text-red-500 mr-3 shrink-0 mt-0.5" size={24} />
+                  <div>
+                    <h3 className="text-red-800 font-bold text-sm">Relatório não liberado (Com Pendências)</h3>
+                    <p className="text-red-700 text-sm mt-1 whitespace-pre-wrap">{editingReport.observacoesStatus}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
+                <h2 className="text-lg font-bold text-[#5C3A21]">Configurações do Relatório</h2>
+                <div className="flex items-center gap-2">
+                  {formData.logo && <button onClick={removeLogo} className="text-xs font-bold text-red-500 hover:text-red-700 underline px-2 transition">Remover Logo</button>}
+                  <label className="cursor-pointer text-[13px] font-bold text-[#5C3A21] bg-[#F4B41A] hover:bg-[#e0a210] flex items-center gap-2 px-4 py-2 rounded-md shadow-sm transition uppercase"><Upload size={16} />{formData.logo ? 'Substituir Logo' : 'Anexar Logo'}<input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="hidden" /></label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-700">Origem da Ocorrência</label>
+                  <select name="tipoRelatorio" value={formData.tipoRelatorio || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none bg-white font-medium shadow-sm">
+                    <option value="Problema com Fornecedor">Problema com Fornecedor</option><option value="Insumo ou Embalagem">Insumo ou Embalagem</option>
+                    <option value="Ocorrência Interna">Ocorrência Interna</option>
+                    <option value="Relatório de Não Conformidade - Cliente">Relatório de Não Conformidade - Cliente</option>
+                    <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
+                  </select>
+                </div>
+                <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Emissão</label><input type="text" name="dataRelatorio" value={formData.dataRelatorio || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+              </div>
+
+              {isFornecedor && (
+                <div><label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2"><Truck size={16} className="text-[#5C3A21]" />Fornecedor</label><FornecedorSelect value={formData.fornecedor || ''} onChange={(f) => setFormData(prev => ({ ...prev, fornecedor: f }))} fornecedores={fornecedores} onAddFornecedor={addFornecedor} /></div>
+              )}
+            </div>
+
+            {isCliente ? (
+              <>
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                       <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
+                         <Store size={16} className="text-[#5C3A21]" /> Clientes Afetados (Multipla Seleção)
+                       </label>
+                       <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[32px]">
+                         {(!formData.lojasLocais || formData.lojasLocais.length === 0) && <span className="text-sm text-gray-400">Nenhum selecionado...</span>}
+                         {(formData.lojasLocais || []).map((loja, idx) => (
+                           <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+                             <span className="font-bold text-indigo-800 text-xs">{loja}</span>
+                             <button type="button" onClick={() => setFormData(p => ({ ...p, lojasLocais: p.lojasLocais.filter((_, i) => i !== idx) }))} className="text-indigo-400 hover:text-red-500 ml-1"><X size={14}/></button>
+                           </div>
+                         ))}
+                       </div>
+                       <ClienteSelect
+                         value={formData.lojasLocais || []}
+                         onChange={(novasLojas) => {
+                           if (Array.isArray(novasLojas)) {
+                               setFormData(prev => ({ ...prev, lojasLocais: novasLojas }));
+                           } else if (typeof novasLojas === 'string' && novasLojas !== '') {
+                               setFormData(prev => ({ ...prev, lojasLocais: [...(prev.lojasLocais || []), novasLojas] }));
+                           }
+                         }}
+                         clientes={clientes}
+                         onAddCliente={addCliente}
+                       />
+                    </div>
+                    
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
+                  <div>
+                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descrição da Não Conformidade Apresentada</label></div>
+                    <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                  </div>
+                  
+                  <div>
+                     <label className="block text-sm font-bold mb-3 text-gray-700">Características do Produto</label>
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Registro Fotográfico</h2>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
+                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                      <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
+                      <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
+                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                      <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
+                  {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                      {formData.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
+                        return (
+                          <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
+                            <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
+                            <div className="absolute top-1 right-1 flex gap-1">
+                              <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                              <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                            </div>
+                            <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
+                              {index > 0 ? (
+                                <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
+                              ) : <div/>}
+                              {index < formData.imagens.length - 1 ? (
+                                <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
+                              ) : <div/>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
+                  
+                  <div>
+                     <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
+                     <select name="statusParecer" value={formData.statusParecer || ''} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
+                        <option value="">Selecione uma opção...</option>
+                        <option value="PROCEDENTE">Procedente</option>
+                        <option value="NÃO PROCEDENTE">Não Procedente</option>
+                        <option value="NÃO APLICADO">Não Aplicado</option>
+                     </select>
+                  </div>
+
+                  <div>
+                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
+                    <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
+                  </div>
+
+                  <div>
+                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
+                    <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
+                  </div>
+
+                  <div>
+                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
+                    <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                    {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                    {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
+                    {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
+                  <div>
+                    <div className="mb-1">
+                      <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
+                    </div>
+                    <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                  </div>
+                  <div>
+                    <div className="mb-1">
+                      <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
+                    </div>
+                    <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
+                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                      <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
+                      <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
+                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                      <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
+                  {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                      {formData.imagens.map((img, index) => {
+                        const src = typeof img === 'string' ? img : img?.displaySrc;
+                        return (
+                          <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
+                            <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
+                            <div className="absolute top-1 right-1 flex gap-1">
+                              <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                              <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                            </div>
+                            <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
+                              {index > 0 ? (
+                                <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
+                              ) : <div/>}
+                              {index < formData.imagens.length - 1 ? (
+                                <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
+                              ) : <div/>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            <div className="space-y-4 pt-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
+                <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
+                <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
+                  <div key={index} className="bg-gray-50 border border-gray-200 p-4 rounded-lg relative">
+                    <button onClick={() => removeAssinatura(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"><UserX size={18} /></button>
+                    <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura?.nome || ''} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
+                    <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura?.cargo || ''} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {!isCliente && (
+              <div className="pt-4"><label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label><input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" /></div>
+            )}
+          </div>
+
+          <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
+             {editingReportId ? (
+               <span className="font-bold text-[#5C3A21]">Editando {String(editingReportId).substring(0, 8)}...</span>
+             ) : <span />}
+            <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide"><FileText size={24} />VISUALIZAR DOCUMENTO</button>
+          </div>
+        </div>
+        <div className="text-center mt-6 text-xs text-gray-400 no-print">Desenvolvido por: Cristiamberg</div>
+      </div>
+    );
+  }
+
   if (view === 'preview') {
-    let tituloRelatorio = "RELATÓRIO DE OCORRência PRODUTO";
-    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRência"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+    let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
+    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
     
     const tipoStr = String(formData.tipoRelatorio || '');
     
@@ -2711,7 +3057,7 @@ function App() {
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <p className="text-[14px]"><strong>CLIENTE:</strong> {formData.lojaLocal}</p>
+                    <p className="text-[14px]"><strong>CLIENTE(S):</strong> {(formData.lojasLocais && formData.lojasLocais.length > 0) ? formData.lojasLocais.join(', ') : (formData.lojaLocal || 'Não informado')}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
                     <p className="text-[14px]"><strong>PRODUTO:</strong> {formData.produto}</p>
                     <p className="text-[14px]"><strong>LOTE:</strong> {formData.lote}</p>
@@ -2847,294 +3193,7 @@ function App() {
     );
   }
 
-  const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
-
-  return (
-    <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
-      {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
-      
-      {editingImageIndex !== null && (() => {
-        const imgObj = formData.imagens && formData.imagens[editingImageIndex];
-        if(!imgObj) return null;
-        const baseSrc = typeof imgObj === 'string' ? imgObj : imgObj.baseSrc;
-        const initialShapes = typeof imgObj === 'string' ? [] : imgObj.shapes;
-        
-        return (
-          <ImageAnnotator 
-            baseImageSrc={baseSrc} 
-            initialShapes={initialShapes}
-            onSave={updateAnnotatedImage} 
-            onCancel={() => setEditingImageIndex(null)} 
-          />
-        );
-      })()}
-
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border-t-[10px] border-[#5C3A21]">
-        <div className="bg-white px-8 py-6 flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#F4B41A] p-2.5 rounded-lg shadow-sm"><ClipboardList size={28} className="text-[#5C3A21]" /></div>
-            <div>
-              <h1 className="text-2xl font-black tracking-wide text-[#5C3A21]">
-                {editingReportId ? 'EDIÇÃO DE RNC' : 'SISTEMA DE EMISSÃO DE RNC'}
-              </h1>
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                {editingReportId ? `Editando registro ${String(editingReportId).substring(0,6)}...` : `Operador Atual: ${userName}`}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {editingReportId && (
-               <button onClick={cancelEditing} className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 transition">Cancelar Edição</button>
-            )}
-            <button onClick={() => { setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
-          </div>
-        </div>
-
-        <div className="p-6 md:p-8 space-y-8">
-          {editingReport && editingReport.status === 'Não Liberado' && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm animate-fade-in-up">
-              <div className="flex items-start">
-                <AlertCircle className="text-red-500 mr-3 shrink-0 mt-0.5" size={24} />
-                <div>
-                  <h3 className="text-red-800 font-bold text-sm">Relatório não liberado (Com Pendências)</h3>
-                  <p className="text-red-700 text-sm mt-1 whitespace-pre-wrap">{editingReport.observacoesStatus}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
-              <h2 className="text-lg font-bold text-[#5C3A21]">Configurações do Relatório</h2>
-              <div className="flex items-center gap-2">
-                {formData.logo && <button onClick={removeLogo} className="text-xs font-bold text-red-500 hover:text-red-700 underline px-2 transition">Remover Logo</button>}
-                <label className="cursor-pointer text-[13px] font-bold text-[#5C3A21] bg-[#F4B41A] hover:bg-[#e0a210] flex items-center gap-2 px-4 py-2 rounded-md shadow-sm transition uppercase"><Upload size={16} />{formData.logo ? 'Substituir Logo' : 'Anexar Logo'}<input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="hidden" /></label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold mb-1 text-gray-700">Origem da Ocorrência</label>
-                <select name="tipoRelatorio" value={formData.tipoRelatorio || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none bg-white font-medium shadow-sm">
-                  <option value="Problema com Fornecedor">Problema com Fornecedor</option><option value="Insumo ou Embalagem">Insumo ou Embalagem</option>
-                  <option value="Ocorrência Interna">Ocorrência Interna</option>
-                  <option value="Relatório de Não Conformidade - Cliente">Relatório de Não Conformidade - Cliente</option>
-                  <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
-                </select>
-              </div>
-              <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Emissão</label><input type="text" name="dataRelatorio" value={formData.dataRelatorio || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-            </div>
-
-            {isFornecedor && (
-              <div><label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2"><Truck size={16} className="text-[#5C3A21]" />Fornecedor</label><FornecedorSelect value={formData.fornecedor || ''} onChange={(f) => setFormData(prev => ({ ...prev, fornecedor: f }))} fornecedores={fornecedores} onAddFornecedor={addFornecedor} /></div>
-            )}
-          </div>
-
-          {isCliente ? (
-            <>
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                     <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
-                       <Store size={16} className="text-[#5C3A21]" /> Cliente / Loja ou Local
-                     </label>
-                     <ClienteSelect value={formData.lojaLocal || ''} onChange={(c) => setFormData(prev => ({ ...prev, lojaLocal: c }))} clientes={clientes} onAddCliente={addCliente} />
-                  </div>
-                  
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
-                <div>
-                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descrição da Não Conformidade Apresentada</label></div>
-                  <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
-                </div>
-                
-                <div>
-                   <label className="block text-sm font-bold mb-3 text-gray-700">Características do Produto</label>
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                     <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Registro Fotográfico</h2>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                    <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
-                    <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                    <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
-                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                </div>
-                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    {formData.imagens.map((img, index) => {
-                      const src = typeof img === 'string' ? img : img?.displaySrc;
-                      return (
-                        <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
-                          <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
-                          <div className="absolute top-1 right-1 flex gap-1">
-                            <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                            <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                          </div>
-                          <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                            {index > 0 ? (
-                              <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                            ) : <div/>}
-                            {index < formData.imagens.length - 1 ? (
-                              <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                            ) : <div/>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-6">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
-                
-                <div>
-                   <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
-                   <select name="statusParecer" value={formData.statusParecer || ''} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
-                      <option value="">Selecione uma opção...</option>
-                      <option value="PROCEDENTE">Procedente</option>
-                      <option value="NÃO PROCEDENTE">Não Procedente</option>
-                      <option value="NÃO APLICADO">Não Aplicado</option>
-                   </select>
-                </div>
-
-                <div>
-                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
-                  <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
-                </div>
-
-                <div>
-                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
-                  <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
-                </div>
-
-                <div>
-                  <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
-                  <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-                  {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
-                  {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
-                <div>
-                  <div className="mb-1">
-                    <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
-                  </div>
-                  <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
-                </div>
-                <div>
-                  <div className="mb-1">
-                    <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
-                  </div>
-                  <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                    <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
-                    <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                    <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
-                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                </div>
-                {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    {formData.imagens.map((img, index) => {
-                      const src = typeof img === 'string' ? img : img?.displaySrc;
-                      return (
-                        <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
-                          <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
-                          <div className="absolute top-1 right-1 flex gap-1">
-                            <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                            <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                          </div>
-                          <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                            {index > 0 ? (
-                              <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                            ) : <div/>}
-                            {index < formData.imagens.length - 1 ? (
-                              <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                            ) : <div/>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          <div className="space-y-4 pt-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
-              <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
-              <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).map((assinatura, index) => (
-                <div key={index} className="bg-gray-50 border border-gray-200 p-4 rounded-lg relative">
-                  <button onClick={() => removeAssinatura(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition"><UserX size={18} /></button>
-                  <div className="mb-2 pr-6"><label className="block text-xs font-bold mb-1 text-gray-600">Nome</label><input type="text" value={assinatura?.nome || ''} onChange={(e) => handleAssinaturaChange(index, 'nome', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none" /></div>
-                  <div><label className="block text-xs font-bold mb-1 text-gray-600">Cargo</label><textarea rows="2" value={assinatura?.cargo || ''} onChange={(e) => handleAssinaturaChange(index, 'cargo', e.target.value)} className="w-full border border-gray-300 p-1.5 text-sm rounded focus:ring-1 focus:ring-[#F4B41A] outline-none resize-y min-h-[50px]" /></div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {!isCliente && (
-            <div className="pt-4"><label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label><input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" /></div>
-          )}
-        </div>
-
-        <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
-           {editingReportId ? (
-             <span className="font-bold text-[#5C3A21]">Editando {String(editingReportId).substring(0, 8)}...</span>
-           ) : <span />}
-          <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide"><FileText size={24} />VISUALIZAR DOCUMENTO</button>
-        </div>
-      </div>
-      <div className="text-center mt-6 text-xs text-gray-400 no-print">Desenvolvido por: Cristiamberg</div>
-    </div>
-  );
+  return null;
 }
 
 export default class AppWithBoundary extends React.Component {
