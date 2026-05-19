@@ -1037,6 +1037,7 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
   const [nome, setNome] = useState('');
   const [cargo, setCargo] = useState('');
   const [isNewAdmin, setIsNewAdmin] = useState(false);
+  const [isCanApprove, setIsCanApprove] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Substituição de alerts/confirms:
@@ -1053,10 +1054,10 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
       return;
     }
     setIsSubmitting(true);
-    const success = await onAddUser(email, password, nome, cargo, isNewAdmin);
+    const success = await onAddUser(email, password, nome, cargo, isNewAdmin, isCanApprove);
     setIsSubmitting(false);
     if (success) {
-      setEmail(''); setPassword(''); setNome(''); setCargo(''); setIsNewAdmin(false);
+      setEmail(''); setPassword(''); setNome(''); setCargo(''); setIsNewAdmin(false); setIsCanApprove(false);
     }
   };
 
@@ -1110,10 +1111,17 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
               </div>
             </div>
             
-            <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 mt-2">
-              <input type="checkbox" id="isAdmin" checked={isNewAdmin} onChange={(e) => setIsNewAdmin(e.target.checked)} className="w-5 h-5 accent-[#5C3A21] cursor-pointer" />
-              <label htmlFor="isAdmin" className="font-bold text-gray-700 cursor-pointer">Acesso de Administrador</label>
-              <span className="text-xs text-gray-500 ml-2">(Pode criar e excluir usuários)</span>
+            <div className="flex flex-col gap-3 bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="isAdmin" checked={isNewAdmin} onChange={(e) => { setIsNewAdmin(e.target.checked); if(e.target.checked) setIsCanApprove(true); }} className="w-5 h-5 accent-[#5C3A21] cursor-pointer" />
+                <label htmlFor="isAdmin" className="font-bold text-gray-700 cursor-pointer">Acesso de Administrador</label>
+                <span className="text-xs text-gray-500 ml-2 hidden sm:inline">(Pode gerenciar usuários e fornecedores)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="canApprove" checked={isCanApprove} onChange={(e) => setIsCanApprove(e.target.checked)} disabled={isNewAdmin} className="w-5 h-5 accent-[#5C3A21] cursor-pointer disabled:opacity-50" />
+                <label htmlFor="canApprove" className={`font-bold cursor-pointer ${isNewAdmin ? 'text-gray-400' : 'text-gray-700'}`}>Pode Liberar Relatórios</label>
+                <span className="text-xs text-gray-500 ml-2 hidden sm:inline">(Muda status para Liberado/Pendente)</span>
+              </div>
             </div>
 
             <button type="submit" disabled={isSubmitting} className="w-full bg-[#5C3A21] text-[#F4B41A] font-bold py-3 px-4 rounded-xl shadow-sm hover:bg-[#4a2e1a] transition mt-4 disabled:opacity-50">
@@ -1133,8 +1141,10 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
               {usersDirectory.map(u => (
                 <li key={u.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
-                      {u.nome} {u.isAdmin && <span className="bg-[#5C3A21] text-[#F4B41A] text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Admin</span>}
+                    <p className="font-bold text-gray-800 text-sm flex items-center gap-2 flex-wrap">
+                      {u.nome} 
+                      {u.isAdmin && <span className="bg-[#5C3A21] text-[#F4B41A] text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Admin</span>}
+                      {!u.isAdmin && u.canApprove && <span className="bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Aprovador</span>}
                     </p>
                     <p className="text-xs text-gray-500">{u.email} • {u.cargo}</p>
                   </div>
@@ -1201,79 +1211,7 @@ const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave })
   );
 };
 
-const BarChart = ({ data, title, color = '#F4B41A' }) => {
-  if (!data || data.length === 0) return null;
-  const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
-      <div className="space-y-3">
-        {(data || []).map((item, index) => {
-          const percentage = ((item.value || 0) / maxValue) * 100;
-          return (
-            <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="font-medium text-gray-600 truncate mr-2" title={item.label}>{item.label}</span>
-                <span className="font-bold text-gray-800">{item.value || 0}</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-6 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000 ease-out flex items-center" style={{ width: `${Math.max(percentage, 2)}%`, backgroundColor: item.color || color }}>
-                  {percentage > 10 && <span className="text-white text-xs font-bold ml-2">{percentage.toFixed(0)}%</span>}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const PieChartComponent = ({ data, title }) => {
-  if (!data || data.length === 0) return null;
-  const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
-  if (total === 0) return null;
-  
-  const colors = ['#F4B41A', '#ED7D31', '#5C3A21', '#22C55E', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
-  let currentAngle = 0;
-  const slices = (data || []).map((item, index) => {
-    const percentage = ((item.value || 0) / total) * 100;
-    const angle = (percentage / 100) * 360;
-    const startAngle = currentAngle; currentAngle += angle;
-    const startRad = ((startAngle - 90) * Math.PI) / 180, endRad = ((startAngle + angle - 90) * Math.PI) / 180;
-    const cx = 50, cy = 50, r = 40;
-    const x1 = cx + r * Math.cos(startRad), y1 = cy + r * Math.sin(startRad);
-    const x2 = cx + r * Math.cos(endRad), y2 = cy + r * Math.sin(endRad);
-    return { ...item, percentage, color: item.color || colors[index % colors.length], path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${angle > 180 ? 1 : 0} 1 ${x2} ${y2} Z` };
-  });
-
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
-      <div className="flex flex-col items-center">
-        <svg viewBox="0 0 100 100" className="w-48 h-48">
-          {slices.map((slice, index) => <path key={index} d={slice.path} fill={slice.color} stroke="white" strokeWidth="1" className="transition-all duration-500 hover:opacity-80 cursor-pointer"><title>{`${slice.label}: ${slice.value} (${slice.percentage.toFixed(1)}%)`}</title></path>)}
-          <circle cx="50" cy="50" r="25" fill="white" />
-          <text x="50" y="48" textAnchor="middle" className="text-lg font-bold" fill="#1f2937">{total}</text>
-          <text x="50" y="60" textAnchor="middle" className="text-xs" fill="#6b7280">Total</text>
-        </svg>
-        <div className="mt-4 grid grid-cols-2 gap-2 w-full">
-          {slices.map((slice, index) => (
-            <div key={index} className="flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: slice.color }}></div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-700 truncate" title={slice.label}>{slice.label}</div>
-                <div className="text-xs text-gray-500">{slice.value} ({slice.percentage.toFixed(1)}%)</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
+const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
@@ -1281,18 +1219,20 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
-        <h3 className="text-xl font-black text-gray-900 mb-1">Avaliar RNC</h3>
-        <p className="text-gray-500 text-sm mb-6 font-medium">Avaliação realizada por: <span className="font-bold">{avaliadorAtual}</span></p>
+        <h3 className="text-xl font-black text-gray-900 mb-1">{canApprove ? 'Avaliar RNC' : 'Registrar Envio'}</h3>
+        <p className="text-gray-500 text-sm mb-6 font-medium">Ação realizada por: <span className="font-bold">{avaliadorAtual}</span></p>
         
         <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Situação do Relatório</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
-              <option value="Pendente">⏳ Aguardando / Pendente</option>
-              <option value="Liberado">✅ Liberado (Aprovado)</option>
-              <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
-            </select>
-          </div>
+          {canApprove && (
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Situação do Relatório</label>
+              <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
+                <option value="Pendente">⏳ Aguardando / Pendente</option>
+                <option value="Liberado">✅ Liberado (Aprovado)</option>
+                <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Status de Envio (WhatsApp/Email)</label>
@@ -1302,7 +1242,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
             </select>
           </div>
           
-          {status === 'Não Liberado' && (
+          {canApprove && status === 'Não Liberado' && (
             <div className="animate-fade-in-up">
               <label className="block text-sm font-bold text-gray-700 mb-2">Motivo / Observações para Correção</label>
               <textarea 
@@ -1318,7 +1258,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual }) => {
 
         <div className="flex justify-end gap-3 mt-8">
           <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
-          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar Avaliação</button>
+          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar {canApprove ? 'Avaliação' : 'Envio'}</button>
         </div>
       </div>
     </div>
@@ -1525,6 +1465,78 @@ const RelatorioViewModal = ({ registro, onClose }) => {
   );
 };
 
+const BarChart = ({ data, title, color = '#F4B41A' }) => {
+  if (!data || data.length === 0) return null;
+  const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
+      <div className="space-y-3">
+        {(data || []).map((item, index) => {
+          const percentage = ((item.value || 0) / maxValue) * 100;
+          return (
+            <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="font-medium text-gray-600 truncate mr-2" title={item.label}>{item.label}</span>
+                <span className="font-bold text-gray-800">{item.value || 0}</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-6 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-1000 ease-out flex items-center" style={{ width: `${Math.max(percentage, 2)}%`, backgroundColor: item.color || color }}>
+                  {percentage > 10 && <span className="text-white text-xs font-bold ml-2">{percentage.toFixed(0)}%</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const PieChartComponent = ({ data, title }) => {
+  if (!data || data.length === 0) return null;
+  const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
+  if (total === 0) return null;
+  
+  const colors = ['#F4B41A', '#ED7D31', '#5C3A21', '#22C55E', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
+  let currentAngle = 0;
+  const slices = (data || []).map((item, index) => {
+    const percentage = ((item.value || 0) / total) * 100;
+    const angle = (percentage / 100) * 360;
+    const startAngle = currentAngle; currentAngle += angle;
+    const startRad = ((startAngle - 90) * Math.PI) / 180, endRad = ((startAngle + angle - 90) * Math.PI) / 180;
+    const cx = 50, cy = 50, r = 40;
+    const x1 = cx + r * Math.cos(startRad), y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad), y2 = cy + r * Math.sin(endRad);
+    return { ...item, percentage, color: item.color || colors[index % colors.length], path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${angle > 180 ? 1 : 0} 1 ${x2} ${y2} Z` };
+  });
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
+      <div className="flex flex-col items-center">
+        <svg viewBox="0 0 100 100" className="w-48 h-48">
+          {slices.map((slice, index) => <path key={index} d={slice.path} fill={slice.color} stroke="white" strokeWidth="1" className="transition-all duration-500 hover:opacity-80 cursor-pointer"><title>{`${slice.label}: ${slice.value} (${slice.percentage.toFixed(1)}%)`}</title></path>)}
+          <circle cx="50" cy="50" r="25" fill="white" />
+          <text x="50" y="48" textAnchor="middle" className="text-lg font-bold" fill="#1f2937">{total}</text>
+          <text x="50" y="60" textAnchor="middle" className="text-xs" fill="#6b7280">Total</text>
+        </svg>
+        <div className="mt-4 grid grid-cols-2 gap-2 w-full">
+          {slices.map((slice, index) => (
+            <div key={index} className="flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: slice.color }}></div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-gray-700 truncate" title={slice.label}>{slice.label}</div>
+                <div className="text-xs text-gray-500">{slice.value} ({slice.percentage.toFixed(1)}%)</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
@@ -1587,6 +1599,7 @@ function App() {
   const [loginNome, setLoginNome] = useState('');
   const [loginCargo, setLoginCargo] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canApprove, setCanApprove] = useState(false);
 
   // User Profile
   const [userName, setUserName] = useState('');
@@ -1649,6 +1662,7 @@ function App() {
         setUserName(sessionUser.nome);
         setUserRole(sessionUser.cargo);
         setIsAdmin(sessionUser.isAdmin === true);
+        setCanApprove(sessionUser.canApprove === true || sessionUser.isAdmin === true);
         setView('dashboard');
       } catch (e) {
         setView('welcome');
@@ -1740,6 +1754,7 @@ function App() {
     setUserName(userObj.nome);
     setUserRole(userObj.cargo);
     setIsAdmin(userObj.isAdmin === true);
+    setCanApprove(userObj.canApprove === true || userObj.isAdmin === true);
     setView('dashboard');
   };
 
@@ -1771,6 +1786,7 @@ function App() {
         email: loginEmail.trim(),
         password: loginPassword,
         isAdmin: true,
+        canApprove: true,
         dataCriacao: new Date().toISOString(),
         _isUnsynced: true // Flag de segurança para não ser apagado por erros da nuvem
       };
@@ -1789,7 +1805,7 @@ function App() {
     }
   };
 
-  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin) => {
+  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin, newCanApprove) => {
     try {
       const existingUser = usersDirectory.find(u => u.email === newEmail);
       if (existingUser) {
@@ -1805,6 +1821,7 @@ function App() {
         email: newEmail,
         password: newPassword,
         isAdmin: newIsAdmin,
+        canApprove: newCanApprove,
         dataCriacao: new Date().toISOString(),
         _isUnsynced: true // Flag de segurança para não sumir da lista
       };
@@ -1849,6 +1866,7 @@ function App() {
     setUserName('');
     setUserRole('');
     setIsAdmin(false);
+    setCanApprove(false);
     setLoginEmail('');
     setLoginPassword('');
     localStorage.removeItem('imac_app_session_user');
@@ -2458,7 +2476,7 @@ function App() {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
-        {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} />}
+        {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} canApprove={canApprove} />}
         
         <EditProfileModal 
           isOpen={isProfileModalOpen} 
