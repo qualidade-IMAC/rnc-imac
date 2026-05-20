@@ -1062,12 +1062,6 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
   const [editIsManager, setEditIsManager] = useState(false);
 
   if (!isOpen) return null;
-const handleConfirmEditPermissions = () => {
-    onUpdatePermissions(userToEdit.id, editIsAdmin, editCanApprove, editIsManager);
-    setUserToEdit(null);
-    setModalMessage('Permissões atualizadas com sucesso!');
-    setTimeout(() => setModalMessage(''), 3000);
-  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password.length < 6) {
