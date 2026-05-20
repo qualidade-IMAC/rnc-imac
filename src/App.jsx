@@ -2516,8 +2516,23 @@ function App() {
                    <button type="submit" className="flex-1 bg-[#F4B41A] text-[#5C3A21] font-bold py-3 rounded-xl hover:bg-[#e0a210] transition shadow-md">Enviar</button>
                 </div>
               </form>
+            ) : (
+              <form onSubmit={handleEmailLogin} className="space-y-4 text-left animate-fade-in-up">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">E-mail corporativo</label>
+                  <input type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Digite seu e-mail" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Senha</label>
+                  <input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Sua senha de acesso" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={() => setWelcomeMode('choice')} className="px-4 bg-gray-200 text-gray-800 font-bold rounded-xl hover:bg-gray-300 transition"><ChevronLeft size={20}/></button>
+                  <button type="submit" className="flex-1 bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition flex items-center justify-center gap-2"><Check size={20}/> Entrar no Sistema</button>
+                </div>
+              </form>
             )}
-            
+
             <p className="text-xs text-gray-400 mt-6 pt-4 border-t border-gray-100">Controle de Qualidade • IMAC</p>
           </div>
         </div>
