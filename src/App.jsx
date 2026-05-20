@@ -2535,23 +2535,65 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
                   <label className="block font-bold text-gray-700 mb-1">Produto / Material Afetado</label>
                   <input type="text" required value={solicitacaoForm.produto} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, produto: e.target.value})} placeholder="Qual o produto?" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                 </div>
+
+                {solicitacaoForm.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' && (
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Loja / Cliente Afetado</label>
+                    <input type="text" required value={solicitacaoForm.lojaLocal || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, lojaLocal: e.target.value})} placeholder="Ex: Matriz, Loja 02..." className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                )}
+
+                {solicitacaoForm.tipoRelatorio === 'Problema com Fornecedor' && (
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Nome do Fornecedor</label>
+                    <input type="text" required value={solicitacaoForm.fornecedor || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, fornecedor: e.target.value})} placeholder="Ex: Aurora, Seara..." className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Lote</label>
                     <input type="text" required value={solicitacaoForm.lote} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, lote: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                   </div>
+                  
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Nota Fiscal</label>
-                    <input type="text" required value={solicitacaoForm.nf} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, nf: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    <label className="block font-bold text-gray-700 mb-1">Quantidade</label>
+                    <input type="text" required value={solicitacaoForm.quantidade || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, quantidade: e.target.value})} placeholder="Ex: 5 kg, 2 caixas" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                   </div>
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Recebimento</label>
-                    <input type="text" required value={solicitacaoForm.dataRecebimento} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataRecebimento: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
-                  </div>
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Validade</label>
-                    <input type="text" required value={solicitacaoForm.validade} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, validade: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
-                  </div>
+
+                  {(solicitacaoForm.tipoRelatorio === 'Problema com Fornecedor' || solicitacaoForm.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' || solicitacaoForm.tipoRelatorio === 'Ocorrência Interna') && (
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">Validade</label>
+                      <input type="text" required={solicitacaoForm.tipoRelatorio !== 'Ocorrência Interna'} value={solicitacaoForm.validade || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, validade: e.target.value})} placeholder="Ex: 10/12/2026" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    </div>
+                  )}
+
+                  {solicitacaoForm.tipoRelatorio === 'Problema com Fornecedor' && (
+                    <>
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1">Nota Fiscal</label>
+                        <input type="text" required value={solicitacaoForm.nf || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, nf: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1">Recebimento</label>
+                        <input type="text" required value={solicitacaoForm.dataRecebimento || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataRecebimento: e.target.value})} placeholder="Ex: 10/05/2026" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                      </div>
+                    </>
+                  )}
+
+                  {solicitacaoForm.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' && (
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">Fabricação</label>
+                      <input type="text" required value={solicitacaoForm.dataFabricacao || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataFabricacao: e.target.value})} placeholder="Ex: 01/05/2026" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    </div>
+                  )}
+
+                  {solicitacaoForm.tipoRelatorio === 'Ocorrência Interna' && (
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">Ocorrência</label>
+                      <input type="text" required value={solicitacaoForm.dataOcorrencia || ''} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataOcorrencia: e.target.value})} placeholder="Ex: 20/05/2026" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">Descreva o problema</label>
