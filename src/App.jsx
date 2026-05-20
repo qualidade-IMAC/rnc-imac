@@ -1413,7 +1413,93 @@ const PieChartComponent = ({ data, title }) => {
     </div>
   );
 };
+const RelatorioViewModal = ({ registro, onClose }) => {
+  if (!registro) return null;
 
+  const safeDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('pt-BR');
+    } catch (error) { return ''; }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full animate-fade-in-up flex flex-col max-h-[90vh]">
+        
+        {/* Cabeçalho */}
+        <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
+          <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2">
+            <FileText size={24}/> Visão Rápida do Relatório
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition">
+            <X size={20}/>
+          </button>
+        </div>
+
+        {/* Corpo com Scroll */}
+        <div className="overflow-y-auto pr-2 space-y-4 flex-1">
+          <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase">Tipo</p>
+              <p className="font-semibold text-gray-800">{registro.tipoRelatorio || 'Não informado'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase">Data de Emissão</p>
+              <p className="font-semibold text-gray-800">{registro.dataRelatorio || safeDate(registro.dataCriacao)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase">Produto / Material</p>
+              <p className="font-semibold text-gray-800">{registro.produto || 'Não informado'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase">Autor</p>
+              <p className="font-semibold text-gray-800">{registro.autorNome || 'Desconhecido'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs font-bold text-gray-500 uppercase">Resumo da Ocorrência</p>
+              <p className="font-semibold text-gray-800">{registro.ocorrencia || 'Nenhum resumo'}</p>
+            </div>
+          </div>
+
+          {registro.descricao && (
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Descrição</p>
+              <div className="bg-white p-3 border border-gray-200 rounded-lg text-sm text-gray-700 rich-text-content" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+            </div>
+          )}
+
+          {/* Status Atual */}
+          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+            <span className="text-sm font-bold text-gray-700">Status da Avaliação:</span>
+            <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase border tracking-wide ${
+                (!registro.status || registro.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                registro.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
+                'bg-red-50 text-red-700 border-red-200'
+              }`}>
+                {registro.status || 'Pendente'}
+            </span>
+            <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase border tracking-wide flex items-center gap-1 ${
+                registro.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
+              }`}>
+                <Send size={12} /> {registro.enviado ? 'Enviado' : 'Não Enviado'}
+            </span>
+          </div>
+        </div>
+
+        {/* Rodapé */}
+        <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
+          <button onClick={onClose} className="px-6 py-2.5 bg-[#5C3A21] text-[#F4B41A] rounded-lg hover:bg-[#4a2e1a] font-bold transition shadow-md">
+            Fechar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
