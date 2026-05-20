@@ -1593,7 +1593,6 @@ function App() {
 
   const defaultAssinaturas = [
     { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' },
-    { nome: 'Thalita Maria Lima Lelis', cargo: 'Gerente Industrial\nResponsável Técnica\nIMAC Congelados' },
     { nome: 'Nathália Viana de Carvalho', cargo: 'Nutricionista - CRN 13435\nControle de Qualidade\nIMAC Congelados' },
     { nome: 'Cristiamberg Coimbra', cargo: 'Estagiário de Qualidade\nControle de Qualidade\nIMAC Congelados' }
   ];
@@ -2236,7 +2235,7 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
        return;
     }
 
-    const newAssinaturas = [...currentAssinaturas, { nome: userName, cargo: userRole }];
+    const newAssinaturas = [...currentAssinaturas, { nome: userName, cargo: 'Gerente Industrial\nResponsável Técnica\nIMAC Congelados' }];
     const payload = { assinaturas: newAssinaturas, dataModificacao: new Date().toISOString() };
     
     setRegistros(prev => {
