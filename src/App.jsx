@@ -160,7 +160,7 @@ const Clock = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline p
 const Lock = (p) => <SvgIcon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></SvgIcon>;
 const User = (p) => <SvgIcon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></SvgIcon>;
 const Key = (p) => <SvgIcon {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></SvgIcon>;
-
+const Settings = (p) => <SvgIcon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.5a2 2 0 0 1-1 1.72l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0-.73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
 const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1040,23 +1040,34 @@ const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRe
   );
 };
 
-const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, onAddUser, onRemoveUser, onResetPassword }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [nome, setNome] = useState('');
-  const [cargo, setCargo] = useState('');
-  const [isNewAdmin, setIsNewAdmin] = useState(false);
-  const [isCanApprove, setIsCanApprove] = useState(false);
-  const [isManager, setIsManager] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [modalMessage, setModalMessage] = useState('');
-  const [userToRemove, setUserToRemove] = useState(null);
-  const [userToReset, setUserToReset] = useState(null);
-  const [newResetPassword, setNewResetPassword] = useState('');
+const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, onAddUser, onRemoveUser, onResetPassword, onUpdatePermissions }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [nome, setNome] = useState('');
+  const [cargo, setCargo] = useState('');
+  const [isNewAdmin, setIsNewAdmin] = useState(false);
+  const [isCanApprove, setIsCanApprove] = useState(false);
+  const [isManager, setIsManager] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [modalMessage, setModalMessage] = useState('');
+  const [userToRemove, setUserToRemove] = useState(null);
+  const [userToReset, setUserToReset] = useState(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
 
-  if (!isOpen) return null;
+  // === NOVOS ESTADOS PARA EDIÇÃO ===
+  const [userToEdit, setUserToEdit] = useState(null);
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
+  const [editCanApprove, setEditCanApprove] = useState(false);
+  const [editIsManager, setEditIsManager] = useState(false);
 
+  if (!isOpen) return null;
+const handleConfirmEditPermissions = () => {
+    onUpdatePermissions(userToEdit.id, editIsAdmin, editCanApprove, editIsManager);
+    setUserToEdit(null);
+    setModalMessage('Permissões atualizadas com sucesso!');
+    setTimeout(() => setModalMessage(''), 3000);
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password.length < 6) {
@@ -1084,7 +1095,12 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
       setModalMessage('Senha atualizada com sucesso!');
       setTimeout(() => setModalMessage(''), 3000);
   };
-
+const handleConfirmEditPermissions = () => {
+    onUpdatePermissions(userToEdit.id, editIsAdmin, editCanApprove, editIsManager);
+    setUserToEdit(null);
+    setModalMessage('Permissões atualizadas com sucesso!');
+    setTimeout(() => setModalMessage(''), 3000);
+  };
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full animate-fade-in-up flex flex-col md:flex-row gap-6 max-h-[90vh] overflow-y-auto relative">
@@ -1117,7 +1133,35 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
             </div>
           </div>
         )}
+{userToEdit && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4 rounded-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm text-center animate-fade-in-up">
+              <Settings size={40} className="text-gray-600 mx-auto mb-4" />
+              <p className="font-bold text-gray-800 text-lg mb-2">Editar Permissões</p>
+              <p className="text-gray-600 text-sm mb-4">Configurar acesso para <strong>{userToEdit.nome}</strong>:</p>
+              
+              <div className="flex flex-col gap-3 text-left bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="editIsAdmin" checked={editIsAdmin} onChange={(e) => { setEditIsAdmin(e.target.checked); if(e.target.checked) setEditCanApprove(true); }} className="w-5 h-5 accent-[#5C3A21] cursor-pointer" />
+                  <label htmlFor="editIsAdmin" className="font-bold text-gray-700 cursor-pointer text-sm">Administrador</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="editCanApprove" checked={editCanApprove} onChange={(e) => setEditCanApprove(e.target.checked)} disabled={editIsAdmin} className="w-5 h-5 accent-[#5C3A21] cursor-pointer disabled:opacity-50" />
+                  <label htmlFor="editCanApprove" className={`font-bold cursor-pointer text-sm ${editIsAdmin ? 'text-gray-400' : 'text-gray-700'}`}>Pode Liberar Relatórios</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="editIsManager" checked={editIsManager} onChange={(e) => setEditIsManager(e.target.checked)} className="w-5 h-5 accent-pink-600 cursor-pointer" />
+                  <label htmlFor="editIsManager" className="font-bold text-gray-700 cursor-pointer text-sm">É Gerente Industrial</label>
+                </div>
+              </div>
 
+              <div className="flex justify-center gap-3">
+                <button onClick={() => setUserToEdit(null)} className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold text-gray-700 transition">Cancelar</button>
+                <button onClick={handleConfirmEditPermissions} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-900 rounded-lg font-bold text-white transition shadow-md">Salvar</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex-1 border-r border-gray-200 pr-6">
           <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
             <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2"><Plus size={24}/> Criar Novo Usuário</h3>
@@ -1194,15 +1238,20 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
                     <p className="text-xs text-gray-500">{u.email} • {u.cargo}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => setUserToReset(u)} className="text-blue-500 hover:text-white bg-blue-50 hover:bg-blue-600 p-2 rounded transition" title="Resetar Senha">
-                      <Key size={16}/>
+                  <button onClick={() => setUserToReset(u)} className="text-blue-500 hover:text-white bg-blue-50 hover:bg-blue-600 p-2 rounded transition" title="Resetar Senha">
+                    <Key size={16}/>
+                  </button>
+                  
+                  <button onClick={() => { setUserToEdit(u); setEditIsAdmin(u.isAdmin || false); setEditCanApprove(u.canApprove || false); setEditIsManager(u.isManager || false); }} className="text-gray-500 hover:text-white bg-gray-100 hover:bg-gray-600 p-2 rounded transition" title="Editar Permissões">
+                    <Settings size={16}/>
+                  </button>
+
+                  {u.id !== currentUid && (
+                    <button onClick={() => setUserToRemove(u)} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-2 rounded transition" title="Revogar Acesso">
+                      <Trash2 size={16}/>
                     </button>
-                    {u.id !== currentUid && (
-                      <button onClick={() => setUserToRemove(u)} className="text-red-500 hover:text-white bg-red-50 hover:bg-red-600 p-2 rounded transition" title="Revogar Acesso">
-                        <Trash2 size={16}/>
-                      </button>
-                    )}
-                  </div>
+                  )}
+                </div>
                 </li>
               ))}
             </ul>
@@ -1776,7 +1825,25 @@ function App() {
       return false;
     }
   };
+const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsManager) => {
+    try {
+      setUsersDirectory(prev => {
+        const newList = prev.map(u => u.id === uid ? { ...u, isAdmin: newIsAdmin, canApprove: newCanApprove, isManager: newIsManager } : u);
+        localStorage.setItem('imac_users_directory', JSON.stringify(newList));
+        return newList;
+      });
 
+      if (db && isConfigured) {
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid), { 
+          isAdmin: newIsAdmin, 
+          canApprove: newCanApprove, 
+          isManager: newIsManager 
+        }).catch(()=>{});
+      }
+    } catch (e) {
+      setAppMessage("❌ Erro ao atualizar permissões.");
+    }
+  };
   const handleResetPassword = async (uid, newPass) => {
     try {
       setUsersDirectory(prev => {
@@ -2602,6 +2669,7 @@ function App() {
           onAddUser={handleCreateNewUser}
           onRemoveUser={handleRemoveUser}
           onResetPassword={handleResetPassword}
+          onUpdatePermissions={handleUpdatePermissions}
         />
 
         {isFornecedoresModalOpen && (
