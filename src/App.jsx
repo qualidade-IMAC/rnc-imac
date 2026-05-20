@@ -1540,7 +1540,7 @@ function App() {
   const [welcomeMode, setWelcomeMode] = useState('choice'); // choice, login, solicitar
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [solicitacaoForm, setSolicitacaoForm] = useState({
-    tipoRelatorio: 'Problema com Fornecedor', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: []
+    tipoRelatorio: 'Problema com Fornecedor', solicitante: '', urgencia: 'Média', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: []
   });
 
   // User Profile
@@ -2014,7 +2014,7 @@ function App() {
       }
       
       setAppMessage("✅ Solicitação enviada com sucesso!");
-      setSolicitacaoForm({ tipoRelatorio: 'Problema com Fornecedor', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: [] });
+      setSolicitacaoForm({ tipoRelatorio: 'Problema com Fornecedor', solicitante: '', urgencia: 'Média', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: [] });
       setWelcomeMode('choice');
       setTimeout(() => setAppMessage(null), 3000);
     } catch(e) {
@@ -2446,6 +2446,23 @@ function App() {
               </div>
             ) : welcomeMode === 'solicitar' ? (
               <form onSubmit={submitSolicitacao} className="space-y-4 text-left animate-fade-in-up text-sm max-h-[50vh] overflow-y-auto pr-2 pb-2">
+                
+                {/* NOVO: Solicitante e Urgência */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Quem está solicitando?</label>
+                    <input type="text" required value={solicitacaoForm.solicitante} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, solicitante: e.target.value})} placeholder="Seu nome / Setor" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Nível de Urgência</label>
+                    <select required value={solicitacaoForm.urgencia} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, urgencia: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none font-bold">
+                      <option value="Baixa">🟢 Baixa (Pode aguardar)</option>
+                      <option value="Média">🟡 Média (Atenção em breve)</option>
+                      <option value="Alta">🔴 Alta (Ação imediata)</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">Tipo de Problema</label>
                   <select required value={solicitacaoForm.tipoRelatorio} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, tipoRelatorio: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none">
@@ -2461,19 +2478,19 @@ function App() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Lote</label>
-                    <input type="text" value={solicitacaoForm.lote} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, lote: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    <input type="text" required value={solicitacaoForm.lote} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, lote: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                   </div>
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Nota Fiscal</label>
-                    <input type="text" value={solicitacaoForm.nf} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, nf: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    <input type="text" required value={solicitacaoForm.nf} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, nf: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                   </div>
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Recebimento</label>
-                    <input type="text" value={solicitacaoForm.dataRecebimento} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataRecebimento: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    <input type="text" required value={solicitacaoForm.dataRecebimento} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, dataRecebimento: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                   </div>
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Validade</label>
-                    <input type="text" value={solicitacaoForm.validade} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, validade: e.target.value})} placeholder="Opcional" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
+                    <input type="text" required value={solicitacaoForm.validade} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, validade: e.target.value})} placeholder="Obrigatório" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
                   </div>
                 </div>
                 <div>
@@ -2497,21 +2514,6 @@ function App() {
                 <div className="flex gap-2 pt-2">
                    <button type="button" onClick={() => setWelcomeMode('choice')} className="flex-1 bg-gray-200 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-300 transition">Voltar</button>
                    <button type="submit" className="flex-1 bg-[#F4B41A] text-[#5C3A21] font-bold py-3 rounded-xl hover:bg-[#e0a210] transition shadow-md">Enviar</button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleEmailLogin} className="space-y-4 text-left animate-fade-in-up">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">E-mail corporativo</label>
-                  <input type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Digite seu e-mail" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Senha</label>
-                  <input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Sua senha de acesso" className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none" />
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <button type="button" onClick={() => setWelcomeMode('choice')} className="px-4 bg-gray-200 text-gray-800 font-bold rounded-xl hover:bg-gray-300 transition"><ChevronLeft size={20}/></button>
-                  <button type="submit" className="flex-1 bg-[#5C3A21] text-[#F4B41A] font-bold py-3.5 px-4 rounded-xl shadow-md hover:bg-[#4a2e1a] transition flex items-center justify-center gap-2"><Check size={20}/> Entrar no Sistema</button>
                 </div>
               </form>
             )}
@@ -2658,13 +2660,26 @@ function App() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {solicitacoes.filter(s => s.status === 'Pendente').map(sol => (
-                  <div key={sol.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-bold px-2 py-1 rounded bg-blue-100 text-blue-800">{safeDate(sol.dataCriacao)}</span>
-                      <span className="text-xs font-bold text-gray-500">{sol.tipoRelatorio}</span>
-                    </div>
-                    <p className="text-sm font-bold text-gray-800 truncate">{sol.produto}</p>
-                    <p className="text-xs text-gray-600 line-clamp-2">{sol.descricao}</p>
+                  <div key={sol.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+  {/* Faixa de Urgência colorida na lateral */}
+  {sol.urgencia === 'Alta' && <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>}
+  {sol.urgencia === 'Média' && <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>}
+  {sol.urgencia === 'Baixa' && <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>}
+
+  <div className="flex justify-between items-start pl-2">
+    <span className="text-[10px] font-bold px-2 py-1 rounded bg-blue-100 text-blue-800">{safeDate(sol.dataCriacao)}</span>
+    <span className={`text-[10px] font-bold px-2 py-1 rounded ${sol.urgencia === 'Alta' ? 'bg-red-100 text-red-700' : sol.urgencia === 'Média' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+      {sol.urgencia ? `Urgência: ${sol.urgencia}` : 'Urgência: Média'}
+    </span>
+  </div>
+  
+  <div className="pl-2">
+    <p className="text-sm font-bold text-gray-800 truncate" title={sol.produto}>{sol.produto}</p>
+    <p className="text-xs font-semibold text-indigo-600 mt-0.5">Solicitante: {sol.solicitante || 'Não informado'}</p>
+    <p className="text-[11px] text-gray-500 mt-0.5">{sol.tipoRelatorio}</p>
+  </div>
+
+  <p className="text-xs text-gray-600 line-clamp-2 pl-2 border-t border-gray-100 pt-1 mt-1">{sol.descricao}</p>
                     <button onClick={() => {
                        const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [] }));
                        setFormData({ ...getEmptyForm(), ...sol, imagens: formImages });
