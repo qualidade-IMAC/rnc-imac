@@ -897,110 +897,7 @@ const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
     </div>
   );
 };
-const RelatorioViewModal = ({ registro, onClose }) => {
-  if (!registro) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/70 z-[300] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-fade-in-up">
-
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
-          <div>
-            <h2 className="text-2xl font-black text-[#5C3A21]">
-              Visualização do Relatório
-            </h2>
-            <p className="text-sm text-gray-500">
-              ID: {String(registro.id || '').substring(0, 8)}
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
-
-          <div className="grid md:grid-cols-2 gap-4">
-
-            <div className="bg-gray-50 rounded-xl p-4 border">
-              <p className="text-xs text-gray-500 font-bold uppercase">
-                Tipo de Relatório
-              </p>
-              <p className="font-bold text-gray-800 mt-1">
-                {registro.tipoRelatorio || 'Não informado'}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-xl p-4 border">
-              <p className="text-xs text-gray-500 font-bold uppercase">
-                Produto
-              </p>
-              <p className="font-bold text-gray-800 mt-1">
-                {registro.produto || 'Não informado'}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-xl p-4 border">
-              <p className="text-xs text-gray-500 font-bold uppercase">
-                Fornecedor
-              </p>
-              <p className="font-bold text-gray-800 mt-1">
-                {registro.fornecedor || 'Não informado'}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 rounded-xl p-4 border">
-              <p className="text-xs text-gray-500 font-bold uppercase">
-                Data
-              </p>
-              <p className="font-bold text-gray-800 mt-1">
-                {registro.data || 'Não informado'}
-              </p>
-            </div>
-
-          </div>
-
-          <div className="bg-white border rounded-xl p-5">
-            <p className="text-xs text-gray-500 font-bold uppercase mb-2">
-              Ocorrência
-            </p>
-
-            <div
-              className="rich-text-content text-gray-800"
-              dangerouslySetInnerHTML={{
-                __html: registro.ocorrencia || 'Sem descrição'
-              }}
-            />
-          </div>
-
-          {registro.imagens && registro.imagens.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 font-bold uppercase mb-3">
-                Imagens
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                {registro.imagens.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`Imagem ${index + 1}`}
-                    className="rounded-xl border shadow-sm w-full object-cover"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-};
 const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEdit, onRemove }) => {
   const [editingName, setEditingName] = useState(null);
   const [editValue, setEditValue] = useState('');
@@ -2369,6 +2266,8 @@ function App() {
     return p[tipoRelAtual] || p['Problema com Fornecedor'];
   };
   const placeholders = getPlaceholders();
+
+  const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
 
   if (authLoading || view === 'loading') {
     return (
