@@ -72,7 +72,10 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
 }
 
 const saveToLocalStorage = (key, data) => {
-  try { localStorage.setItem(key, JSON.stringify(data)); } catch (error) { console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`); }
+  // O setTimeout tira essa tarefa da fila principal, destravando a tela imediatamente
+  setTimeout(() => {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (error) { console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`); }
+  }, 10);
 };
 
 const safeDate = (dateString) => {
@@ -1565,7 +1568,7 @@ function App() {
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
   const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
-
+  const [visibleHistoryCount, setVisibleHistoryCount] = useState(20);
   // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
   const [checkingDirectory, setCheckingDirectory] = useState(true);
@@ -2505,7 +2508,7 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
                 </button>
               </div>
             ) : welcomeMode === 'solicitar' ? (
-              <form onSubmit={submitSolicitacao} className="space-y-4 text-left animate-fade-in-up text-sm max-h-[50vh] overflow-y-auto pr-2 pb-2">
+              <form onSubmit={submitSolicitacao} className="space-y-4 text-left animate-fade-in-up text-sm max-h-[50vh] overflow-y-auto p-2">
                 
                 {/* NOVO: Solicitante e Urgência */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
