@@ -121,6 +121,7 @@ const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }
 
 const Printer = (p) => <SvgIcon {...p}><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" /></SvgIcon>;
 const Edit3 = (p) => <SvgIcon {...p}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></SvgIcon>;
+const Copy = (p) => <SvgIcon {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></SvgIcon>;
 const ImagePlus = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v4M21 9h-6M18 6v6M3 16l5-5c.928-.893 2.072-.893 3 0l5 5M14 14l1-1c.928-.893 2.072-.893 3 0l3 3" /></SvgIcon>;
 const Trash2 = (p) => <SvgIcon {...p}><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></SvgIcon>;
 const FileText = (p) => <SvgIcon {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></SvgIcon>;
@@ -2221,7 +2222,15 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     setView('form');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+const duplicateReport = (registro) => {
+    if(!registro) return;
+    // Puxa os dados para o formulário
+    startEditingReport(registro);
+    // Limpa o ID de edição para que o sistema salve como um NOVO relatório
+    setEditingReportId(null);
+    setAppMessage("📝 Relatório duplicado! Altere as informações necessárias (como a loja) e salve.");
+    setTimeout(() => setAppMessage(null), 4000);
+  };
   const cancelEditing = () => {
     setEditingReportId(null);
     setFormData(getEmptyForm());
@@ -2914,6 +2923,7 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
                             <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
                             <button onClick={() => { startEditingReport(reg); setView('preview'); }} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar Documento"><Eye size={16} /></button>
                             <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
+                            <button onClick={() => duplicateReport(reg)} className="text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 p-2 rounded-lg transition" title="Duplicar Relatório"><Copy size={16} /></button>
                             <button onClick={() => setRegistroToDelete(reg.id)} className="text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition" title="Apagar"><Trash2 size={16} /></button>
                           </div>
                         </td>
