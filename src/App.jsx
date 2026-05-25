@@ -2967,6 +2967,10 @@ const duplicateReport = (registro) => {
       </div>
     );
   }
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'form') {
     return (
