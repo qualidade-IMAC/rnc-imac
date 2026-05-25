@@ -2966,12 +2966,8 @@ const duplicateReport = (registro) => {
         </div>
       </div>
     );
-  }
-        </div>
-      </div>
-    );
-  }
-
+}
+  
   if (view === 'form') {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
