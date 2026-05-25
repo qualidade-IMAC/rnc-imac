@@ -3170,8 +3170,6 @@ const duplicateReport = (registro) => {
                      </select>
                   </div>
 
-      
-              </>
             ) : (
               <>
                 <div className="space-y-4">
