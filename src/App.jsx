@@ -3305,7 +3305,6 @@ const duplicateReport = (registro) => {
                       </div>
                     ))}
                   </div>
-                </div>
               </>
             ) : (
               <>
