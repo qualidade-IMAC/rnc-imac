@@ -3289,9 +3289,6 @@ const duplicateReport = (registro) => {
                     </div>
                   </div>
                 )}
-
-                <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao3}</p></div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
                      <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
