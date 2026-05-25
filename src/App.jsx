@@ -3051,117 +3051,69 @@ const duplicateReport = (registro) => {
             </div>
 
             {isCliente ? (
-              <>
-                <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                       <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
-                         <Store size={16} className="text-[#5C3A21]" /> Clientes Afetados (Multipla Seleção)
-                       </label>
-                       <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[32px]">
-                         {(!formData.lojasLocais || formData.lojasLocais.length === 0) && <span className="text-sm text-gray-400">Nenhum selecionado...</span>}
-                         {(formData.lojasLocais || []).map((loja, idx) => (
-                           <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
-                             <span className="font-bold text-indigo-800 text-xs">{loja}</span>
-                             <button type="button" onClick={() => setFormData(p => ({ ...p, lojasLocais: p.lojasLocais.filter((_, i) => i !== idx) }))} className="text-indigo-400 hover:text-red-500 ml-1"><X size={14}/></button>
-                           </div>
-                         ))}
-                       </div>
-                       <ClienteSelect
-                         value={formData.lojasLocais || []}
-                         onChange={(novasLojas) => {
-                           if (Array.isArray(novasLojas)) {
-                               setFormData(prev => ({ ...prev, lojasLocais: novasLojas }));
-                           } else if (typeof novasLojas === 'string' && novasLojas !== '') {
-                               setFormData(prev => ({ ...prev, lojasLocais: [...(prev.lojasLocais || []), novasLojas] }));
-                           }
-                         }}
-                         clientes={clientes}
-                         onAddCliente={addCliente}
-                       />
-                    </div>
-                    
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
                   <div className="space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3 mt-6">
-                      <h2 className="text-lg font-bold text-[#5C3A21]">Descrição, Análises e Considerações</h2>
-                      <button type="button" onClick={addTopico} className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR TÓPICO</button>
-                    </div>
-                    
-                    {(Array.isArray(formData.topicos) ? formData.topicos : []).map((topico, index) => (
-                      <div key={topico.id || index} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative shadow-sm">
-                         <button type="button" onClick={() => removeTopico(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition" title="Remover Tópico"><X size={18} /></button>
-                         <div className="mb-2 pr-8">
-                           <input type="text" value={topico.titulo} onChange={(e) => handleTopicoChange(index, 'titulo', e.target.value)} className="w-full border-b border-dashed border-gray-400 text-sm font-bold text-[#5C3A21] pb-1 outline-none focus:border-[#F4B41A] bg-transparent uppercase tracking-wider" placeholder="TÍTULO DO TÓPICO (ex: Metodologia)" />
+                    <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                         <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
+                           <Store size={16} className="text-[#5C3A21]" /> Clientes Afetados (Multipla Seleção)
+                         </label>
+                         <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[32px]">
+                           {(!formData.lojasLocais || formData.lojasLocais.length === 0) && <span className="text-sm text-gray-400">Nenhum selecionado...</span>}
+                           {(formData.lojasLocais || []).map((loja, idx) => (
+                             <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+                               <span className="font-bold text-indigo-800 text-xs">{loja}</span>
+                               <button type="button" onClick={() => setFormData(p => ({ ...p, lojasLocais: p.lojasLocais.filter((_, i) => i !== idx) }))} className="text-indigo-400 hover:text-red-500 ml-1"><X size={14}/></button>
+                             </div>
+                           ))}
                          </div>
-                         <RichTextEditor value={topico.texto || ''} onChange={(val) => handleTopicoChange(index, 'texto', val)} placeholder="Descreva os detalhes aqui..." />
+                         <ClienteSelect
+                           value={formData.lojasLocais || []}
+                           onChange={(novasLojas) => {
+                             if (Array.isArray(novasLojas)) {
+                                 setFormData(prev => ({ ...prev, lojasLocais: novasLojas }));
+                             } else if (typeof novasLojas === 'string' && novasLojas !== '') {
+                                 setFormData(prev => ({ ...prev, lojasLocais: [...(prev.lojasLocais || []), novasLojas] }));
+                             }
+                           }}
+                           clientes={clientes}
+                           onAddCliente={addCliente}
+                         />
                       </div>
-                    ))}
-                  </div>
-                  
-                  <div>
-                     <label className="block text-sm font-bold mb-3 text-gray-700">Características do Produto</label>
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                     </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Registro Fotográfico</h2>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                      <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
-                      <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
-                      <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  </div>
-                  {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                      {formData.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return (
-                          <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
-                            <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
-                            <div className="absolute top-1 right-1 flex gap-1">
-                              <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                              <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                            </div>
-                            <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                              {index > 0 ? (
-                                <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                              ) : <div/>}
-                              {index < formData.imagens.length - 1 ? (
-                                <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                              ) : <div/>}
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                      {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
+                      {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                    </div>
+                  </div>
+                )}
 
-                <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
-                  
-                  <div>
-                     <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
+                <div className="space-y-4 mt-8">
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Características do Produto & Parecer</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                    <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                    <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                    <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                  </div>
+                  <div className="mt-4">
+                     <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer Técnico</label>
                      <select name="statusParecer" value={formData.statusParecer || ''} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
                         <option value="">Selecione uma opção...</option>
                         <option value="PROCEDENTE">Procedente</option>
@@ -3169,24 +3121,26 @@ const duplicateReport = (registro) => {
                         <option value="NÃO APLICADO">Não Aplicado</option>
                      </select>
                   </div>
-
-            ) : (
-              <>
-                <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-                    {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
-                    {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-                  </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 mt-8">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3 mt-6">
+                    <h2 className="text-lg font-bold text-[#5C3A21]">Descrição, Análises e Considerações</h2>
+                    <button type="button" onClick={addTopico} className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR TÓPICO</button>
+                  </div>
+                  
+                  {(Array.isArray(formData.topicos) ? formData.topicos : []).map((topico, index) => (
+                    <div key={topico.id || index} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative shadow-sm">
+                       <button type="button" onClick={() => removeTopico(index)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition" title="Remover Tópico"><X size={18} /></button>
+                       <div className="mb-2 pr-8">
+                         <input type="text" value={topico.titulo} onChange={(e) => handleTopicoChange(index, 'titulo', e.target.value)} className="w-full border-b border-dashed border-gray-400 text-sm font-bold text-[#5C3A21] pb-1 outline-none focus:border-[#F4B41A] bg-transparent uppercase tracking-wider" placeholder="TÍTULO DO TÓPICO (ex: Metodologia)" />
+                       </div>
+                       <RichTextEditor value={topico.texto || ''} onChange={(val) => handleTopicoChange(index, 'texto', val)} placeholder="Descreva os detalhes aqui..." />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-4 mt-8">
                   <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
                     <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
@@ -3221,10 +3175,6 @@ const duplicateReport = (registro) => {
                     </div>
                   )}
                 </div>
-              </>
-            )}
-
-            <div className="space-y-4 pt-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
                 <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
                 <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
