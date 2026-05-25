@@ -3258,8 +3258,15 @@ const duplicateReport = (registro) => {
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao2}</p></div>
                   
-                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+                  {(Array.isArray(formData.topicos) ? formData.topicos : []).map((topico, index) => {
+  if (!topico.texto || topico.texto.trim() === '' || topico.texto === '<br>') return null;
+  return (
+    <div key={topico.id || index} className="mb-5 w-full overflow-hidden break-inside-avoid">
+      <p className="font-bold text-[14px] ml-1 mb-1 uppercase">{topico.titulo}:</p>
+      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: topico.texto }} />
+    </div>
+  );
+})}
 
                   <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4 ml-1 mb-2">
@@ -3291,17 +3298,7 @@ const duplicateReport = (registro) => {
                      <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO PROCEDENTE' ? 'X' : '  '}) NÃO PROCEDENTE</p>
                      <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
                   </div>
-
-                  {(Array.isArray(formData.topicos) ? formData.topicos : []).map((topico, index) => {
-  if (!topico.texto || topico.texto.trim() === '' || topico.texto === '<br>') return null;
-  return (
-    <div key={topico.id || index} className="mb-5 w-full overflow-hidden break-inside-avoid">
-      <p className="font-bold text-[14px] ml-1 mb-1 uppercase">{topico.titulo}:</p>
-      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: topico.texto }} />
-    </div>
-  );
-})}
-
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
