@@ -11,13 +11,13 @@ if (typeof __firebase_config !== 'undefined') {
   isConfigured = true;
 } else {
   firebaseConfig = {
-    apiKey: "AIzaSyAomEpViVLeoDdILS88SjjozJNr4BtjjNU",
-    authDomain: "rnc-imac-51124.firebaseapp.com",
-    projectId: "rnc-imac-51124",
-    storageBucket: "rnc-imac-51124.firebasestorage.app",
-    messagingSenderId: "858158161408",
-    appId: "1:858158161408:web:68df68b9aafe57e4b142e5"
-  };
+  apiKey: "AIzaSyCMs6dYdu5UI5XFSf5E_JWqlpr5Ae9Hx90",
+  authDomain: "sistemaits-7519b.firebaseapp.com",
+  projectId: "sistemaits-7519b",
+  storageBucket: "sistemaits-7519b.firebasestorage.app",
+  messagingSenderId: "879433915473",
+  appId: "1:879433915473:web:76e82b1b0a2619d010ac70"
+};
   if (firebaseConfig.apiKey !== "") {
     isConfigured = true;
   }
