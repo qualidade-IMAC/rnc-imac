@@ -3292,20 +3292,15 @@ const duplicateReport = (registro) => {
                      <p className="text-[14px] font-semibold">({formData.statusParecer === 'NÃO APLICADO' ? 'X' : '  '}) NÃO APLICADO</p>
                   </div>
 
-                  <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
-
-                  <div className="mb-5">
-                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
-                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
-                  </div>
-
-                  {formData.conclusaoParecer && (
-                    <div className="mb-8">
-                       <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
-                       <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
-                    </div>
-                  )}
+                  {(Array.isArray(formData.topicos) ? formData.topicos : []).map((topico, index) => {
+  if (!topico.texto || topico.texto.trim() === '' || topico.texto === '<br>') return null;
+  return (
+    <div key={topico.id || index} className="mb-5 w-full overflow-hidden break-inside-avoid">
+      <p className="font-bold text-[14px] ml-1 mb-1 uppercase">{topico.titulo}:</p>
+      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: topico.texto }} />
+    </div>
+  );
+})}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
