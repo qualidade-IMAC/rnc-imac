@@ -3283,7 +3283,9 @@ const duplicateReport = (registro) => {
               <FileText size={24} />VISUALIZAR DOCUMENTO
             </button>
           </div>
-          <div className="text-center mt-6 text-xs text-gray-400 no-print">Desenvolvido por: Cristiamberg</div>
+          <div className="text-center mt-6 text-xs text-gray-400 no-print">
+            Desenvolvido por: Cristiamberg
+          </div>
         </div>
       </div>
     );
