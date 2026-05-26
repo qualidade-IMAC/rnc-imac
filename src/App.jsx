@@ -2950,12 +2950,11 @@ const duplicateReport = (registro) => {
           </div>
                     <div className="text-center mt-6 text-xs text-gray-400 no-print">
             Desenvolvido por: Cristiamberg
-          </div>
+                  </div>
         </div>
-      </>
+      </div>
     );
   }
-
   if (view === 'form') {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
@@ -3285,11 +3284,11 @@ const duplicateReport = (registro) => {
               <FileText size={24} />VISUALIZAR DOCUMENTO
             </button>
           </div>
-          <div className="text-center mt-6 text-xs text-gray-400 no-print">
+                    <div className="text-center mt-6 text-xs text-gray-400 no-print">
             Desenvolvido por: Cristiamberg
           </div>
         </div>
-      </div>
+      </>
     );
   }
   if (view === 'preview') {
