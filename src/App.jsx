@@ -2865,7 +2865,7 @@ const duplicateReport = (registro) => {
 
   <p className="text-xs text-gray-600 line-clamp-2 pl-2 border-t border-gray-100 pt-1 mt-1">{sol.descricao}</p>
                     <button onClick={() => {
-                       const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [], legenda: '' }));
+                       const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [] }));
                        setFormData({ ...getEmptyForm(), ...sol, imagens: formImages });
                        setEditingReportId(null);
                        setView('form');
@@ -3172,7 +3172,7 @@ const duplicateReport = (registro) => {
                     <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
                       <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
                       <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar, colocar setas e adicionar legenda embaixo da foto</span>
                       <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   </div>
@@ -3197,12 +3197,15 @@ const duplicateReport = (registro) => {
                                 ) : <div/>}
                               </div>
                             </div>
-                            <div className="bg-white border-t border-gray-200 p-2">
+                            <div className="bg-white border-t border-[#F4B41A]/40 p-2">
+                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">
+                                Legenda da foto {index + 1}
+                              </label>
                               <textarea
                                 value={typeof img === 'string' ? '' : (img?.legenda || '')}
                                 onChange={(e) => updateImageCaption(index, e.target.value)}
-                                placeholder="Digite uma legenda para esta foto..."
-                                className="w-full text-xs border border-gray-300 rounded p-2 resize-none outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-gray-50"
+                                placeholder="Ex.: Produto com alteração visual, lote, validade, etiqueta..."
+                                className="w-full min-h-[58px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-yellow-50/40 text-gray-800"
                                 rows={2}
                               />
                             </div>
