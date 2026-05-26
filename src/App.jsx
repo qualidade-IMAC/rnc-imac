@@ -3350,7 +3350,17 @@ const duplicateReport = (registro) => {
                     <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
+                        const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+                        return (
+                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                            <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" />
+                            {legenda.trim() !== '' && (
+                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
+                                <p className="text-[12px] text-center text-gray-700 italic">{legenda}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
                       })}
                     </div>
                   </div>
@@ -3421,7 +3431,17 @@ const duplicateReport = (registro) => {
                     <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
+                        const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+                        return (
+                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                            <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" />
+                            {legenda.trim() !== '' && (
+                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
+                                <p className="text-[12px] text-center text-gray-700 italic">{legenda}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
                       })}
                     </div>
                   </div>
