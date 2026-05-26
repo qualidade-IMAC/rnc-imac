@@ -1362,15 +1362,15 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
 };
 
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
-  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
+  const [filters, setFilters] = useState({ periodo: 'todos', fornecedor: '', tipo: '', status: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-3 items-center">
       <Filter size={18} className="text-gray-500" />
       <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
-        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
+        <option value="todos">Todo Período</option><option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
+        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option>
       </select>
       <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
@@ -1568,7 +1568,7 @@ function App() {
   
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
-  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
+  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'todos', fornecedor: '', tipo: '', status: '' });
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(20);
   // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
@@ -2356,7 +2356,26 @@ const duplicateReport = (registro) => {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handleSaveReport = (action = 'save_and_preview') => {
+  const handleSaveReport = async (action = 'save_and_preview') => {
+    const imagensNormalizadas = Array.isArray(formData.imagens)
+      ? formData.imagens.map((img) => {
+          if (typeof img === 'string') {
+            return {
+              isObject: true,
+              id: Date.now() + Math.random(),
+              baseSrc: img,
+              displaySrc: img,
+              shapes: [],
+              legenda: ''
+            };
+          }
+          return {
+            ...img,
+            legenda: img?.legenda || ''
+          };
+        })
+      : [];
+
     const registroData = {
       tipoRelatorio: String(formData.tipoRelatorio || 'Problema com Fornecedor'),
       dataRelatorio: formData.dataRelatorio || '',
@@ -2370,7 +2389,7 @@ const duplicateReport = (registro) => {
       sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
       statusParecer: formData.statusParecer || '',
       topicos: Array.isArray(formData.topicos) ? formData.topicos : [],
-      imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
+      imagens: imagensNormalizadas,
       assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: appUser?.id || 'anonimo',
@@ -2381,43 +2400,52 @@ const duplicateReport = (registro) => {
 
     let currentId = editingReportId;
 
-    if (editingReportId) {
-      const updatedAt = new Date().toISOString();
-      const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
-      const existingReport = registros.find(r => r.id === editingReportId);
-      if (existingReport && typeof existingReport.enviado !== 'undefined') {
-         payloadEdicao.enviado = existingReport.enviado;
+    try {
+      if (editingReportId) {
+        const updatedAt = new Date().toISOString();
+        const payloadEdicao = { ...registroData, id: String(editingReportId), dataModificacao: updatedAt, _isUnsynced: false };
+        const existingReport = registros.find(r => r.id === editingReportId);
+        if (existingReport && typeof existingReport.enviado !== 'undefined') {
+           payloadEdicao.enviado = existingReport.enviado;
+        }
+
+        setRegistros(prev => {
+          const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
+          saveToLocalStorage('imac_registros', updatedList);
+          return updatedList;
+        });
+
+        if (db && isConfigured) {
+          const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload, { merge: true });
+          setAppMessage("✅ Relatório atualizado na nuvem!");
+        } else {
+          setAppMessage("💾 Edição salva localmente");
+        }
+      } else {
+        const tempId = Date.now().toString();
+        const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: !db || !isConfigured };
+        currentId = tempId;
+
+        setRegistros(prev => {
+          const newList = [novoRegistro, ...(prev || [])];
+          saveToLocalStorage('imac_registros', newList);
+          return newList;
+        });
+
+        if (db && isConfigured) {
+          const safePayload = JSON.parse(JSON.stringify({ ...novoRegistro, _isUnsynced: false }));
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload, { merge: true });
+          setAppMessage("✅ Relatório salvo na nuvem!");
+        } else {
+          setAppMessage("💾 Relatório salvo localmente");
+        }
       }
-      
-      setRegistros(prev => {
-        const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
-        saveToLocalStorage('imac_registros', updatedList);
-        return updatedList;
-      });
-
-      if (db && isConfigured) {
-        const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
-        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload)
-          .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
-          .catch(() => setAppMessage("💾 Atualização salva localmente"));
-      } else { setAppMessage("💾 Edição salva localmente"); }
-      
-    } else {
-      const tempId = Date.now().toString();
-      const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
-      currentId = tempId;
-
-      setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; saveToLocalStorage('imac_registros', newList); return newList; });
-      
-      if (db && isConfigured) {
-        const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
-        const safePayload = JSON.parse(JSON.stringify(registroParaNuvem));
-        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload)
-          .then(() => setAppMessage("✅ Relatório salvo na nuvem!"))
-          .catch(() => setAppMessage("💾 Salvo localmente (offline)"));
-      } else { setAppMessage("💾 Relatório salvo localmente"); }
+    } catch (error) {
+      console.error('Erro ao salvar no Firestore:', error);
+      setAppMessage(`💾 Salvo localmente, mas não sincronizou na nuvem: ${error?.message || 'verifique a conexão/permissão do Firebase'}`);
     }
-    
+
     if (action === 'save_and_preview') {
       setEditingReportId(currentId);
       setView('preview');
@@ -2428,7 +2456,7 @@ const duplicateReport = (registro) => {
       setView('dashboard');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    setTimeout(() => setAppMessage(null), 3000);
+    setTimeout(() => setAppMessage(null), 6000);
   };
 
   const handlePrintAndSave = () => window.print();
@@ -2445,24 +2473,73 @@ const duplicateReport = (registro) => {
     setRegistroToDelete(null);
   };
 
+  const parseRegistroDate = (r) => {
+    if (!r) return null;
+
+    if (r.dataCriacao) {
+      const d = new Date(r.dataCriacao);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    if (r.dataRelatorio) {
+      const partes = String(r.dataRelatorio).split('/');
+      if (partes.length === 3) {
+        const [dia, mes, ano] = partes;
+        const d = new Date(Number(ano), Number(mes) - 1, Number(dia));
+        if (!isNaN(d.getTime())) return d;
+      } else {
+        const d = new Date(r.dataRelatorio);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+
+    if (r.dataOcorrencia) {
+      const d = new Date(r.dataOcorrencia);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    return new Date();
+  };
+
   const getFilteredRecords = () => {
     return (registros || []).filter(r => {
-      if(!r || !r.dataCriacao) return false;
-      const d = new Date(r.dataCriacao); 
-      if (isNaN(d.getTime())) return false;
+      if (!r) return false;
+
+      const d = parseRegistroDate(r);
 
       const now = new Date();
-      if (dashboardFilters.periodo === 'mes_atual') { if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false; } 
-      else if (dashboardFilters.periodo === 'mes_anterior') { const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false; } 
-      else if (dashboardFilters.periodo === 'trimestre') { const t = new Date(); t.setMonth(t.getMonth() - 3); if (d < t) return false; } 
-      else if (dashboardFilters.periodo === 'ano') { if (d.getFullYear() !== now.getFullYear()) return false; }
+      if (d && !isNaN(d.getTime())) {
+        if (dashboardFilters.periodo === 'mes_atual') {
+          if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+        } else if (dashboardFilters.periodo === 'mes_anterior') {
+          const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false;
+        } else if (dashboardFilters.periodo === 'trimestre') {
+          const t = new Date();
+          t.setMonth(t.getMonth() - 3);
+          if (d < t) return false;
+        } else if (dashboardFilters.periodo === 'ano') {
+          if (d.getFullYear() !== now.getFullYear()) return false;
+        }
+      }
+
       if (dashboardFilters.fornecedor && r.fornecedor !== dashboardFilters.fornecedor) return false;
       if (dashboardFilters.tipo && r.tipoRelatorio !== dashboardFilters.tipo) return false;
-      
+
       const recordStatus = r.status || 'Pendente';
-      if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters.status === 'Pendente' && !r.status)) return false;
+      if (
+        dashboardFilters.status &&
+        recordStatus !== dashboardFilters.status &&
+        !(dashboardFilters.status === 'Pendente' && !r.status)
+      ) {
+        return false;
+      }
 
       return true;
+    }).sort((a, b) => {
+      const da = parseRegistroDate(a);
+      const db = parseRegistroDate(b);
+      return (db?.getTime?.() || 0) - (da?.getTime?.() || 0);
     });
   };
 
