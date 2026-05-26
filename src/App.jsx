@@ -2434,15 +2434,21 @@ const duplicateReport = (registro) => {
 
   const getFilteredRecords = () => {
     return (registros || []).filter(r => {
-      if(!r || !r.dataCriacao) return false;
-      const d = new Date(r.dataCriacao); 
-      if (isNaN(d.getTime())) return false;
+      if(!r) return false;
+      
+      // Se o relatório for antigo e não tiver dataCriacao válida, cria uma genérica para não esconder o dado
+      let d = new Date(); 
+      if (r.dataCriacao) {
+        const parsedDate = new Date(r.dataCriacao);
+        if (!isNaN(parsedDate.getTime())) d = parsedDate;
+      }
 
       const now = new Date();
       if (dashboardFilters.periodo === 'mes_atual') { if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false; } 
       else if (dashboardFilters.periodo === 'mes_anterior') { const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false; } 
       else if (dashboardFilters.periodo === 'trimestre') { const t = new Date(); t.setMonth(t.getMonth() - 3); if (d < t) return false; } 
       else if (dashboardFilters.periodo === 'ano') { if (d.getFullYear() !== now.getFullYear()) return false; }
+      
       if (dashboardFilters.fornecedor && r.fornecedor !== dashboardFilters.fornecedor) return false;
       if (dashboardFilters.tipo && r.tipoRelatorio !== dashboardFilters.tipo) return false;
       
