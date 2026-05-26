@@ -2144,7 +2144,8 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
         id: Date.now() + Math.random(),
         baseSrc: base64, 
         displaySrc: base64,
-        shapes: [] 
+        shapes: [],
+        legenda: ''
       }));
       setFormData(prev => ({ ...prev, imagens: [...(prev.imagens || []), ...newImageObjects] }));
     } catch (error) {}
@@ -2165,14 +2166,52 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     });
   };
 
+  const updateImageCaption = (indexToUpdate, legenda) => {
+    setFormData(prev => {
+      const novasImagens = [...(prev.imagens || [])];
+      const item = novasImagens[indexToUpdate];
+
+      if (typeof item === 'string') {
+        novasImagens[indexToUpdate] = {
+          isObject: true,
+          id: Date.now(),
+          baseSrc: item,
+          displaySrc: item,
+          shapes: [],
+          legenda: legenda
+        };
+      } else if (item) {
+        novasImagens[indexToUpdate] = {
+          ...item,
+          legenda: legenda
+        };
+      }
+
+      return { ...prev, imagens: novasImagens };
+    });
+  };
+
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
     setFormData(prev => { 
       const novasImagens = [...(prev.imagens || [])];
       const item = novasImagens[editingImageIndex];
       if (typeof item === 'string') {
-        novasImagens[editingImageIndex] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+        novasImagens[editingImageIndex] = {
+          isObject: true,
+          id: Date.now(),
+          baseSrc: newBaseSrc,
+          displaySrc: flattenedSrc,
+          shapes: newShapes,
+          legenda: ''
+        };
       } else if (item) {
-        novasImagens[editingImageIndex] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+        novasImagens[editingImageIndex] = {
+          ...item,
+          baseSrc: newBaseSrc,
+          displaySrc: flattenedSrc,
+          shapes: newShapes,
+          legenda: item.legenda || ''
+        };
       }
       return { ...prev, imagens: novasImagens }; 
     });
@@ -3157,6 +3196,15 @@ const duplicateReport = (registro) => {
                         return (
                           <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
                             <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
+                            <div className="bg-white border-t border-gray-200 p-2">
+                              <textarea
+                                value={typeof img === 'string' ? '' : (img?.legenda || '')}
+                                onChange={(e) => updateImageCaption(index, e.target.value)}
+                                placeholder="Digite uma legenda para esta foto..."
+                                className="w-full text-xs border border-gray-300 rounded p-2 resize-none outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-gray-50"
+                                rows={2}
+                              />
+                            </div>
                             <div className="absolute top-1 right-1 flex gap-1">
                               <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
                               <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
@@ -3290,7 +3338,23 @@ const duplicateReport = (registro) => {
                     <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
+                        const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+
+                        return (
+                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded overflow-hidden bg-white">
+                            <img
+                              src={src}
+                              alt={`Evidência ${index + 1}`}
+                              className="w-full h-auto max-h-[800px] object-contain bg-white p-1"
+                            />
+
+                            {legenda.trim() !== '' && (
+                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
+                                <p className="text-[12px] text-center text-gray-700 italic whitespace-pre-line">{legenda}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
                       })}
                     </div>
                   </div>
@@ -3340,7 +3404,23 @@ const duplicateReport = (registro) => {
                     <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
-                        return <img key={index} src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain border border-gray-300 shadow-sm rounded break-inside-avoid bg-white p-1" />;
+                        const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+
+                        return (
+                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded overflow-hidden bg-white">
+                            <img
+                              src={src}
+                              alt={`Evidência ${index + 1}`}
+                              className="w-full h-auto max-h-[800px] object-contain bg-white p-1"
+                            />
+
+                            {legenda.trim() !== '' && (
+                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
+                                <p className="text-[12px] text-center text-gray-700 italic whitespace-pre-line">{legenda}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
                       })}
                     </div>
                   </div>
