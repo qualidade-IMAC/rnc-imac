@@ -2865,7 +2865,7 @@ const duplicateReport = (registro) => {
 
   <p className="text-xs text-gray-600 line-clamp-2 pl-2 border-t border-gray-100 pt-1 mt-1">{sol.descricao}</p>
                     <button onClick={() => {
-                       const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [] }));
+                       const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [], legenda: '' }));
                        setFormData({ ...getEmptyForm(), ...sol, imagens: formImages });
                        setEditingReportId(null);
                        setView('form');
