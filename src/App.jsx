@@ -1362,15 +1362,15 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
 };
 
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
-  const [filters, setFilters] = useState({ periodo: 'todos', fornecedor: '', tipo: '', status: '' });
+  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-3 items-center">
       <Filter size={18} className="text-gray-500" />
       <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
-        <option value="todos">Todo Período</option><option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
-        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option>
+        <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
+        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
       </select>
       <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
         <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
@@ -1568,7 +1568,7 @@ function App() {
   
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
-  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'todos', fornecedor: '', tipo: '', status: '' });
+  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(20);
   // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
@@ -2196,22 +2196,9 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       const novasImagens = [...(prev.imagens || [])];
       const item = novasImagens[editingImageIndex];
       if (typeof item === 'string') {
-        novasImagens[editingImageIndex] = {
-          isObject: true,
-          id: Date.now(),
-          baseSrc: newBaseSrc,
-          displaySrc: flattenedSrc,
-          shapes: newShapes,
-          legenda: ''
-        };
+        novasImagens[editingImageIndex] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes, legenda: '' };
       } else if (item) {
-        novasImagens[editingImageIndex] = {
-          ...item,
-          baseSrc: newBaseSrc,
-          displaySrc: flattenedSrc,
-          shapes: newShapes,
-          legenda: item.legenda || ''
-        };
+        novasImagens[editingImageIndex] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes, legenda: item.legenda || '' };
       }
       return { ...prev, imagens: novasImagens }; 
     });
@@ -2356,26 +2343,7 @@ const duplicateReport = (registro) => {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handleSaveReport = async (action = 'save_and_preview') => {
-    const imagensNormalizadas = Array.isArray(formData.imagens)
-      ? formData.imagens.map((img) => {
-          if (typeof img === 'string') {
-            return {
-              isObject: true,
-              id: Date.now() + Math.random(),
-              baseSrc: img,
-              displaySrc: img,
-              shapes: [],
-              legenda: ''
-            };
-          }
-          return {
-            ...img,
-            legenda: img?.legenda || ''
-          };
-        })
-      : [];
-
+  const handleSaveReport = (action = 'save_and_preview') => {
     const registroData = {
       tipoRelatorio: String(formData.tipoRelatorio || 'Problema com Fornecedor'),
       dataRelatorio: formData.dataRelatorio || '',
@@ -2389,7 +2357,7 @@ const duplicateReport = (registro) => {
       sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
       statusParecer: formData.statusParecer || '',
       topicos: Array.isArray(formData.topicos) ? formData.topicos : [],
-      imagens: imagensNormalizadas,
+      imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
       assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
       logo: formData.logo || null, localData: formData.localData || '',
       userId: appUser?.id || 'anonimo',
@@ -2400,52 +2368,43 @@ const duplicateReport = (registro) => {
 
     let currentId = editingReportId;
 
-    try {
-      if (editingReportId) {
-        const updatedAt = new Date().toISOString();
-        const payloadEdicao = { ...registroData, id: String(editingReportId), dataModificacao: updatedAt, _isUnsynced: false };
-        const existingReport = registros.find(r => r.id === editingReportId);
-        if (existingReport && typeof existingReport.enviado !== 'undefined') {
-           payloadEdicao.enviado = existingReport.enviado;
-        }
-
-        setRegistros(prev => {
-          const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
-          saveToLocalStorage('imac_registros', updatedList);
-          return updatedList;
-        });
-
-        if (db && isConfigured) {
-          const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload, { merge: true });
-          setAppMessage("✅ Relatório atualizado na nuvem!");
-        } else {
-          setAppMessage("💾 Edição salva localmente");
-        }
-      } else {
-        const tempId = Date.now().toString();
-        const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: !db || !isConfigured };
-        currentId = tempId;
-
-        setRegistros(prev => {
-          const newList = [novoRegistro, ...(prev || [])];
-          saveToLocalStorage('imac_registros', newList);
-          return newList;
-        });
-
-        if (db && isConfigured) {
-          const safePayload = JSON.parse(JSON.stringify({ ...novoRegistro, _isUnsynced: false }));
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload, { merge: true });
-          setAppMessage("✅ Relatório salvo na nuvem!");
-        } else {
-          setAppMessage("💾 Relatório salvo localmente");
-        }
+    if (editingReportId) {
+      const updatedAt = new Date().toISOString();
+      const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
+      const existingReport = registros.find(r => r.id === editingReportId);
+      if (existingReport && typeof existingReport.enviado !== 'undefined') {
+         payloadEdicao.enviado = existingReport.enviado;
       }
-    } catch (error) {
-      console.error('Erro ao salvar no Firestore:', error);
-      setAppMessage(`💾 Salvo localmente, mas não sincronizou na nuvem: ${error?.message || 'verifique a conexão/permissão do Firebase'}`);
-    }
+      
+      setRegistros(prev => {
+        const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
+        saveToLocalStorage('imac_registros', updatedList);
+        return updatedList;
+      });
 
+      if (db && isConfigured) {
+        const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload)
+          .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
+          .catch(() => setAppMessage("💾 Atualização salva localmente"));
+      } else { setAppMessage("💾 Edição salva localmente"); }
+      
+    } else {
+      const tempId = Date.now().toString();
+      const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
+      currentId = tempId;
+
+      setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; saveToLocalStorage('imac_registros', newList); return newList; });
+      
+      if (db && isConfigured) {
+        const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
+        const safePayload = JSON.parse(JSON.stringify(registroParaNuvem));
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload)
+          .then(() => setAppMessage("✅ Relatório salvo na nuvem!"))
+          .catch(() => setAppMessage("💾 Salvo localmente (offline)"));
+      } else { setAppMessage("💾 Relatório salvo localmente"); }
+    }
+    
     if (action === 'save_and_preview') {
       setEditingReportId(currentId);
       setView('preview');
@@ -2456,7 +2415,7 @@ const duplicateReport = (registro) => {
       setView('dashboard');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    setTimeout(() => setAppMessage(null), 6000);
+    setTimeout(() => setAppMessage(null), 3000);
   };
 
   const handlePrintAndSave = () => window.print();
@@ -2473,73 +2432,24 @@ const duplicateReport = (registro) => {
     setRegistroToDelete(null);
   };
 
-  const parseRegistroDate = (r) => {
-    if (!r) return null;
-
-    if (r.dataCriacao) {
-      const d = new Date(r.dataCriacao);
-      if (!isNaN(d.getTime())) return d;
-    }
-
-    if (r.dataRelatorio) {
-      const partes = String(r.dataRelatorio).split('/');
-      if (partes.length === 3) {
-        const [dia, mes, ano] = partes;
-        const d = new Date(Number(ano), Number(mes) - 1, Number(dia));
-        if (!isNaN(d.getTime())) return d;
-      } else {
-        const d = new Date(r.dataRelatorio);
-        if (!isNaN(d.getTime())) return d;
-      }
-    }
-
-    if (r.dataOcorrencia) {
-      const d = new Date(r.dataOcorrencia);
-      if (!isNaN(d.getTime())) return d;
-    }
-
-    return new Date();
-  };
-
   const getFilteredRecords = () => {
     return (registros || []).filter(r => {
-      if (!r) return false;
-
-      const d = parseRegistroDate(r);
+      if(!r || !r.dataCriacao) return false;
+      const d = new Date(r.dataCriacao); 
+      if (isNaN(d.getTime())) return false;
 
       const now = new Date();
-      if (d && !isNaN(d.getTime())) {
-        if (dashboardFilters.periodo === 'mes_atual') {
-          if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
-        } else if (dashboardFilters.periodo === 'mes_anterior') {
-          const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false;
-        } else if (dashboardFilters.periodo === 'trimestre') {
-          const t = new Date();
-          t.setMonth(t.getMonth() - 3);
-          if (d < t) return false;
-        } else if (dashboardFilters.periodo === 'ano') {
-          if (d.getFullYear() !== now.getFullYear()) return false;
-        }
-      }
-
+      if (dashboardFilters.periodo === 'mes_atual') { if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false; } 
+      else if (dashboardFilters.periodo === 'mes_anterior') { const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false; } 
+      else if (dashboardFilters.periodo === 'trimestre') { const t = new Date(); t.setMonth(t.getMonth() - 3); if (d < t) return false; } 
+      else if (dashboardFilters.periodo === 'ano') { if (d.getFullYear() !== now.getFullYear()) return false; }
       if (dashboardFilters.fornecedor && r.fornecedor !== dashboardFilters.fornecedor) return false;
       if (dashboardFilters.tipo && r.tipoRelatorio !== dashboardFilters.tipo) return false;
-
+      
       const recordStatus = r.status || 'Pendente';
-      if (
-        dashboardFilters.status &&
-        recordStatus !== dashboardFilters.status &&
-        !(dashboardFilters.status === 'Pendente' && !r.status)
-      ) {
-        return false;
-      }
+      if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters.status === 'Pendente' && !r.status)) return false;
 
       return true;
-    }).sort((a, b) => {
-      const da = parseRegistroDate(a);
-      const db = parseRegistroDate(b);
-      return (db?.getTime?.() || 0) - (da?.getTime?.() || 0);
     });
   };
 
@@ -3271,8 +3181,22 @@ const duplicateReport = (registro) => {
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         return (
-                          <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
-                            <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
+                          <div key={index} className="group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
+                            <div className="relative">
+                              <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
+                              <div className="absolute top-1 right-1 flex gap-1">
+                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                              </div>
+                              <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
+                                {index > 0 ? (
+                                  <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
+                                ) : <div/>}
+                                {index < formData.imagens.length - 1 ? (
+                                  <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
+                                ) : <div/>}
+                              </div>
+                            </div>
                             <div className="bg-white border-t border-gray-200 p-2">
                               <textarea
                                 value={typeof img === 'string' ? '' : (img?.legenda || '')}
@@ -3281,18 +3205,6 @@ const duplicateReport = (registro) => {
                                 className="w-full text-xs border border-gray-300 rounded p-2 resize-none outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-gray-50"
                                 rows={2}
                               />
-                            </div>
-                            <div className="absolute top-1 right-1 flex gap-1">
-                              <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                              <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
-                            </div>
-                            <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                              {index > 0 ? (
-                                <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                              ) : <div/>}
-                              {index < formData.imagens.length - 1 ? (
-                                <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                              ) : <div/>}
                             </div>
                           </div>
                         );
@@ -3416,18 +3328,12 @@ const duplicateReport = (registro) => {
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
-
                         return (
-                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded overflow-hidden bg-white">
-                            <img
-                              src={src}
-                              alt={`Evidência ${index + 1}`}
-                              className="w-full h-auto max-h-[800px] object-contain bg-white p-1"
-                            />
-
+                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                            <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" />
                             {legenda.trim() !== '' && (
                               <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
-                                <p className="text-[12px] text-center text-gray-700 italic whitespace-pre-line">{legenda}</p>
+                                <p className="text-[12px] text-center text-gray-700 italic">{legenda}</p>
                               </div>
                             )}
                           </div>
@@ -3482,18 +3388,12 @@ const duplicateReport = (registro) => {
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
-
                         return (
-                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded overflow-hidden bg-white">
-                            <img
-                              src={src}
-                              alt={`Evidência ${index + 1}`}
-                              className="w-full h-auto max-h-[800px] object-contain bg-white p-1"
-                            />
-
+                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                            <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" />
                             {legenda.trim() !== '' && (
                               <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
-                                <p className="text-[12px] text-center text-gray-700 italic whitespace-pre-line">{legenda}</p>
+                                <p className="text-[12px] text-center text-gray-700 italic">{legenda}</p>
                               </div>
                             )}
                           </div>
