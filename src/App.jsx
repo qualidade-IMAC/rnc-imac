@@ -2173,19 +2173,6 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       return { ...prev, imagens: novasImagens };
     });
   };
-  
-  const moveImage = (index, step) => {
-    setFormData(prev => {
-      const novasImagens = [...(prev.imagens || [])];
-      const newIndex = index + step;
-      if (newIndex >= 0 && newIndex < novasImagens.length) {
-        const temp = novasImagens[newIndex];
-        novasImagens[newIndex] = novasImagens[index];
-        novasImagens[index] = temp;
-      }
-      return { ...prev, imagens: novasImagens };
-    });
-  };
 
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
     setFormData(prev => { 
@@ -3139,6 +3126,12 @@ const duplicateReport = (registro) => {
                   </div>
                 </div>
                 
+               {index < formData.imagens.length - 1 ? (
+                      <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
+                    ) : <div/>}
+                  </div>
+                </div>
+                
                 <div className="bg-white border-t border-[#F4B41A]/40 p-2">
                   <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">
                     Legenda da foto {index + 1}
@@ -3151,7 +3144,6 @@ const duplicateReport = (registro) => {
                     rows={2}
                   />
                 </div>
-
               </div>
             );
           })}
