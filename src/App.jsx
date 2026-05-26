@@ -3221,28 +3221,39 @@ const duplicateReport = (registro) => {
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         return (
-                          <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
-                            <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white flex-1" />
-                            <div className="absolute top-1 right-1 flex gap-1">
-                              <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                              <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                          <div key={index} className="group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
+                            <div className="relative">
+                              <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
+                              <div className="absolute top-1 right-1 flex gap-1">
+                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
+                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                              </div>
+                              <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
+                                {index > 0 ? (
+                                  <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
+                                ) : <div/>}
+                                {index < formData.imagens.length - 1 ? (
+                                  <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
+                                ) : <div/>}
+                              </div>
                             </div>
-                            <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                              {index > 0 ? (
-                                <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                              ) : <div/>}
-                              {index < formData.imagens.length - 1 ? (
-                                <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                              ) : <div/>}
+                            <div className="bg-white border-t border-[#F4B41A]/40 p-2">
+                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">
+                                Legenda da foto {index + 1}
+                              </label>
+                              <textarea
+                                value={typeof img === 'string' ? '' : (img?.legenda || '')}
+                                onChange={(e) => updateImageCaption(index, e.target.value)}
+                                placeholder="Ex.: Produto com alteração visual, lote, validade..."
+                                className="w-full min-h-[58px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-yellow-50/40 text-gray-800"
+                                rows={2}
+                              />
                             </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
-                </div>
-              </>
-            )}
 
             <div className="space-y-4 pt-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
