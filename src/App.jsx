@@ -2948,9 +2948,11 @@ const duplicateReport = (registro) => {
               </table>
             </div>
           </div>
-          <div className="text-center mt-8 text-xs text-gray-400 no-print">Desenvolvido por: Cristiamberg</div>
+                    <div className="text-center mt-6 text-xs text-gray-400 no-print">
+            Desenvolvido por: Cristiamberg
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
