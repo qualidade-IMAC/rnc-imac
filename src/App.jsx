@@ -1623,18 +1623,25 @@ function App() {
           const files = Array.from(e.target.files);
           if(files.length === 0) return;
           Promise.all(files.map(f => compressImage(f, false))).then(bases => {
-            setFormData(prev => ({...prev, [fieldName]: [...(prev[fieldName] || []), ...bases]}));
+            const newImages = bases.map(base64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: base64, displaySrc: base64, shapes: [] }));
+            setFormData(prev => ({...prev, [fieldName]: [...(prev[fieldName] || []), ...newImages]}));
           });
         }} className="hidden" />
       </label>
       {formData[fieldName] && formData[fieldName].length > 0 && (
         <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
-          {formData[fieldName].map((img, idx) => (
-             <div key={idx} className="relative w-20 h-20 shrink-0 border border-gray-300 rounded bg-white">
-               <img src={typeof img === 'string' ? img : img.baseSrc} className="w-full h-full object-cover rounded p-0.5" alt="Anexo" />
-               <button type="button" onClick={() => setFormData(p => ({...p, [fieldName]: p[fieldName].filter((_, i) => i !== idx)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 z-10"><X size={12}/></button>
+          {formData[fieldName].map((img, idx) => {
+            const src = typeof img === 'string' ? img : (img.displaySrc || img.baseSrc);
+            return (
+             <div key={idx} className="relative w-24 h-24 shrink-0 border border-gray-300 rounded bg-white group">
+               <img src={src} className="w-full h-full object-cover rounded p-0.5" alt="Anexo" />
+               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2 rounded">
+                 <button type="button" onClick={() => setEditingImageIndex({ field: fieldName, index: idx })} className="bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-700 shadow" title="Anotar ou Cortar"><PenTool size={14}/></button>
+                 <button type="button" onClick={() => setFormData(p => ({...p, [fieldName]: p[fieldName].filter((_, i) => i !== idx)}))} className="bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 shadow" title="Remover Foto"><Trash2 size={14}/></button>
+               </div>
              </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -2204,14 +2211,19 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
 
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
     setFormData(prev => { 
-      const novasImagens = [...(prev.imagens || [])];
-      const item = novasImagens[editingImageIndex];
+      const isObj = editingImageIndex && typeof editingImageIndex === 'object';
+      const field = isObj ? editingImageIndex.field : 'imagens';
+      const index = isObj ? editingImageIndex.index : editingImageIndex;
+
+      const novasImagens = [...(prev[field] || [])];
+      const item = novasImagens[index];
+      
       if (typeof item === 'string') {
-        novasImagens[editingImageIndex] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+        novasImagens[index] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
       } else if (item) {
-        novasImagens[editingImageIndex] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+        novasImagens[index] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
       }
-      return { ...prev, imagens: novasImagens }; 
+      return { ...prev, [field]: novasImagens }; 
     });
     setEditingImageIndex(null); 
   };
@@ -2995,7 +3007,11 @@ const duplicateReport = (registro) => {
         {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
         
         {editingImageIndex !== null && (() => {
-          const imgObj = formData.imagens && formData.imagens[editingImageIndex];
+          const isObj = editingImageIndex && typeof editingImageIndex === 'object';
+          const field = isObj ? editingImageIndex.field : 'imagens';
+          const index = isObj ? editingImageIndex.index : editingImageIndex;
+          
+          const imgObj = formData[field] && formData[field][index];
           if(!imgObj) return null;
           const baseSrc = typeof imgObj === 'string' ? imgObj : imgObj.baseSrc;
           const initialShapes = typeof imgObj === 'string' ? [] : imgObj.shapes;
@@ -3438,28 +3454,40 @@ const duplicateReport = (registro) => {
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
 <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
 {formData.imagensInvestigacao && formData.imagensInvestigacao.length > 0 && (
-  <div className="flex gap-2 ml-1 mb-5 flex-wrap break-inside-avoid">
-    {formData.imagensInvestigacao.map((img, idx) => <img key={idx} src={typeof img === 'string' ? img : img.baseSrc} className="max-h-40 object-contain border border-gray-300 p-1 bg-white" alt="Evidência" />)}
+  <div className={`grid gap-4 ml-1 mb-5 break-inside-avoid ${formData.imagensInvestigacao.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+    {formData.imagensInvestigacao.map((img, idx) => (
+      <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+        <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Investigação" />
+      </div>
+    ))}
   </div>
 )}
 
-<div className="mb-5">
+<div className="mb-5 break-inside-avoid">
    <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
    <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
    {formData.imagensAcaoCorretiva && formData.imagensAcaoCorretiva.length > 0 && (
-     <div className="flex gap-2 ml-1 flex-wrap break-inside-avoid">
-       {formData.imagensAcaoCorretiva.map((img, idx) => <img key={idx} src={typeof img === 'string' ? img : img.baseSrc} className="max-h-40 object-contain border border-gray-300 p-1 bg-white" alt="Evidência" />)}
+     <div className={`grid gap-4 ml-1 mt-3 break-inside-avoid ${formData.imagensAcaoCorretiva.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+       {formData.imagensAcaoCorretiva.map((img, idx) => (
+         <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+           <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Ação Corretiva" />
+         </div>
+       ))}
      </div>
    )}
 </div>
 
 {formData.conclusaoParecer && (
-  <div className="mb-8">
+  <div className="mb-8 break-inside-avoid">
      <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
      <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
      {formData.imagensConclusao && formData.imagensConclusao.length > 0 && (
-       <div className="flex gap-2 ml-1 flex-wrap break-inside-avoid">
-         {formData.imagensConclusao.map((img, idx) => <img key={idx} src={typeof img === 'string' ? img : img.baseSrc} className="max-h-40 object-contain border border-gray-300 p-1 bg-white" alt="Evidência" />)}
+       <div className={`grid gap-4 ml-1 mt-3 break-inside-avoid ${formData.imagensConclusao.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+         {formData.imagensConclusao.map((img, idx) => (
+           <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+             <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Conclusão" />
+           </div>
+         ))}
        </div>
      )}
   </div>
