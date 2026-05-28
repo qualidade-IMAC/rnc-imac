@@ -1609,8 +1609,36 @@ function App() {
     dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
     lojasLocais: [], dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '', conclusaoParecer: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
-    imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas]
-  });
+    imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas],
+    imagensInvestigacao: [],
+  imagensAcaoCorretiva: [],
+  imagensConclusao: []
+});
+
+  const renderMiniImageUploader = (fieldLabel, fieldName) => (
+    <div className="mt-2">
+      <label className="cursor-pointer inline-flex items-center gap-2 text-xs font-bold text-[#5C3A21] bg-[#F4B41A]/20 border border-[#F4B41A]/50 hover:bg-[#F4B41A]/40 px-3 py-1.5 rounded transition">
+        <ImagePlus size={14} /> Anexar Foto em {fieldLabel}
+        <input type="file" multiple accept="image/*" onChange={(e) => {
+          const files = Array.from(e.target.files);
+          if(files.length === 0) return;
+          Promise.all(files.map(f => compressImage(f, false))).then(bases => {
+            setFormData(prev => ({...prev, [fieldName]: [...(prev[fieldName] || []), ...bases]}));
+          });
+        }} className="hidden" />
+      </label>
+      {formData[fieldName] && formData[fieldName].length > 0 && (
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
+          {formData[fieldName].map((img, idx) => (
+             <div key={idx} className="relative w-20 h-20 shrink-0 border border-gray-300 rounded bg-white">
+               <img src={typeof img === 'string' ? img : img.baseSrc} className="w-full h-full object-cover rounded p-0.5" alt="Anexo" />
+               <button type="button" onClick={() => setFormData(p => ({...p, [fieldName]: p[fieldName].filter((_, i) => i !== idx)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 z-10"><X size={12}/></button>
+             </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const [formData, setFormData] = useState(getEmptyForm());
 
@@ -2230,7 +2258,10 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       localData: registro.localData || (registro.dataCriacao ? `Aquiraz, ${safeDate(registro.dataCriacao)}.` : ''),
       imagens: Array.isArray(registro.imagens) ? registro.imagens : [],
       fornecedor: registro.fornecedor || '',
-      assinaturas: Array.isArray(registro.assinaturas) ? registro.assinaturas : [...defaultAssinaturas]
+      assinaturas: Array.isArray(registro.assinaturas) ? registro.assinaturas : [...defaultAssinaturas],
+      imagensInvestigacao: Array.isArray(registro.imagensInvestigacao) ? registro.imagensInvestigacao : [],
+      imagensAcaoCorretiva: Array.isArray(registro.imagensAcaoCorretiva) ? registro.imagensAcaoCorretiva : [],
+      imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : []
     });
     setEditingReportId(registro.id);
     setView('form');
@@ -2323,7 +2354,10 @@ const duplicateReport = (registro) => {
       userId: appUser?.id || 'anonimo',
       autorNome: userName || 'Desconhecido',
       autorCargo: userRole || '',
-      enviado: false
+      enviado: false,
+      imagensInvestigacao: Array.isArray(formData.imagensInvestigacao) ? formData.imagensInvestigacao : [],
+      imagensAcaoCorretiva: Array.isArray(formData.imagensAcaoCorretiva) ? formData.imagensAcaoCorretiva : [],
+      imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : []
     };
 
     let currentId = editingReportId;
@@ -3162,16 +3196,19 @@ const duplicateReport = (registro) => {
                   <div>
                     <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
                     <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
+                    {renderMiniImageUploader('Investigação', 'imagensInvestigacao')}
                   </div>
 
                   <div>
                     <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
                     <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
+                    {renderMiniImageUploader('Ação Corretiva', 'imagensAcaoCorretiva')}
                   </div>
 
                   <div>
                     <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
                     <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
+                    {renderMiniImageUploader('Conclusão', 'imagensConclusao')}
                   </div>
                 </div>
               </>
@@ -3391,20 +3428,34 @@ const duplicateReport = (registro) => {
                   </div>
 
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
-                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-5" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+<div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+{formData.imagensInvestigacao && formData.imagensInvestigacao.length > 0 && (
+  <div className="flex gap-2 ml-1 mb-5 flex-wrap break-inside-avoid">
+    {formData.imagensInvestigacao.map((img, idx) => <img key={idx} src={typeof img === 'string' ? img : img.baseSrc} className="max-h-40 object-contain border border-gray-300 p-1 bg-white" alt="Evidência" />)}
+  </div>
+)}
 
-                  <div className="mb-5">
-                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
-                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
-                  </div>
+<div className="mb-5">
+   <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
+   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
+   {formData.imagensAcaoCorretiva && formData.imagensAcaoCorretiva.length > 0 && (
+     <div className="flex gap-2 ml-1 flex-wrap break-inside-avoid">
+       {formData.imagensAcaoCorretiva.map((img, idx) => <img key={idx} src={typeof img === 'string' ? img : img.baseSrc} className="max-h-40 object-contain border border-gray-300 p-1 bg-white" alt="Evidência" />)}
+     </div>
+   )}
+</div>
 
-                  {formData.conclusaoParecer && (
-                    <div className="mb-8">
-                       <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
-                       <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
-                    </div>
-                  )}
-
+{formData.conclusaoParecer && (
+  <div className="mb-8">
+     <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
+     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
+     {formData.imagensConclusao && formData.imagensConclusao.length > 0 && (
+       <div className="flex gap-2 ml-1 flex-wrap break-inside-avoid">
+         {formData.imagensConclusao.map((img, idx) => <img key={idx} src={typeof img === 'string' ? img : img.baseSrc} className="max-h-40 object-contain border border-gray-300 p-1 bg-white" alt="Evidência" />)}
+       </div>
+     )}
+  </div>
+)}
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
