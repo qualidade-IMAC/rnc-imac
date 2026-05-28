@@ -3354,7 +3354,7 @@ const duplicateReport = (registro) => {
   }
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. PARECER TÉCNICO";
     
     const tipoStr = String(formData.tipoRelatorio || '');
     
