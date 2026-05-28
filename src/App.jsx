@@ -3310,24 +3310,31 @@ const duplicateReport = (registro) => {
             </div>
 
             {!isCliente && (
-              <div className="pt-4"><label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label><input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" /></div>
+              <div className="pt-4">
+                <label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label>
+                <input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" />
+              </div>
             )}
-          </div>
-<div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
-            {editingReportId ? (
-              <span className="font-bold text-[#5C3A21]">Editando {String(editingReportId).substring(0, 8)}...</span>
-            ) : <span />}
-            <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide">
-              <FileText size={24} />VISUALIZAR DOCUMENTO
-            </button>
-          </div>
-                    <div className="text-center mt-6 text-xs text-gray-400 no-print">
-            Desenvolvido por: Cristiamberg
-          </div>
-        </div>
-      </>
-    );
-  }
+          </>
+        )}
+      </div>
+
+      <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
+        {editingReportId ? (
+          <span className="font-bold text-[#5C3A21]">Editando {String(editingReportId).substring(0, 8)}...</span>
+        ) : <span />}
+        <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide">
+          <FileText size={24} />VISUALIZAR DOCUMENTO
+        </button>
+      </div>
+      
+      <div className="text-center mt-6 text-xs text-gray-400 no-print pb-6">
+        Desenvolvido por: Cristiamberg
+      </div>
+    </div>
+  </div>
+);
+}
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
     let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
