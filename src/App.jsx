@@ -1732,7 +1732,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     </div>
   );
 };
-
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
@@ -3275,7 +3274,7 @@ const duplicateReport = (registro) => {
       </div>
     );
   }
-  if (view === 'form') {
+if (view === 'form') {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
         {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
@@ -3361,7 +3360,7 @@ const duplicateReport = (registro) => {
               )}
             </div>
 
-<div className="mt-4 p-4 bg-[#F4B41A]/10 border border-[#F4B41A]/30 rounded-lg">
+            <div className="mt-4 p-4 bg-[#F4B41A]/10 border border-[#F4B41A]/30 rounded-lg">
               <p className="text-sm font-bold text-[#5C3A21] mb-3">Personalizar Títulos do Relatório (Opcional - Deixe em branco para usar o Padrão)</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
@@ -3378,11 +3377,11 @@ const duplicateReport = (registro) => {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Título Seção 3</label>
-                  <input type="text" name="customTitulo3" value={formData.customTitulo3 || ''} onChange={handleChange} placeholder="Ex: 3. CONSIDERAÇÕES FINAIS" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
+                  <input type="text" name="customTitulo3" value={formData.customTitulo3 || ''} onChange={handleChange} placeholder="Ex: 3. PARECER TÉCNICO" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
                 </div>
               </div>
             </div>
-            
+
             {isCliente ? (
               <>
                 <div className="space-y-4">
@@ -3448,7 +3447,7 @@ const duplicateReport = (registro) => {
                     <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
                       <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
                       <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                      <span className="text-xs text-gray-500 mt-1 font-medium">Você pode redimensionar e arrastar as fotos depois de anexar</span>
                       <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   </div>
@@ -3457,7 +3456,7 @@ const duplicateReport = (registro) => {
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         const tamanho = img?.tamanho || 'pequeno';
-                        let widthClass = 'w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)]'; // Pequeno
+                        let widthClass = 'w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)]';
                         if (tamanho === 'medio') widthClass = 'w-full sm:w-[calc(100%)] md:w-[calc(50%-0.5rem)]';
                         if (tamanho === 'grande') widthClass = 'w-full';
 
@@ -3496,7 +3495,7 @@ const duplicateReport = (registro) => {
                 </div>
 
                 <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Considerações Finais</h2>
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
                   
                   <div>
                      <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
@@ -3532,7 +3531,7 @@ const duplicateReport = (registro) => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
                     <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                    <span className="text-xs text-gray-500 font-bold bg-gray-100 px-2 py-1 rounded">💡 Dica: Clique nos títulos dos campos abaixo para renomeá-los</span>
+                    <span className="text-xs text-gray-500 font-bold bg-gray-100 px-2 py-1 rounded hidden md:block">💡 Dica: Clique nos títulos dos campos abaixo para renomeá-los</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <div>
@@ -3574,6 +3573,7 @@ const duplicateReport = (registro) => {
                       <input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
                     </div>}
                   </div>
+                </div>
 
                 <div className="space-y-6">
                   <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
@@ -3597,40 +3597,43 @@ const duplicateReport = (registro) => {
                     <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
                       <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
                       <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                      <span className="text-xs text-gray-500 mt-1 font-medium">Depois você pode cortar a imagem e colocar setas</span>
+                      <span className="text-xs text-gray-500 mt-1 font-medium">Você pode redimensionar e arrastar as fotos depois de anexar</span>
                       <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   </div>
                   {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div className="flex flex-wrap gap-4 mt-4">
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
+                        const tamanho = img?.tamanho || 'pequeno';
+                        let widthClass = 'w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)]';
+                        if (tamanho === 'medio') widthClass = 'w-full sm:w-[calc(100%)] md:w-[calc(50%-0.5rem)]';
+                        if (tamanho === 'grande') widthClass = 'w-full';
+
                         return (
-                          <div key={index} className="group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
+                          <div 
+                            key={index} draggable onDragStart={(e) => handleDragStart(e, index, 'imagens')} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index, 'imagens')}
+                            className={`group rounded-lg overflow-hidden border border-gray-300 shadow-sm bg-gray-100 flex flex-col cursor-move transition-all duration-300 ${widthClass}`}
+                          >
                             <div className="relative">
-                              <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
-                              <div className="absolute top-1 right-1 flex gap-1">
-                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                              <img src={src} alt="Preview" className={`w-full object-contain bg-white ${tamanho === 'grande' ? 'max-h-[600px]' : 'h-48'}`} />
+                              <div className="absolute top-1 left-1 flex gap-1 bg-white/90 p-1 rounded backdrop-blur-sm shadow opacity-0 group-hover:opacity-100 transition z-10">
+                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'pequeno')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'pequeno' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Pequena">P</button>
+                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'medio')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'medio' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Média">M</button>
+                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'grande')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'grande' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Grande">G</button>
                               </div>
-                              <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                                {index > 0 ? (
-                                  <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                                ) : <div/>}
-                                {index < formData.imagens.length - 1 ? (
-                                  <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                                ) : <div/>}
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700"><PenTool size={16} /></button>
+                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700"><Trash2 size={16} /></button>
                               </div>
                             </div>
-                            <div className="bg-white border-t border-[#F4B41A]/40 p-2">
-                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">
-                                Legenda da foto {index + 1}
-                              </label>
+                            <div className="bg-white border-t border-[#F4B41A]/40 p-2 flex-1 flex flex-col">
+                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">Legenda (Arraste a foto para mover)</label>
                               <textarea
                                 value={typeof img === 'string' ? '' : (img?.legenda || '')}
                                 onChange={(e) => updateImageCaption(index, e.target.value)}
-                                placeholder="Ex.: Produto com alteração visual, lote, validade..."
-                                className="w-full min-h-[58px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-yellow-50/40 text-gray-800"
+                                placeholder="Ex.: Produto com alteração visual..."
+                                className="w-full flex-1 min-h-[40px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] bg-yellow-50/40 text-gray-800"
                                 rows={2}
                               />
                             </div>
@@ -3657,19 +3660,17 @@ const duplicateReport = (registro) => {
                   </div>
                 </div>
 
-                {!isCliente && (
-                  <div className="pt-4">
-                    <label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label>
-                    <input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" />
-                  </div>
-                )}
+                <div className="pt-4">
+                  <label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label>
+                  <input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" />
+                </div>
               </>
             )}
           </div>
 
           <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
             {editingReportId ? (
-              <span className="font-bold text-[#5C3A21]">Editando {String(editingReportId).substring(0, 8)}...</span>
+              <span className="font-bold text-gray-600">Editando {String(editingReportId).substring(0, 8)}...</span>
             ) : <span />}
             <button onClick={() => handleSaveReport('save_and_preview')} className="bg-[#5C3A21] hover:bg-[#4a2e1a] text-[#F4B41A] font-black py-4 px-10 rounded-lg shadow-lg transition flex items-center gap-3 text-lg uppercase tracking-wide">
               <FileText size={24} />VISUALIZAR DOCUMENTO
