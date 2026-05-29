@@ -1807,21 +1807,35 @@ function App() {
           const files = Array.from(e.target.files);
           if(files.length === 0) return;
           Promise.all(files.map(f => compressImage(f, false))).then(bases => {
-            const newImages = bases.map(base64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: base64, displaySrc: base64, shapes: [] }));
+            const newImages = bases.map(base64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: base64, displaySrc: base64, shapes: [], tamanho: 'pequeno' }));
             setFormData(prev => ({...prev, [fieldName]: [...(prev[fieldName] || []), ...newImages]}));
           });
         }} className="hidden" />
       </label>
       {formData[fieldName] && formData[fieldName].length > 0 && (
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
+        <div className="flex flex-wrap gap-3 mt-3 pb-2">
           {formData[fieldName].map((img, idx) => {
             const src = typeof img === 'string' ? img : (img.displaySrc || img.baseSrc);
+            const tamanho = img?.tamanho || 'pequeno';
+            
+            let widthClass = 'w-24 h-24';
+            if (tamanho === 'medio') widthClass = 'w-48 h-48';
+            if (tamanho === 'grande') widthClass = 'w-full h-auto max-h-[300px]';
+
             return (
-             <div key={idx} className="relative w-24 h-24 shrink-0 border border-gray-300 rounded bg-white group">
-               <img src={src} className="w-full h-full object-cover rounded p-0.5" alt="Anexo" />
-               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2 rounded">
-                 <button type="button" onClick={() => setEditingImageIndex({ field: fieldName, index: idx })} className="bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-700 shadow" title="Anotar ou Cortar"><PenTool size={14}/></button>
-                 <button type="button" onClick={() => setFormData(p => ({...p, [fieldName]: p[fieldName].filter((_, i) => i !== idx)}))} className="bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 shadow" title="Remover Foto"><Trash2 size={14}/></button>
+             <div 
+                key={idx} draggable onDragStart={(e) => handleDragStart(e, idx, fieldName)} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, idx, fieldName)}
+                className={`relative shrink-0 border border-gray-300 rounded bg-white group cursor-move transition-all duration-300 ${widthClass}`}
+             >
+               <img src={src} className="w-full h-full object-contain rounded p-0.5" alt="Anexo" />
+               <div className="absolute top-1 left-1 flex gap-1 bg-white/90 p-1 rounded backdrop-blur-sm opacity-0 group-hover:opacity-100 transition shadow z-10">
+                 <button type="button" onClick={(e) => { e.stopPropagation(); changeImageSize(idx, fieldName, 'pequeno'); }} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${tamanho === 'pequeno' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`}>P</button>
+                 <button type="button" onClick={(e) => { e.stopPropagation(); changeImageSize(idx, fieldName, 'medio'); }} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${tamanho === 'medio' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`}>M</button>
+                 <button type="button" onClick={(e) => { e.stopPropagation(); changeImageSize(idx, fieldName, 'grande'); }} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${tamanho === 'grande' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`}>G</button>
+               </div>
+               <div className="absolute top-1 right-1 flex gap-1 bg-black/60 p-1 rounded opacity-0 group-hover:opacity-100 transition z-10">
+                 <button type="button" onClick={() => setEditingImageIndex({ field: fieldName, index: idx })} className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700"><PenTool size={12}/></button>
+                 <button type="button" onClick={() => setFormData(p => ({...p, [fieldName]: p[fieldName].filter((_, i) => i !== idx)}))} className="bg-red-600 text-white p-1 rounded hover:bg-red-700"><Trash2 size={12}/></button>
                </div>
              </div>
             );
@@ -2365,6 +2379,39 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
   };
 
   const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: (prev.imagens || []).filter((_, index) => index !== indexToRemove) }));
+
+  const handleDragStart = (e, index, field) => {
+    e.dataTransfer.setData('sourceIndex', index);
+    e.dataTransfer.setData('sourceField', field);
+  };
+
+  const handleDrop = (e, targetIndex, field) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex'), 10);
+    const sourceField = e.dataTransfer.getData('sourceField');
+    if (sourceField !== field || isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+    setFormData(prev => {
+      const newList = [...(prev[field] || [])];
+      const [draggedItem] = newList.splice(sourceIndex, 1);
+      newList.splice(targetIndex, 0, draggedItem);
+      return { ...prev, [field]: newList };
+    });
+  };
+
+  const handleDragOver = (e) => e.preventDefault();
+
+  const changeImageSize = (index, field, newSize) => {
+    setFormData(prev => {
+      const newList = [...(prev[field] || [])];
+      const item = newList[index];
+      if (typeof item === 'string') {
+        newList[index] = { isObject: true, id: Date.now(), baseSrc: item, displaySrc: item, shapes: [], tamanho: newSize };
+      } else {
+        newList[index] = { ...item, tamanho: newSize };
+      }
+      return { ...prev, [field]: newList };
+    });
+  };
   
   const moveImage = (index, step) => {
     setFormData(prev => {
@@ -3354,35 +3401,38 @@ const duplicateReport = (registro) => {
                     </label>
                   </div>
                   {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div className="flex flex-wrap gap-4 mt-4">
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
+                        const tamanho = img?.tamanho || 'pequeno';
+                        let widthClass = 'w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)]'; // Pequeno
+                        if (tamanho === 'medio') widthClass = 'w-full sm:w-[calc(100%)] md:w-[calc(50%-0.5rem)]';
+                        if (tamanho === 'grande') widthClass = 'w-full';
+
                         return (
-                          <div key={index} className="group rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex flex-col">
+                          <div 
+                            key={index} draggable onDragStart={(e) => handleDragStart(e, index, 'imagens')} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index, 'imagens')}
+                            className={`group rounded-lg overflow-hidden border border-gray-300 shadow-sm bg-gray-100 flex flex-col cursor-move transition-all duration-300 ${widthClass}`}
+                          >
                             <div className="relative">
-                              <img src={src} alt="Preview" className="w-full h-32 object-contain bg-white" />
-                              <div className="absolute top-1 right-1 flex gap-1">
-                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700" title="Anotar ou Cortar Imagem"><PenTool size={16} /></button>
-                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700" title="Remover Foto"><Trash2 size={16} /></button>
+                              <img src={src} alt="Preview" className={`w-full object-contain bg-white ${tamanho === 'grande' ? 'max-h-[600px]' : 'h-48'}`} />
+                              <div className="absolute top-1 left-1 flex gap-1 bg-white/90 p-1 rounded backdrop-blur-sm shadow opacity-0 group-hover:opacity-100 transition z-10">
+                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'pequeno')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'pequeno' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Pequena">P</button>
+                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'medio')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'medio' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Média">M</button>
+                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'grande')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'grande' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Grande">G</button>
                               </div>
-                              <div className="absolute bottom-1 left-1 right-1 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition">
-                                {index > 0 ? (
-                                  <button type="button" onClick={() => moveImage(index, -1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para esquerda"><ChevronLeft size={16}/></button>
-                                ) : <div/>}
-                                {index < formData.imagens.length - 1 ? (
-                                  <button type="button" onClick={() => moveImage(index, 1)} className="bg-gray-800/80 text-white p-1 rounded hover:bg-gray-900 shadow" title="Mover para direita"><ChevronRight size={16}/></button>
-                                ) : <div/>}
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700"><PenTool size={16} /></button>
+                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700"><Trash2 size={16} /></button>
                               </div>
                             </div>
-                            <div className="bg-white border-t border-[#F4B41A]/40 p-2">
-                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">
-                                Legenda da foto {index + 1}
-                              </label>
+                            <div className="bg-white border-t border-[#F4B41A]/40 p-2 flex-1 flex flex-col">
+                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">Legenda (Arraste a foto para mover)</label>
                               <textarea
                                 value={typeof img === 'string' ? '' : (img?.legenda || '')}
                                 onChange={(e) => updateImageCaption(index, e.target.value)}
-                                placeholder="Ex.: Produto com alteração visual, lote, validade..."
-                                className="w-full min-h-[58px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] focus:border-[#F4B41A] bg-yellow-50/40 text-gray-800"
+                                placeholder="Ex.: Produto com alteração visual..."
+                                className="w-full flex-1 min-h-[40px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] bg-yellow-50/40 text-gray-800"
                                 rows={2}
                               />
                             </div>
@@ -3619,15 +3669,21 @@ const duplicateReport = (registro) => {
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
-                    <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+                    <div className="flex flex-wrap gap-4">
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+                        const tamanho = img?.tamanho || 'pequeno';
+                        
+                        let widthClass = 'w-[calc(50%-0.5rem)]';
+                        if (tamanho === 'grande') widthClass = 'w-full';
+                        if (tamanho === 'pequeno' && formData.imagens.length >= 3) widthClass = 'w-[calc(33.333%-0.7rem)]';
+
                         return (
-                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                          <div key={index} className={`break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden flex flex-col ${widthClass}`}>
                             <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" />
                             {legenda.trim() !== '' && (
-                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
+                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2 mt-auto">
                                 <p className="text-[12px] text-center text-gray-700 italic">{legenda}</p>
                               </div>
                             )}
@@ -3635,8 +3691,6 @@ const duplicateReport = (registro) => {
                         );
                       })}
                     </div>
-                  </div>
-                )}
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao3}</p></div>
@@ -3726,15 +3780,21 @@ const duplicateReport = (registro) => {
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
                     <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
-                    <div className={`grid gap-4 ${formData.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
+                    <div className="flex flex-wrap gap-4">
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
                         const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+                        const tamanho = img?.tamanho || 'pequeno';
+                        
+                        let widthClass = 'w-[calc(50%-0.5rem)]';
+                        if (tamanho === 'grande') widthClass = 'w-full';
+                        if (tamanho === 'pequeno' && formData.imagens.length >= 3) widthClass = 'w-[calc(33.333%-0.7rem)]';
+
                         return (
-                          <div key={index} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                          <div key={index} className={`break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden flex flex-col ${widthClass}`}>
                             <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" />
                             {legenda.trim() !== '' && (
-                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2">
+                              <div className="border-t border-gray-200 bg-gray-50 px-3 py-2 mt-auto">
                                 <p className="text-[12px] text-center text-gray-700 italic">{legenda}</p>
                               </div>
                             )}
@@ -3742,9 +3802,7 @@ const duplicateReport = (registro) => {
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
+                    
                 <div className="print:pt-4">
                   {formData.consideracoes && (
                     <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
