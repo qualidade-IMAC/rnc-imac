@@ -1487,7 +1487,10 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
   if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
   if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
-
+if (registro.customTituloRelatorio) tituloRelatorio = registro.customTituloRelatorio;
+  if (registro.customTitulo1) tituloSecao1 = registro.customTitulo1;
+  if (registro.customTitulo2) tituloSecao2 = registro.customTitulo2;
+  if (registro.customTitulo3) tituloSecao3 = registro.customTitulo3;
   const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
   const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
   const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
@@ -1780,6 +1783,7 @@ function App() {
   ];
 
   const getEmptyForm = () => ({
+    customTituloRelatorio: '', customTitulo1: '', customTitulo2: '', customTitulo3: '',
     logo: localStorage.getItem('imac_logo_oficial') || null,
     tipoRelatorio: 'Problema com Fornecedor',
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
@@ -2469,6 +2473,10 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     if(!registro) return;
     setFormData({
       logo: registro.logo || localStorage.getItem('imac_logo_oficial') || null,
+      customTituloRelatorio: registro.customTituloRelatorio || '',
+      customTitulo1: registro.customTitulo1 || '',
+      customTitulo2: registro.customTitulo2 || '',
+      customTitulo3: registro.customTitulo3 || '',
       tipoRelatorio: registro.tipoRelatorio || 'Problema com Fornecedor',
       dataRelatorio: registro.dataRelatorio || safeDate(registro.dataCriacao),
       dataOcorrencia: registro.dataOcorrencia || '',
@@ -2575,6 +2583,10 @@ const duplicateReport = (registro) => {
   const handleSaveReport = (action = 'save_and_preview') => {
     const registroData = {
       tipoRelatorio: String(formData.tipoRelatorio || 'Problema com Fornecedor'),
+      customTituloRelatorio: formData.customTituloRelatorio || '',
+      customTitulo1: formData.customTitulo1 || '',
+      customTitulo2: formData.customTitulo2 || '',
+      customTitulo3: formData.customTitulo3 || '',
       dataRelatorio: formData.dataRelatorio || '',
       produto: formData.produto || 'Não especificado',
       ocorrencia: formData.ocorrencia || 'Sem descrição',
@@ -3325,6 +3337,28 @@ const duplicateReport = (registro) => {
               )}
             </div>
 
+<div className="mt-4 p-4 bg-[#F4B41A]/10 border border-[#F4B41A]/30 rounded-lg">
+              <p className="text-sm font-bold text-[#5C3A21] mb-3">Personalizar Títulos do Relatório (Opcional - Deixe em branco para usar o Padrão)</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Título Principal</label>
+                  <input type="text" name="customTituloRelatorio" value={formData.customTituloRelatorio || ''} onChange={handleChange} placeholder="Ex: RELATÓRIO DE OCORRÊNCIA PRODUTO" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Título Seção 1</label>
+                  <input type="text" name="customTitulo1" value={formData.customTitulo1 || ''} onChange={handleChange} placeholder="Ex: 1. INFORMAÇÕES GERAIS..." className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Título Seção 2</label>
+                  <input type="text" name="customTitulo2" value={formData.customTitulo2 || ''} onChange={handleChange} placeholder="Ex: 2. DESCRIÇÃO DA OCORRÊNCIA" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Título Seção 3</label>
+                  <input type="text" name="customTitulo3" value={formData.customTitulo3 || ''} onChange={handleChange} placeholder="Ex: 3. PARECER TÉCNICO" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
+                </div>
+              </div>
+            </div>
+            
             {isCliente ? (
               <>
                 <div className="space-y-4">
@@ -3603,7 +3637,10 @@ const duplicateReport = (registro) => {
     if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
     if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
-
+if (formData.customTituloRelatorio) tituloRelatorio = formData.customTituloRelatorio;
+    if (formData.customTitulo1) tituloSecao1 = formData.customTitulo1;
+    if (formData.customTitulo2) tituloSecao2 = formData.customTitulo2;
+    if (formData.customTitulo3) tituloSecao3 = formData.customTitulo3;
     const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
