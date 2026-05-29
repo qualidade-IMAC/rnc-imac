@@ -1460,7 +1460,11 @@ const PieChartComponent = ({ data, title }) => {
     </div>
   );
 };
-const RelatorioViewModal = ({ registro, onClose }) => {
+const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual }) => {
+  const [status, setStatus] = useState(registro?.status || 'Pendente');
+  const [obs, setObs] = useState(registro?.observacoesStatus || '');
+  const [enviado, setEnviado] = useState(registro?.enviado || false);
+
   if (!registro) return null;
 
   const safeDate = (dateString) => {
@@ -1479,7 +1483,7 @@ const RelatorioViewModal = ({ registro, onClose }) => {
         {/* Cabeçalho */}
         <div className="flex justify-between items-center mb-5 border-b border-gray-200 pb-3">
           <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2">
-            <FileText size={24}/> Visão Rápida do Relatório
+            <FileText size={24}/> Visão Rápida e Avaliação
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition">
             <X size={20}/>
@@ -1518,29 +1522,74 @@ const RelatorioViewModal = ({ registro, onClose }) => {
             </div>
           )}
 
-          {/* Status Atual */}
-          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-200">
-            <span className="text-sm font-bold text-gray-700">Status da Avaliação:</span>
-            <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase border tracking-wide ${
-                (!registro.status || registro.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                registro.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
-                'bg-red-50 text-red-700 border-red-200'
-              }`}>
-                {registro.status || 'Pendente'}
-            </span>
-            <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase border tracking-wide flex items-center gap-1 ${
-                registro.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
-              }`}>
-                <Send size={12} /> {registro.enviado ? 'Enviado' : 'Não Enviado'}
-            </span>
+          {/* Área de Avaliação Integrada */}
+          <div className="mt-4 border-t border-gray-200 pt-4">
+            {canApprove ? (
+              <div className="bg-purple-50 border border-purple-100 p-4 rounded-lg">
+                <h4 className="text-sm font-black text-purple-900 mb-3 flex items-center gap-2">
+                  <CheckCircle size={18} /> Avaliar Relatório
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Situação do Relatório</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm font-bold text-gray-700 bg-white">
+                      <option value="Pendente">⏳ Aguardando / Pendente</option>
+                      <option value="Liberado">✅ Liberado (Aprovado)</option>
+                      <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Status de Envio (WhatsApp/Email)</label>
+                    <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-700 bg-white">
+                      <option value="nao">📥 Não Enviado</option>
+                      <option value="sim">📤 Enviado</option>
+                    </select>
+                  </div>
+                </div>
+
+                {status === 'Não Liberado' && (
+                  <div className="animate-fade-in-up mb-3">
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Motivo / Observações para Correção</label>
+                    <textarea 
+                      rows="3" 
+                      value={obs} 
+                      onChange={(e) => setObs(e.target.value)} 
+                      placeholder="Explique o que o emissor precisa corrigir ou adicionar no relatório..."
+                      className="w-full border border-red-300 p-2 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-y text-sm bg-red-50"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-bold text-gray-700">Status da Avaliação:</span>
+                <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase border tracking-wide ${
+                    (!registro.status || registro.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                    registro.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
+                    'bg-red-50 text-red-700 border-red-200'
+                  }`}>
+                  {registro.status || 'Pendente'}
+                </span>
+                <span className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase border tracking-wide flex items-center gap-1 ${
+                    registro.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
+                  }`}>
+                  <Send size={12} /> {registro.enviado ? 'Enviado' : 'Não Enviado'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Rodapé */}
-        <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
-          <button onClick={onClose} className="px-6 py-2.5 bg-[#5C3A21] text-[#F4B41A] rounded-lg hover:bg-[#4a2e1a] font-bold transition shadow-md">
+        <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-200">
+          <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition">
             Fechar
           </button>
+          {canApprove && (
+            <button onClick={() => onSaveStatus(registro.id, status, status === 'Não Liberado' ? obs : '', enviado)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition flex items-center gap-2 shadow-md">
+              <Check size={18}/> Salvar Avaliação
+            </button>
+          )}
         </div>
 
       </div>
@@ -2757,7 +2806,16 @@ const duplicateReport = (registro) => {
 
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
-        {registroToView && <RelatorioViewModal registro={registroToView} onClose={() => setRegistroToView(null)} />}
+        {registroToView && <RelatorioViewModal 
+  registro={registroToView} 
+  onClose={() => setRegistroToView(null)} 
+  onSaveStatus={(id, status, obs, enviado) => {
+    handleUpdateStatus(id, status, obs, enviado);
+    setRegistroToView(null);
+  }}
+  canApprove={canApprove}
+  avaliadorAtual={userName}
+/>}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} canApprove={canApprove} />}
         
         <EditProfileModal 
@@ -2909,10 +2967,14 @@ const duplicateReport = (registro) => {
                       </div>
                       <p className="text-sm font-bold text-gray-800 truncate mt-1" title={reg.produto}>{reg.produto || 'Produto não informado'}</p>
                       <p className="text-xs text-gray-600 truncate" title={reg.ocorrencia}>{reg.ocorrencia}</p>
-                      <div className="mt-2 flex gap-2">
-                        <button onClick={() => setEvaluatingRegistro(reg)} className="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 py-1.5 rounded text-xs font-bold transition flex justify-center items-center gap-1"><CheckCircle size={14}/> Avaliar</button>
-                        <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1.5 rounded text-xs transition flex justify-center items-center" title="Cobrar por WhatsApp"><MessageCircle size={14}/></button>
-                      </div>
+                      <div className="mt-3 flex gap-2">
+  <button onClick={() => setRegistroToView(reg)} className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold transition flex justify-center items-center gap-1 shadow-sm border border-blue-200">
+    <Eye size={16}/> Visualizar e Avaliar
+  </button>
+  <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
+    <MessageCircle size={16}/>
+  </button>
+</div>
                     </div>
                   );
                 })}
