@@ -1476,21 +1476,26 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     } catch (error) { return ''; }
   };
 
-  let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-  let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
-  let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; 
-  let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+  let tituloRelatorio = registro.customTituloRelatorio || "RELATÓRIO DE OCORRÊNCIA PRODUTO";
+  let tituloSecao1 = registro.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
+  let tituloSecao2 = registro.customTitulo2 || "2. DESCRIÇÃO DA OCORRÊNCIA"; 
+  let tituloSecao3 = registro.customTitulo3 || "3. PARECER TÉCNICO";
   
   const tipoStr = String(registro.tipoRelatorio || '');
   
-  if (tipoStr === 'Relatório de Não Conformidade - Cliente') { tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; tituloSecao1 = "DADOS DA OCORRÊNCIA"; }
-  if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
-  if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
-  if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
-if (registro.customTituloRelatorio) tituloRelatorio = registro.customTituloRelatorio;
-  if (registro.customTitulo1) tituloSecao1 = registro.customTitulo1;
-  if (registro.customTitulo2) tituloSecao2 = registro.customTitulo2;
-  if (registro.customTitulo3) tituloSecao3 = registro.customTitulo3;
+  if (tipoStr === 'Relatório de Não Conformidade - Cliente') { 
+    if (!registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; 
+    if (!registro.customTitulo1) tituloSecao1 = "DADOS DA OCORRÊNCIA"; 
+  }
+  if (tipoStr === 'Insumo ou Embalagem' && !registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
+  if (tipoStr === 'Ocorrência Interna' && !registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
+  if (tipoStr.includes('Teste')) { 
+    if (!registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE TESTES"; 
+    if (!registro.customTitulo1) tituloSecao1 = "1. DADOS DO ESTUDO"; 
+    if (!registro.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; 
+    if (!registro.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
+  }
+
   const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
   const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
   const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
@@ -1541,7 +1546,6 @@ if (registro.customTituloRelatorio) tituloRelatorio = registro.customTituloRelat
                     </>
                   ) : (
                     <>
-                      <>
                       <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
                       <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
                       {registro.dataOcorrencia && <p><strong>{registro.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {registro.dataOcorrencia}</p>}
@@ -3680,19 +3684,26 @@ const duplicateReport = (registro) => {
     );
   }
   if (view === 'preview') {
-    let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
+    let tituloRelatorio = formData.customTituloRelatorio || "RELATÓRIO DE OCORRência PRODUTO";
+    let tituloSecao1 = formData.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
+    let tituloSecao2 = formData.customTitulo2 || "2. DESCRIÇÃO DA OCORRÊNCIA"; 
+    let tituloSecao3 = formData.customTitulo3 || "3. PARECER TÉCNICO";
     
     const tipoStr = String(formData.tipoRelatorio || '');
     
-    if (tipoStr === 'Relatório de Não Conformidade - Cliente') { tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; tituloSecao1 = "DADOS DA OCORRÊNCIA"; }
-    if (tipoStr === 'Insumo ou Embalagem') tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
-    if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
-    if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
-if (formData.customTituloRelatorio) tituloRelatorio = formData.customTituloRelatorio;
-    if (formData.customTitulo1) tituloSecao1 = formData.customTitulo1;
-    if (formData.customTitulo2) tituloSecao2 = formData.customTitulo2;
-    if (formData.customTitulo3) tituloSecao3 = formData.customTitulo3;
+    if (tipoStr === 'Relatório de Não Conformidade - Cliente') { 
+      if (!formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; 
+      if (!formData.customTitulo1) tituloSecao1 = "DADOS DA OCORRÊNCIA"; 
+    }
+    if (tipoStr === 'Insumo ou Embalagem' && !formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
+    if (tipoStr === 'Ocorrência Interna' && !formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
+    if (tipoStr.includes('Teste')) { 
+      if (!formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE TESTES"; 
+      if (!formData.customTitulo1) tituloSecao1 = "1. DADOS DO ESTUDO"; 
+      if (!formData.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; 
+      if (!formData.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
+    }
+
     const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
@@ -3849,8 +3860,6 @@ if (formData.customTituloRelatorio) tituloRelatorio = formData.customTituloRelat
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p><strong>{formData.labelProduto || 'Produto / Material'}:</strong> {formData.produto}</p>
                     <p><strong>{formData.labelOcorrencia || 'Resumo do Problema'}:</strong> {formData.ocorrencia}</p>
                     {formData.dataOcorrencia && <p><strong>{formData.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {formData.dataOcorrencia}</p>}
@@ -3926,7 +3935,6 @@ if (formData.customTituloRelatorio) tituloRelatorio = formData.customTituloRelat
       </div>
     );
   }
-
   return null;
 }
 
