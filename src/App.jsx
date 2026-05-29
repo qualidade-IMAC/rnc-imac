@@ -1479,7 +1479,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
   let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
   let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; 
-  let tituloSecao3 = "3. PARECER TÉCNICO";
+  let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
   
   const tipoStr = String(registro.tipoRelatorio || '');
   
@@ -3354,7 +3354,7 @@ const duplicateReport = (registro) => {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Título Seção 3</label>
-                  <input type="text" name="customTitulo3" value={formData.customTitulo3 || ''} onChange={handleChange} placeholder="Ex: 3. PARECER TÉCNICO" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
+                  <input type="text" name="customTitulo3" value={formData.customTitulo3 || ''} onChange={handleChange} placeholder="Ex: 3. CONSIDERAÇÕES FINAIS" className="w-full border border-gray-300 p-2 rounded text-sm outline-none focus:ring-1 focus:ring-[#F4B41A]" />
                 </div>
               </div>
             </div>
@@ -3472,7 +3472,7 @@ const duplicateReport = (registro) => {
                 </div>
 
                 <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Considerações Finais</h2>
                   
                   <div>
                      <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
@@ -3629,7 +3629,7 @@ const duplicateReport = (registro) => {
   }
   if (view === 'preview') {
     let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. PARECER TÉCNICO";
+    let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; let tituloSecao3 = "3. CONSIDERAÇÕES FINAIS";
     
     const tipoStr = String(formData.tipoRelatorio || '');
     
