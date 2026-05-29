@@ -1541,16 +1541,17 @@ if (registro.customTituloRelatorio) tituloRelatorio = registro.customTituloRelat
                     </>
                   ) : (
                     <>
-                      <p><strong>Produto / Material:</strong> {registro.produto}</p>
-                      <p><strong>Resumo do Problema:</strong> {registro.ocorrencia}</p>
-                      {registro.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {registro.dataOcorrencia}</p>}
-                      {registro.lote && <p><strong>Lote:</strong> {registro.lote}</p>}
-                      {registro.quantidade && <p><strong>Quantidade Afetada:</strong> {registro.quantidade}</p>}
+                      <>
+                      <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
+                      <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
+                      {registro.dataOcorrencia && <p><strong>{registro.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {registro.dataOcorrencia}</p>}
+                      {registro.lote && <p><strong>{registro.labelLote || 'Lote'}:</strong> {registro.lote}</p>}
+                      {registro.quantidade && <p><strong>{registro.labelQuantidade || 'Quantidade Afetada'}:</strong> {registro.quantidade}</p>}
                       {registro.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
-                      {registro.validade && showValidade && <p><strong>Data de Validade:</strong> {registro.validade}</p>}
-                      {registro.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {registro.dataRecebimento}</p>}
-                      {registro.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {registro.nf}</p>}
-                      {registro.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {registro.horarioEmbalamento}</p>}
+                      {registro.validade && showValidade && <p><strong>{registro.labelValidade || 'Data de Validade'}:</strong> {registro.validade}</p>}
+                      {registro.dataRecebimento && isFornecedor && <p><strong>{registro.labelDataRecebimento || 'Data de Recebimento'}:</strong> {registro.dataRecebimento}</p>}
+                      {registro.nf && isFornecedor && <p><strong>{registro.labelNf || 'Nota Fiscal'}:</strong> {registro.nf}</p>}
+                      {registro.horarioEmbalamento && requiresHorario && <p><strong>{registro.labelHorario || 'Horário / Turno'}:</strong> {registro.horarioEmbalamento}</p>}
                     </>
                   )}
                 </div>
@@ -1784,6 +1785,7 @@ function App() {
 
   const getEmptyForm = () => ({
     customTituloRelatorio: '', customTitulo1: '', customTitulo2: '', customTitulo3: '',
+    labelProduto: '', labelOcorrencia: '', labelDataOcorrencia: '', labelLote: '', labelQuantidade: '', labelValidade: '', labelDataRecebimento: '', labelNf: '', labelHorario: '',
     logo: localStorage.getItem('imac_logo_oficial') || null,
     tipoRelatorio: 'Problema com Fornecedor',
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
@@ -2477,6 +2479,15 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       customTitulo1: registro.customTitulo1 || '',
       customTitulo2: registro.customTitulo2 || '',
       customTitulo3: registro.customTitulo3 || '',
+      labelProduto: registro.labelProduto || '',
+      labelOcorrencia: registro.labelOcorrencia || '',
+      labelDataOcorrencia: registro.labelDataOcorrencia || '',
+      labelLote: registro.labelLote || '',
+      labelQuantidade: registro.labelQuantidade || '',
+      labelValidade: registro.labelValidade || '',
+      labelDataRecebimento: registro.labelDataRecebimento || '',
+      labelNf: registro.labelNf || '',
+      labelHorario: registro.labelHorario || '',
       tipoRelatorio: registro.tipoRelatorio || 'Problema com Fornecedor',
       dataRelatorio: registro.dataRelatorio || safeDate(registro.dataCriacao),
       dataOcorrencia: registro.dataOcorrencia || '',
@@ -2587,6 +2598,15 @@ const duplicateReport = (registro) => {
       customTitulo1: formData.customTitulo1 || '',
       customTitulo2: formData.customTitulo2 || '',
       customTitulo3: formData.customTitulo3 || '',
+      labelProduto: formData.labelProduto || '',
+      labelOcorrencia: formData.labelOcorrencia || '',
+      labelDataOcorrencia: formData.labelDataOcorrencia || '',
+      labelLote: formData.labelLote || '',
+      labelQuantidade: formData.labelQuantidade || '',
+      labelValidade: formData.labelValidade || '',
+      labelDataRecebimento: formData.labelDataRecebimento || '',
+      labelNf: formData.labelNf || '',
+      labelHorario: formData.labelHorario || '',
       dataRelatorio: formData.dataRelatorio || '',
       produto: formData.produto || 'Não especificado',
       ocorrencia: formData.ocorrencia || 'Sem descrição',
@@ -3506,18 +3526,50 @@ const duplicateReport = (registro) => {
             ) : (
               <>
                 <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Resumo do Problema</label><input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data da Ocorrência</label><input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    {showValidade && <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
-                    {isFornecedor && <><div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Recebimento</label><input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div><div><label className="block text-sm font-bold mb-1 text-gray-700">Nota Fiscal</label><input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div></>}
-                    {requiresHorario && <div><label className="block text-sm font-bold mb-1 text-gray-700">Horário / Turno</label><input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>}
+                  <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
+                    <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+                    <span className="text-xs text-gray-500 font-bold bg-gray-100 px-2 py-1 rounded">💡 Dica: Clique nos títulos dos campos abaixo para renomeá-los</span>
                   </div>
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <div>
+                      <input type="text" name="labelProduto" value={formData.labelProduto || ''} placeholder="Produto ou Material" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>
+                    <div>
+                      <input type="text" name="labelOcorrencia" value={formData.labelOcorrencia || ''} placeholder="Resumo do Problema" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>
+                    <div>
+                      <input type="text" name="labelDataOcorrencia" value={formData.labelDataOcorrencia || ''} placeholder="Data da Ocorrência" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>
+                    <div>
+                      <input type="text" name="labelLote" value={formData.labelLote || ''} placeholder="Lote" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>
+                    <div>
+                      <input type="text" name="labelQuantidade" value={formData.labelQuantidade || ''} placeholder="Quantidade" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>
+                    {showValidade && <div>
+                      <input type="text" name="labelValidade" value={formData.labelValidade || ''} placeholder="Data de Validade" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>}
+                    {isFornecedor && <>
+                      <div>
+                        <input type="text" name="labelDataRecebimento" value={formData.labelDataRecebimento || ''} placeholder="Data de Recebimento" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                        <input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                      </div>
+                      <div>
+                        <input type="text" name="labelNf" value={formData.labelNf || ''} placeholder="Nota Fiscal" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                        <input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                      </div>
+                    </>}
+                    {requiresHorario && <div>
+                      <input type="text" name="labelHorario" value={formData.labelHorario || ''} placeholder="Horário / Turno" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                      <input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                    </div>}
+                  </div>
 
                 <div className="space-y-6">
                   <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
@@ -3797,15 +3849,18 @@ if (formData.customTituloRelatorio) tituloRelatorio = formData.customTituloRelat
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <p><strong>Produto / Material:</strong> {formData.produto}</p><p><strong>Resumo do Problema:</strong> {formData.ocorrencia}</p>
-                    {formData.dataOcorrencia && <p><strong>Data da ocorrência:</strong> {formData.dataOcorrencia}</p>}
-                    {formData.lote && <p><strong>Lote:</strong> {formData.lote}</p>}
-                    {formData.quantidade && <p><strong>Quantidade Afetada:</strong> {formData.quantidade}</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                    <p><strong>{formData.labelProduto || 'Produto / Material'}:</strong> {formData.produto}</p>
+                    <p><strong>{formData.labelOcorrencia || 'Resumo do Problema'}:</strong> {formData.ocorrencia}</p>
+                    {formData.dataOcorrencia && <p><strong>{formData.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {formData.dataOcorrencia}</p>}
+                    {formData.lote && <p><strong>{formData.labelLote || 'Lote'}:</strong> {formData.lote}</p>}
+                    {formData.quantidade && <p><strong>{formData.labelQuantidade || 'Quantidade Afetada'}:</strong> {formData.quantidade}</p>}
                     {formData.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {formData.fornecedor}</p>}
-                    {formData.validade && showValidade && <p><strong>Data de Validade:</strong> {formData.validade}</p>}
-                    {formData.dataRecebimento && isFornecedor && <p><strong>Data de Recebimento:</strong> {formData.dataRecebimento}</p>}
-                    {formData.nf && isFornecedor && <p><strong>Nota Fiscal:</strong> {formData.nf}</p>}
-                    {formData.horarioEmbalamento && requiresHorario && <p><strong>Horário / Turno:</strong> {formData.horarioEmbalamento}</p>}
+                    {formData.validade && showValidade && <p><strong>{formData.labelValidade || 'Data de Validade'}:</strong> {formData.validade}</p>}
+                    {formData.dataRecebimento && isFornecedor && <p><strong>{formData.labelDataRecebimento || 'Data de Recebimento'}:</strong> {formData.dataRecebimento}</p>}
+                    {formData.nf && isFornecedor && <p><strong>{formData.labelNf || 'Nota Fiscal'}:</strong> {formData.nf}</p>}
+                    {formData.horarioEmbalamento && requiresHorario && <p><strong>{formData.labelHorario || 'Horário / Turno'}:</strong> {formData.horarioEmbalamento}</p>}
                   </div>
                 </div>
 
