@@ -1476,7 +1476,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     } catch (error) { return ''; }
   };
 
-  // Lógica de títulos baseada no tipo de relatório (idêntica à tela de preview)
   let tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA PRODUTO";
   let tituloSecao1 = "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
   let tituloSecao2 = "2. DESCRIÇÃO DA OCORRÊNCIA"; 
@@ -1497,7 +1496,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl animate-fade-in-up flex flex-col h-[95vh] overflow-hidden">
         
-        {/* Cabeçalho do Modal */}
         <div className="flex justify-between items-center bg-gray-50 px-6 py-4 border-b border-gray-200 shrink-0">
           <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2">
             <Eye size={24}/> Visualização do Relatório
@@ -1507,13 +1505,11 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
           </button>
         </div>
 
-        {/* Corpo com Scroll - Simulando a Folha A4 */}
         <div className="overflow-y-auto flex-1 bg-gray-200 p-4 sm:p-8">
           <div className="max-w-4xl mx-auto bg-white shadow-md border border-gray-300 rounded-sm text-black text-[14px] leading-relaxed relative flex flex-col">
             <div className="h-[8px] w-full bg-[#F4B41A]"></div>
             <div className="px-6 py-8 sm:px-12 sm:py-10">
               
-              {/* Cabeçalho do Documento */}
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b-2 border-gray-100 pb-4 mb-6">
                 <div>
                   {registro.logo ? <img src={registro.logo} alt="Logo IMAC" className="h-[40px] object-contain mb-1" /> : <h1 className="text-[32px] font-black text-[#5C3A21] tracking-tighter leading-none mb-1">IMAC</h1>}
@@ -1525,7 +1521,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </div>
               </div>
 
-              {/* Seção 1 */}
               <div className="mb-6">
                 <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                   <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao1}</p>
@@ -1558,7 +1553,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </div>
               </div>
 
-              {/* Seção 2 */}
               {registro.descricao && (
                 <div className="mb-6 w-full overflow-hidden">
                   <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
@@ -1580,18 +1574,22 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </div>
               )}
 
-              {/* Imagens (Gerais) */}
               {Array.isArray(registro.imagens) && registro.imagens.length > 0 && (
                 <div className="mb-6 mt-4">
                   <p className="font-bold text-[14px] ml-1 mb-2 uppercase">Registro Fotográfico:</p>
-                  <div className={`grid gap-4 ${registro.imagens.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  <div className="flex flex-wrap gap-4">
                     {registro.imagens.map((img, index) => {
                       const src = typeof img === 'string' ? img : img?.displaySrc;
                       const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
+                      const tamanho = img?.tamanho || 'pequeno';
+                      let widthClass = 'w-[calc(50%-0.5rem)]';
+                      if (tamanho === 'grande') widthClass = 'w-full';
+                      if (tamanho === 'pequeno' && registro.imagens.length >= 3) widthClass = 'w-[calc(33.333%-0.7rem)]';
+
                       return (
-                        <div key={index} className="border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
-                          <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[400px] object-contain p-1" />
-                          {legenda.trim() !== '' && <div className="border-t border-gray-200 bg-gray-50 px-3 py-2"><p className="text-[12px] text-center text-gray-700 italic">{legenda}</p></div>}
+                        <div key={index} className={`border border-gray-300 shadow-sm rounded bg-white overflow-hidden flex flex-col ${widthClass}`}>
+                          <img src={src} alt={`Evidência ${index + 1}`} className="w-full h-auto max-h-[800px] object-contain p-1" />
+                          {legenda.trim() !== '' && <div className="border-t border-gray-200 bg-gray-50 px-3 py-2 mt-auto"><p className="text-[12px] text-center text-gray-700 italic">{legenda}</p></div>}
                         </div>
                       );
                     })}
@@ -1599,7 +1597,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </div>
               )}
 
-              {/* Seção 3 - Parecer Técnico / Considerações */}
               {(registro.consideracoes || registro.statusParecer) && (
                 <div className="mb-6 w-full overflow-hidden">
                   <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
@@ -1618,7 +1615,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                       <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
                       <div className="text-justify text-black ml-1 rich-text-content break-words mb-2" dangerouslySetInnerHTML={{ __html: registro.consideracoes || '-' }} />
                       
-                      {/* Investigação Imagens */}
                       {registro.imagensInvestigacao && registro.imagensInvestigacao.length > 0 && (
                         <div className={`grid gap-4 ml-1 mb-5 ${registro.imagensInvestigacao.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {registro.imagensInvestigacao.map((img, idx) => (
@@ -1632,7 +1628,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                       <p className="font-bold text-[14px] ml-1 mb-1 mt-4">AÇÃO CORRETIVA:</p>
                       <div className="text-justify text-black ml-1 rich-text-content break-words mb-2" dangerouslySetInnerHTML={{ __html: registro.acaoCorretiva || '-' }} />
                       
-                      {/* Ação Corretiva Imagens */}
                       {registro.imagensAcaoCorretiva && registro.imagensAcaoCorretiva.length > 0 && (
                         <div className={`grid gap-4 ml-1 mb-5 ${registro.imagensAcaoCorretiva.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {registro.imagensAcaoCorretiva.map((img, idx) => (
@@ -1646,7 +1641,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                       <p className="font-bold text-[14px] ml-1 mb-1 mt-4">CONCLUSÃO:</p>
                       <div className="text-justify text-black ml-1 rich-text-content break-words mb-2" dangerouslySetInnerHTML={{ __html: registro.conclusaoParecer || '-' }} />
                       
-                      {/* Conclusão Imagens */}
                       {registro.imagensConclusao && registro.imagensConclusao.length > 0 && (
                         <div className={`grid gap-4 ml-1 mb-5 ${registro.imagensConclusao.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                           {registro.imagensConclusao.map((img, idx) => (
@@ -1667,7 +1661,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
           </div>
         </div>
 
-        {/* Rodapé Fixo - Painel de Avaliação */}
         <div className="bg-white border-t-2 border-gray-200 p-4 sm:px-6 sm:py-5 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           {canApprove ? (
             <div className="flex flex-col md:flex-row gap-4 items-end">
@@ -1731,6 +1724,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     </div>
   );
 };
+
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
@@ -3610,6 +3604,10 @@ const duplicateReport = (registro) => {
     if (tipoStr === 'Ocorrência Interna') tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
     if (tipoStr.includes('Teste')) { tituloRelatorio = "RELATÓRIO DE TESTES"; tituloSecao1 = "1. DADOS DO ESTUDO"; tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; }
 
+    const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
+    const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
+    const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
+
     return (
       <div className="min-h-screen bg-gray-200 p-4 md:p-8 font-sans print:bg-white print:p-0">
         <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
@@ -3691,6 +3689,8 @@ const duplicateReport = (registro) => {
                         );
                       })}
                     </div>
+                  </div>
+                )}
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao3}</p></div>
@@ -3703,46 +3703,48 @@ const duplicateReport = (registro) => {
                   </div>
 
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRITIVO DE INVESTIGAÇÃO:</p>
-<div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
-{formData.imagensInvestigacao && formData.imagensInvestigacao.length > 0 && (
-  <div className={`grid gap-4 ml-1 mb-5 break-inside-avoid ${formData.imagensInvestigacao.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
-    {formData.imagensInvestigacao.map((img, idx) => (
-      <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
-        <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Investigação" />
-      </div>
-    ))}
-  </div>
-)}
+                  <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                  
+                  {formData.imagensInvestigacao && formData.imagensInvestigacao.length > 0 && (
+                    <div className="grid gap-4 ml-1 mb-5 break-inside-avoid grid-cols-2 print:grid-cols-2">
+                      {formData.imagensInvestigacao.map((img, idx) => (
+                        <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                          <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Investigação" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-<div className="mb-5 break-inside-avoid">
-   <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
-   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
-   {formData.imagensAcaoCorretiva && formData.imagensAcaoCorretiva.length > 0 && (
-     <div className={`grid gap-4 ml-1 mt-3 break-inside-avoid ${formData.imagensAcaoCorretiva.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
-       {formData.imagensAcaoCorretiva.map((img, idx) => (
-         <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
-           <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Ação Corretiva" />
-         </div>
-       ))}
-     </div>
-   )}
-</div>
+                  <div className="mb-5 break-inside-avoid">
+                     <p className="font-bold text-[14px] ml-1 mb-1">AÇÃO CORRETIVA:</p>
+                     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.acaoCorretiva || '-' }} />
+                     {formData.imagensAcaoCorretiva && formData.imagensAcaoCorretiva.length > 0 && (
+                       <div className="grid gap-4 ml-1 mt-3 break-inside-avoid grid-cols-2 print:grid-cols-2">
+                         {formData.imagensAcaoCorretiva.map((img, idx) => (
+                           <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                             <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Ação Corretiva" />
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                  </div>
 
-{formData.conclusaoParecer && (
-  <div className="mb-8 break-inside-avoid">
-     <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
-     <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
-     {formData.imagensConclusao && formData.imagensConclusao.length > 0 && (
-       <div className={`grid gap-4 ml-1 mt-3 break-inside-avoid ${formData.imagensConclusao.length === 1 ? 'grid-cols-1' : 'grid-cols-2 print:grid-cols-2'}`}>
-         {formData.imagensConclusao.map((img, idx) => (
-           <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
-             <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Conclusão" />
-           </div>
-         ))}
-       </div>
-     )}
-  </div>
-)}
+                  {formData.conclusaoParecer && (
+                    <div className="mb-8 break-inside-avoid">
+                       <p className="font-bold text-[14px] ml-1 mb-1">CONCLUSÃO:</p>
+                       <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-2" dangerouslySetInnerHTML={{ __html: formData.conclusaoParecer || '-' }} />
+                       {formData.imagensConclusao && formData.imagensConclusao.length > 0 && (
+                         <div className="grid gap-4 ml-1 mt-3 break-inside-avoid grid-cols-2 print:grid-cols-2">
+                           {formData.imagensConclusao.map((img, idx) => (
+                             <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                               <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Conclusão" />
+                             </div>
+                           ))}
+                         </div>
+                       )}
+                    </div>
+                  )}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
@@ -3802,7 +3804,9 @@ const duplicateReport = (registro) => {
                         );
                       })}
                     </div>
-                    
+                  </div>
+                )}
+
                 <div className="print:pt-4">
                   {formData.consideracoes && (
                     <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
