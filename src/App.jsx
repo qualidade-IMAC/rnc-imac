@@ -3240,11 +3240,9 @@ const duplicateReport = (registro) => {
   <button onClick={() => setRegistroToView(reg)} className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold transition flex justify-center items-center gap-1 shadow-sm border border-blue-200">
     <Eye size={16}/> Visualizar e Avaliar
   </button>
-  <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
-    {reg.solicitante && (
-  )}
-    <MessageCircle size={16}/>
-  </button>
+ <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
+  <MessageCircle size={16}/>
+</button>
 </div>
                     </div>
                   );
