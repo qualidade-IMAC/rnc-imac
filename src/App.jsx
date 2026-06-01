@@ -1769,6 +1769,7 @@ function App() {
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
   const [registroToView, setRegistroToView] = useState(null);
+  const [historicoToView, setHistoricoToView] = useState(null);
   const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
   const [editingReportId, setEditingReportId] = useState(null);
   const [isFornecedoresModalOpen, setFornecedoresModalOpen] = useState(false);
@@ -3062,7 +3063,12 @@ const duplicateReport = (registro) => {
   avaliadorAtual={userName}
 />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} canApprove={canApprove} />}
-        
+        <HistoricoModal 
+          isOpen={!!historicoToView} 
+          onClose={() =" do e logo {`> setHistoricoToView(null)} 
+          solicitante={historicoToView?.solicitante} 
+          urgencia={historicoToView?.urgencia} 
+        />
         <EditProfileModal 
           isOpen={isProfileModalOpen} 
           onClose={() => setIsProfileModalOpen(false)} 
@@ -3217,6 +3223,11 @@ const duplicateReport = (registro) => {
     <Eye size={16}/> Visualizar e Avaliar
   </button>
   <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
+    {reg.solicitante && (
+    <button onClick={() => setHistoricoToView(reg)} className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-blue-200" title="Ver Origem da Solicitação">
+      <Clock size="{16}"/>
+    </button>
+  )}
     <MessageCircle size={16}/>
   </button>
 </div>
@@ -3288,6 +3299,11 @@ const duplicateReport = (registro) => {
                             )}
                             <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Marcar Envio"><CheckCircle size={16} /></button>
                             <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
+                            {reg.solicitante && (
+                            <button onClick={() => setHistoricoToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Ver Origem da Solicitação">
+                            <Clock size="{16}"/>
+                            </button>
+                            )}
                             <button onClick={() => { startEditingReport(reg); setView('preview'); }} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar Documento"><Eye size={16} /></button>
                             <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
                             <button onClick={() => duplicateReport(reg)} className="text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 p-2 rounded-lg transition" title="Duplicar Relatório"><Copy size={16} /></button>
