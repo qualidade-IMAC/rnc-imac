@@ -1460,10 +1460,31 @@ const PieChartComponent = ({ data, title }) => {
     </div>
   );
 };
+
+const HistoricoModal = ({ isOpen, onClose, solicitante, urgencia }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[300] flex items-center justify-center p-4 backdrop-blur-sm no-print">
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full animate-fade-in-up">
+        <div className="flex justify-between items-center mb-4 border-b pb-2">
+          <h3 className="text-lg font-black text-blue-800 flex items-center gap-2"><Clock size={20}/> Origem da Solicitação</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition"><X size={20}/></button>
+        </div>
+        <div className="space-y-3 text-sm text-gray-700">
+          <p><strong>Solicitante Original:</strong> {solicitante || 'Não informado'}</p>
+          <p><strong>Nível de Urgência:</strong> <span className={`px-2 py-0.5 rounded font-bold ${urgencia === 'Alta' ? 'bg-red-100 text-red-700' : urgencia === 'Baixa' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{urgencia || 'Normal'}</span></p>
+        </div>
+        <button onClick={onClose} className="mt-6 w-full bg-gray-200 text-gray-800 font-bold py-2 rounded-lg hover:bg-gray-300 transition">Fechar</button>
+      </div>
+    </div>
+  );
+};
+
 const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
+  const [showHistorico, setShowHistorico] = useState(false);
 
   if (!registro) return null;
 
@@ -1507,6 +1528,14 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
         <div className="flex justify-between items-center bg-gray-50 px-6 py-4 border-b border-gray-200 shrink-0">
           <h3 className="text-xl font-black text-[#5C3A21] flex items-center gap-2">
             <Eye size={24}/> Visualização do Relatório
+            {registro.solicitante && (
+              <>
+                <button onClick={() => setShowHistorico(true)} className="ml-3 flex items-center gap-1 bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-lg text-sm font-bold border border-blue-200 transition">
+                  <Clock size={16} /> Origem
+                </button>
+                <HistoricoModal isOpen={showHistorico} onClose={() => setShowHistorico(false)} solicitante={registro.solicitante} urgencia={registro.urgencia} />
+              </>
+            )}
           </h3>
           <button onClick={onClose} className="text-gray-500 hover:text-red-500 bg-gray-200 hover:bg-red-100 p-2 rounded-lg transition">
             <X size={20}/>
@@ -1746,7 +1775,7 @@ function App() {
   const [isClientesModalOpen, setClientesModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
-
+  const [isHistoricoModalOpen, setIsHistoricoModalOpen] = useState(false);
   const [dbError, setDbError] = useState(false); 
   const [fornecedores, setFornecedores] = useState([]);
   const [clientes, setClientes] = useState([]);
@@ -1799,7 +1828,8 @@ function App() {
     imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas],
     imagensInvestigacao: [],
   imagensAcaoCorretiva: [],
-  imagensConclusao: []
+ imagensConclusao: [],
+  solicitante: '', urgencia: ''
 });
 
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
@@ -2512,6 +2542,8 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       statusParecer: registro.statusParecer || '',
       acaoCorretiva: registro.acaoCorretiva || '',
       conclusaoParecer: registro.conclusaoParecer || '',
+      solicitante: registro.solicitante || '',
+      urgencia: registro.urgencia || '',
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
       localData: registro.localData || (registro.dataCriacao ? `Aquiraz, ${safeDate(registro.dataCriacao)}.` : ''),
@@ -2620,6 +2652,8 @@ const duplicateReport = (registro) => {
       lojasLocais: formData.lojasLocais || [], dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
       sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
       statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '', conclusaoParecer: formData.conclusaoParecer || '',
+      solicitante: formData.solicitante || '',
+      urgencia: formData.urgencia || '',
       imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
       assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
       logo: formData.logo || null, localData: formData.localData || '',
@@ -3316,6 +3350,14 @@ if (view === 'form') {
               {editingReportId && (
                  <button onClick={cancelEditing} className="flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 transition">Cancelar Edição</button>
               )}
+
+                {formData.solicitante && (
+                <>
+                  <button onClick={() => setIsHistoricoModalOpen(true)} className="flex items-center justify-center gap-1 bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg font-bold border border-blue-200 transition"><Clock size={18} /> Histórico</button>
+                  <HistoricoModal isOpen={isHistoricoModalOpen} onClose={() => setIsHistoricoModalOpen(false)} solicitante={formData.solicitante} urgencia={formData.urgencia} />
+                </>
+              )}
+              
               <button onClick={() => { setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold border border-gray-300 transition"><BarChart2 size={18} /> Painel de Registros</button>
             </div>
           </div>
