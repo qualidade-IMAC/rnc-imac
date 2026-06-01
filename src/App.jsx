@@ -3226,6 +3226,11 @@ const duplicateReport = (registro) => {
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col gap-1 items-start">
                           <span className="text-xs font-bold bg-orange-100 text-orange-800 px-2 py-1 rounded">ID: {String(reg.id).substring(0, 6)}</span>
+                          {reg.solicitante && (
+  <button onClick={() => setHistoricoToView(reg)} className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-200 transition shadow-sm" title="Ver Histórico da Solicitação">
+    <Clock size={12} /> Origem
+  </button>
+)}
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border ${reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                             <Send size={10} /> {reg.enviado ? 'Enviado' : 'Não Enviado'}
                           </span>
@@ -3307,6 +3312,11 @@ const duplicateReport = (registro) => {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            {reg.solicitante && (
+  <button onClick={() => setHistoricoToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Ver Origem da Solicitação">
+    <Clock size={16} />
+  </button>
+)}
                             {appUser?.isManager && (
                                <button onClick={() => handleDarVisto(reg)} className="text-pink-600 hover:text-pink-800 bg-pink-50 hover:bg-pink-100 p-2 rounded-lg transition" title="Dar Visto (Assinar)"><PenTool size={16} /></button>
                             )}
