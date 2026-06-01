@@ -1595,8 +1595,20 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                   <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                     <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao2}</p>
                   </div>
-                  <div className="text-justify text-black ml-1 rich-text-content break-words" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
-                  
+                  ) : (
+                    <>
+                      <div className="text-justify text-black ml-1 rich-text-content break-words" dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
+                      {registro.imagensConsideracoes && registro.imagensConsideracoes.length > 0 && (
+                        <div className={`grid gap-4 ml-1 mt-3 ${registro.imagensConsideracoes.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {registro.imagensConsideracoes.map((img, idx) => (
+                            <div key={idx} className="border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                              <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[400px] object-contain p-1" alt="Considerações" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
                   {tipoStr === 'Relatório de Não Conformidade - Cliente' && (
                     <div className="mt-4">
                       <p className="font-bold text-[14px] ml-1 mb-2">CARACTERÍSTICAS DO PRODUTO:</p>
@@ -1830,6 +1842,8 @@ function App() {
     imagensInvestigacao: [],
   imagensAcaoCorretiva: [],
  imagensConclusao: [],
+    imagensDescricao: [], 
+    imagensConsideracoes: [],
   solicitante: '', urgencia: ''
 });
 
@@ -2553,7 +2567,9 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       assinaturas: Array.isArray(registro.assinaturas) ? registro.assinaturas : [...defaultAssinaturas],
       imagensInvestigacao: Array.isArray(registro.imagensInvestigacao) ? registro.imagensInvestigacao : [],
       imagensAcaoCorretiva: Array.isArray(registro.imagensAcaoCorretiva) ? registro.imagensAcaoCorretiva : [],
-      imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : []
+      imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : [],
+      imagensDescricao: Array.isArray(registro.imagensDescricao) ? registro.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
+      imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro.imagensConsideracoes : [] // <--- ADICIONAR ESTA LINHA
     });
     setEditingReportId(registro.id);
     setView('form');
@@ -2664,7 +2680,9 @@ const duplicateReport = (registro) => {
       enviado: false,
       imagensInvestigacao: Array.isArray(formData.imagensInvestigacao) ? formData.imagensInvestigacao : [],
       imagensAcaoCorretiva: Array.isArray(formData.imagensAcaoCorretiva) ? formData.imagensAcaoCorretiva : [],
-      imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : []
+      imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : [],
+      imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
+      imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [] // <--- ADICIONAR ESTA LINHA
     };
 
     let currentId = editingReportId;
@@ -3640,12 +3658,14 @@ if (view === 'form') {
                       <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
                     </div>
                     <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                    {renderMiniImageUploader('Descrição Detalhada', 'imagensDescricao')}
                   </div>
                   <div>
                     <div className="mb-1">
                       <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
                     </div>
                     <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
+                    {renderMiniImageUploader('Considerações Finais', 'imagensConsideracoes')}
                   </div>
                 </div>
 
@@ -3933,9 +3953,19 @@ if (view === 'form') {
                 </div>
 
                 {formData.descricao && (
-                  <div className="mb-5 print:mb-3 w-full overflow-hidden">
+                  <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
                     <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
                     <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+                    
+                    {formData.imagensDescricao && formData.imagensDescricao.length > 0 && (
+                      <div className="grid gap-4 ml-1 mt-3 break-inside-avoid grid-cols-2 print:grid-cols-2">
+                        {formData.imagensDescricao.map((img, idx) => (
+                          <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                            <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Descrição" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -3968,10 +3998,22 @@ if (view === 'form') {
                 )}
 
                 <div className="print:pt-4">
-                  {formData.consideracoes && (
-                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden">
+                  {(formData.consideracoes || (formData.imagensConsideracoes && formData.imagensConsideracoes.length > 0)) && (
+                    <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden break-inside-avoid">
                       <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
-                      <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                      {formData.consideracoes && (
+                        <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
+                      )}
+                      
+                      {formData.imagensConsideracoes && formData.imagensConsideracoes.length > 0 && (
+                        <div className="grid gap-4 ml-1 mt-3 break-inside-avoid grid-cols-2 print:grid-cols-2">
+                          {formData.imagensConsideracoes.map((img, idx) => (
+                            <div key={idx} className="break-inside-avoid border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                              <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[800px] object-contain bg-white p-1" alt="Evidência Considerações" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
