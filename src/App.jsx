@@ -3065,7 +3065,7 @@ const duplicateReport = (registro) => {
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} canApprove={canApprove} />}
         <HistoricoModal 
           isOpen={!!historicoToView} 
-          onClose={() =" do e logo {`> setHistoricoToView(null)} 
+          onClose={() => setHistoricoToView(null)} 
           solicitante={historicoToView?.solicitante} 
           urgencia={historicoToView?.urgencia} 
         />
@@ -3225,7 +3225,7 @@ const duplicateReport = (registro) => {
   <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
     {reg.solicitante && (
     <button onClick={() => setHistoricoToView(reg)} className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-blue-200" title="Ver Origem da Solicitação">
-      <Clock size="{16}"/>
+      <Clock size={16}/>
     </button>
   )}
     <MessageCircle size={16}/>
@@ -3301,7 +3301,7 @@ const duplicateReport = (registro) => {
                             <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
                             {reg.solicitante && (
                             <button onClick={() => setHistoricoToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Ver Origem da Solicitação">
-                            <Clock size="{16}"/>
+                            <Clock size={16}/>
                             </button>
                             )}
                             <button onClick={() => { startEditingReport(reg); setView('preview'); }} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar Documento"><Eye size={16} /></button>
