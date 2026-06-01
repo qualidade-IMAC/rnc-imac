@@ -3242,9 +3242,6 @@ const duplicateReport = (registro) => {
   </button>
   <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
     {reg.solicitante && (
-    <button onClick={() => setHistoricoToView(reg)} className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-blue-200" title="Ver Origem da Solicitação">
-      <Clock size={16}/>
-    </button>
   )}
     <MessageCircle size={16}/>
   </button>
