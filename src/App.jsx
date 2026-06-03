@@ -1595,19 +1595,17 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                   <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                     <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao2}</p>
                   </div>
-                  ) : (
-                    <>
-                      <div className="text-justify text-black ml-1 rich-text-content break-words" dangerouslySetInnerHTML={{ __html: registro.consideracoes }} />
-                      {registro.imagensConsideracoes && registro.imagensConsideracoes.length > 0 && (
-                        <div className={`grid gap-4 ml-1 mt-3 ${registro.imagensConsideracoes.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                          {registro.imagensConsideracoes.map((img, idx) => (
-                            <div key={idx} className="border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
-                              <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[400px] object-contain p-1" alt="Considerações" />
-                            </div>
-                          ))}
+                  
+                  <div className="text-justify text-black ml-1 rich-text-content break-words" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
+                  
+                  {registro.imagensDescricao && registro.imagensDescricao.length > 0 && (
+                    <div className={`grid gap-4 ml-1 mt-3 ${registro.imagensDescricao.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                      {registro.imagensDescricao.map((img, idx) => (
+                        <div key={idx} className="border border-gray-300 shadow-sm rounded bg-white overflow-hidden">
+                          <img src={typeof img === 'string' ? img : (img.displaySrc || img.baseSrc)} className="w-full h-auto max-h-[400px] object-contain p-1" alt="Evidência Descrição" />
                         </div>
-                      )}
-                    </>
+                      ))}
+                    </div>
                   )}
                   {tipoStr === 'Relatório de Não Conformidade - Cliente' && (
                     <div className="mt-4">
