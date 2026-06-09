@@ -3248,7 +3248,7 @@ const duplicateReport = (registro) => {
   </button>
 )}
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border ${reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                            <Send size={10} /> {reg.enviado ? 'Enviado' : 'Não Enviado'}
+                            <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
                           </span>
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded ${dias > 3 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
@@ -3322,7 +3322,7 @@ const duplicateReport = (registro) => {
                             <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
                               reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
                             }`}>
-                              <Send size={10} /> {reg.enviado ? 'Enviado' : 'Não Enviado'}
+                              <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
                             </span>
                           </div>
                         </td>
