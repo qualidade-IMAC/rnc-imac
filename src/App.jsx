@@ -81,6 +81,11 @@ const saveToLocalStorage = (key, data) => {
 const safeDate = (dateString) => {
   if (!dateString) return '';
   try {
+    // Corrige o bug de fuso horário para datas no formato YYYY-MM-DD
+    if (typeof dateString === 'string' && dateString.length === 10 && dateString.includes('-')) {
+      const [y, m, d] = dateString.split('-');
+      return `${d}/${m}/${y}`;
+    }
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('pt-BR');
@@ -1500,6 +1505,10 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   const safeDate = (dateString) => {
     if (!dateString) return '';
     try {
+      if (typeof dateString === 'string' && dateString.length === 10 && dateString.includes('-')) {
+        const [y, m, d] = dateString.split('-');
+        return `${d}/${m}/${y}`;
+      }
       const d = new Date(dateString);
       if (isNaN(d.getTime())) return '';
       return d.toLocaleDateString('pt-BR');
