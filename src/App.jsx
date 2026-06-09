@@ -1311,6 +1311,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
+  const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
@@ -1330,12 +1331,20 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Status de Envio (WhatsApp/Email)</label>
-            <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
-              <option value="nao">📥 Não Enviado</option>
-              <option value="sim">📤 Enviado</option>
-            </select>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Status de Envio</label>
+              <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
+                <option value="nao">📥 Não Enviado</option>
+                <option value="sim">📤 Enviado</option>
+              </select>
+            </div>
+            {enviado && (
+              <div className="flex-1 animate-fade-in-up">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Data do Envio</label>
+                <input type="date" value={dataEnvio} onChange={(e) => setDataEnvio(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm" />
+              </div>
+            )}
           </div>
           
           {canApprove && status === 'Não Liberado' && (
@@ -1354,13 +1363,12 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
 
         <div className="flex justify-end gap-3 mt-8">
           <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
-          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar {canApprove ? 'Avaliação' : 'Envio'}</button>
+          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar {canApprove ? 'Avaliação' : 'Envio'}</button>
         </div>
       </div>
     </div>
   );
 };
-
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
@@ -1484,6 +1492,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
+  const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
   const [showHistorico, setShowHistorico] = useState(false);
 
   if (!registro) return null;
@@ -1720,12 +1729,20 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                     <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-[13px] font-bold text-gray-700 mb-1">Status de Envio (WhatsApp/E-mail)</label>
-                  <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 bg-gray-50">
-                    <option value="nao">📥 Não Enviado</option>
-                    <option value="sim">📤 Enviado</option>
-                  </select>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-[13px] font-bold text-gray-700 mb-1">Status de Envio</label>
+                    <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 bg-gray-50">
+                      <option value="nao">📥 Não Enviado</option>
+                      <option value="sim">📤 Enviado</option>
+                    </select>
+                  </div>
+                  {enviado && (
+                    <div className="flex-1 animate-fade-in-up">
+                      <label className="block text-[13px] font-bold text-gray-700 mb-1">Data</label>
+                      <input type="date" value={dataEnvio} onChange={(e) => setDataEnvio(e.target.value)} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 bg-gray-50" />
+                    </div>
+                  )}
                 </div>
                 
                 {status === 'Não Liberado' && (
@@ -1746,7 +1763,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 <button onClick={onClose} className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition w-full md:w-auto">
                   Fechar
                 </button>
-                <button onClick={() => onSaveStatus(registro.id, status, status === 'Não Liberado' ? obs : '', enviado)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
+                <button onClick={() => onSaveStatus(registro.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
                   <Check size={20}/> Salvar Avaliação
                 </button>
               </div>
@@ -1759,7 +1776,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                   {registro.status || 'Pendente'}
                 </span>
                 <span className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase border tracking-wide flex items-center gap-1 ${registro.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                  <Send size={14} /> {registro.enviado ? 'Enviado' : 'Não Enviado'}
+                  <Send size={14} /> {registro.enviado ? `Enviado: ${safeDate(registro.dataEnvio)}` : 'Não Enviado'}
                 </span>
               </div>
               <button onClick={onClose} className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-bold transition">Fechar Janela</button>
@@ -2615,11 +2632,12 @@ const duplicateReport = (registro) => {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handleUpdateStatus = (id, newStatus, newObs, newEnviado) => {
+  const handleUpdateStatus = (id, newStatus, newObs, newEnviado, newDataEnvio) => {
     const payload = { 
       status: newStatus, 
       observacoesStatus: newObs, 
       enviado: newEnviado,
+      dataEnvio: newDataEnvio || '',
       dataModificacao: new Date().toISOString(),
       avaliadorNome: userName
     };
