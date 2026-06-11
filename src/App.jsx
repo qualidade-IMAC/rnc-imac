@@ -140,6 +140,7 @@ const ArrowUpRight = (p) => <SvgIcon {...p}><path d="M7 17L17 7M7 7h10v10" /></S
 const Circle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10" /></SvgIcon>;
 const Undo = (p) => <SvgIcon {...p}><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" /></SvgIcon>;
 const Send = (p) => <SvgIcon {...p}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></SvgIcon>;
+const Archive = (p) => <SvgIcon {...p}><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></SvgIcon>;
 const Check = (p) => <SvgIcon {...p}><path d="M20 6L9 17l-5-5" /></SvgIcon>;
 const X = (p) => <SvgIcon {...p}><path d="M18 6L6 18M6 6l12 12" /></SvgIcon>;
 const PenTool = (p) => <SvgIcon {...p}><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.586 7.586M11 11l2 2" /></SvgIcon>;
@@ -1317,6 +1318,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
   const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
+  const [arquivado, setArquivado] = useState(registro?.arquivado || false);
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
@@ -1352,6 +1354,14 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
             )}
           </div>
           
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Arquivamento</label>
+            <select value={arquivado ? 'sim' : 'nao'} onChange={(e) => setArquivado(e.target.value === 'sim')} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
+              <option value="nao">📁 Ativo</option>
+              <option value="sim">🗄️ Arquivado (Não enviado)</option>
+            </select>
+          </div>
+          
           {canApprove && status === 'Não Liberado' && (
             <div className="animate-fade-in-up">
               <label className="block text-sm font-bold text-gray-700 mb-2">Motivo / Observações para Correção</label>
@@ -1368,7 +1378,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
 
         <div className="flex justify-end gap-3 mt-8">
           <button onClick={onClose} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition text-sm">Cancelar</button>
-          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar {canApprove ? 'Avaliação' : 'Envio'}</button>
+          <button onClick={() => onSave(registro?.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio, arquivado)} className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition text-sm flex items-center gap-2 shadow-md"><Check size={18}/> Salvar {canApprove ? 'Avaliação' : 'Envio'}</button>
         </div>
       </div>
     </div>
@@ -1498,6 +1508,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
   const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
+  const [arquivado, setArquivado] = useState(registro?.arquivado || false);
   const [showHistorico, setShowHistorico] = useState(false);
 
   if (!registro) return null;
@@ -1754,6 +1765,14 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                   )}
                 </div>
                 
+                <div className="md:col-span-2">
+                  <label className="block text-[13px] font-bold text-gray-700 mb-1">Arquivamento</label>
+                  <select value={arquivado ? 'sim' : 'nao'} onChange={(e) => setArquivado(e.target.value === 'sim')} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none text-sm font-bold text-gray-800 bg-gray-50">
+                    <option value="nao">📁 Ativo</option>
+                    <option value="sim">🗄️ Arquivado</option>
+                  </select>
+                </div>
+                
                 {status === 'Não Liberado' && (
                   <div className="md:col-span-2 animate-fade-in-up">
                     <label className="block text-[13px] font-bold text-red-700 mb-1">Motivo / Observações para Correção</label>
@@ -1772,7 +1791,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 <button onClick={onClose} className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition w-full md:w-auto">
                   Fechar
                 </button>
-                <button onClick={() => onSaveStatus(registro.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
+                <button onClick={() => onSaveStatus(registro.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio, arquivado)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
                   <Check size={20}/> Salvar Avaliação
                 </button>
               </div>
@@ -1786,6 +1805,11 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </span>
                 <span className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase border tracking-wide flex items-center gap-1 ${registro.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                   <Send size={14} /> {registro.enviado ? `Enviado: ${safeDate(registro.dataEnvio)}` : 'Não Enviado'}
+                  {registro.arquivado && (
+                  <span className="px-3 py-1.5 rounded-md text-xs font-bold uppercase border tracking-wide flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300">
+                    <Archive size={14} /> Arquivado
+                  </span>
+                )}
                 </span>
               </div>
               <button onClick={onClose} className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-bold transition">Fechar Janela</button>
@@ -2641,12 +2665,13 @@ const duplicateReport = (registro) => {
     setTimeout(() => setAppMessage(null), 3000);
   };
 
-  const handleUpdateStatus = (id, newStatus, newObs, newEnviado, newDataEnvio) => {
+  const handleUpdateStatus = (id, newStatus, newObs, newEnviado, newDataEnvio, newArquivado) => {
     const payload = { 
       status: newStatus, 
       observacoesStatus: newObs, 
       enviado: newEnviado,
       dataEnvio: newDataEnvio || '',
+      arquivado: newArquivado || false,
       dataModificacao: new Date().toISOString(),
       avaliadorNome: userName
     };
@@ -2718,6 +2743,9 @@ const duplicateReport = (registro) => {
       const existingReport = registros.find(r => r.id === editingReportId);
       if (existingReport && typeof existingReport.enviado !== 'undefined') {
          payloadEdicao.enviado = existingReport.enviado;
+      }
+      if (existingReport && typeof existingReport.arquivado !== 'undefined') {
+         payloadEdicao.arquivado = existingReport.arquivado;
       }
       
       setRegistros(prev => {
@@ -3098,8 +3126,8 @@ const duplicateReport = (registro) => {
         {registroToView && <RelatorioViewModal 
   registro={registroToView} 
   onClose={() => setRegistroToView(null)} 
-  onSaveStatus={(id, status, obs, enviado) => {
-    handleUpdateStatus(id, status, obs, enviado);
+  onSaveStatus={(id, status, obs, enviado, dataEnvio, arquivado) => {
+    handleUpdateStatus(id, status, obs, enviado, dataEnvio, arquivado);
     setRegistroToView(null);
   }}
   canApprove={canApprove}
@@ -3259,6 +3287,11 @@ const duplicateReport = (registro) => {
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border ${reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                             <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
                           </span>
+                          {reg.arquivado && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border bg-gray-200 text-gray-700 border-gray-300 mt-1">
+                              <Archive size={10} /> Arquivado
+                            </span>
+                          )}
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded ${dias > 3 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
                           {dias === 0 ? 'Criado hoje' : `${dias} dia${dias > 1 ? 's' : ''} parado`}
@@ -3333,6 +3366,11 @@ const duplicateReport = (registro) => {
                             }`}>
                               <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
                             </span>
+                            {reg.arquivado && (
+                              <span className="px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300 mt-1">
+                                <Archive size={10} /> Arquivado
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center">
