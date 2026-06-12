@@ -97,12 +97,16 @@ const getShareText = (registro) => {
   const title = registro?.tipoRelatorio || 'Ocorrência';
   const prod = registro?.produto || 'Não informado';
   const prob = registro?.ocorrencia || 'Sem descrição';
-  return `*Aviso de Relatório RNC*\n\n*ID:* ${id}\n*Tipo:* ${title}\n*Produto:* ${prod}\n*Problema:* ${prob}\n\nPor favor, verifique este relatório no sistema IMAC.`;
+  const baseUrl = window.location.href.split('?')[0];
+  const linkAvaliacao = `${baseUrl}?rnc=${registro?.id}`;
+  
+  return `*Aviso de Relatório RNC*\n\n*ID:* ${id}\n*Tipo:* ${title}\n*Produto:* ${prod}\n*Problema:* ${prob}\n\n*Acesse o relatório diretamente no sistema para avaliar:* \n${linkAvaliacao}`;
 };
 
-const shareViaWhatsApp = (registro) => {
+const shareViaWhatsApp = (registro, phone = '') => {
   const text = encodeURIComponent(getShareText(registro));
-  window.open(`https://wa.me/?text=${text}`, '_blank');
+  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+  window.open(url, '_blank');
 };
 
 const shareViaEmail = (registro) => {
@@ -2447,7 +2451,17 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
   }, [db, isConfigured, user]);
 
   const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
-
+useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportIdToOpen = urlParams.get('rnc');
+    if (reportIdToOpen && registros.length > 0) {
+      const report = registros.find(r => String(r.id) === reportIdToOpen);
+      if (report) {
+        setRegistroToView(report);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [registros]);
   const handleImageUpload = async (e, isLogo = false) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -3855,8 +3869,8 @@ if (view === 'form') {
         <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
           <button onClick={() => { setView('form'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
           <div className="flex flex-wrap gap-3">
-            <button onClick={() => shareViaWhatsApp(formData)} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded font-bold shadow hover:bg-green-600 transition"><MessageCircle size={18} /> WhatsApp</button>
-            <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
+<button onClick={() => shareViaWhatsApp({ ...formData, id: editingReportId }, '558599910301')} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded font-bold shadow hover:bg-green-600 transition"><MessageCircle size={18} /> Coordenadora</button>
+            <button onClick={() => shareViaWhatsApp({ ...formData, id: editingReportId }, '558591364639')} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded font-bold shadow hover:bg-emerald-700 transition"><MessageCircle size={18} /> Gerente</button>            <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> Imprimir / PDF</button>
           </div>
         </div>
