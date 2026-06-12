@@ -2451,14 +2451,24 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
   }, [db, isConfigured, user]);
 
   const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
-useEffect(() => {
+const processedUrl = useRef(false);
+  useEffect(() => {
+    if (processedUrl.current) return;
+    
     const urlParams = new URLSearchParams(window.location.search);
     const reportIdToOpen = urlParams.get('rnc');
-    if (reportIdToOpen && registros.length > 0) {
+    
+    if (!reportIdToOpen) {
+      processedUrl.current = true;
+      return;
+    }
+
+    if (registros && registros.length > 0) {
       const report = registros.find(r => String(r.id) === reportIdToOpen);
       if (report) {
         setRegistroToView(report);
-        window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState(null, '', window.location.pathname);
+        processedUrl.current = true;
       }
     }
   }, [registros]);
