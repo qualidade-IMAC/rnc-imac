@@ -1419,22 +1419,30 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
 const BarChart = ({ data, title, color = '#F4B41A' }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
+  const totalValue = (data || []).reduce((sum, d) => sum + (d.value || 0), 0);
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
       <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {(data || []).map((item, index) => {
-          const percentage = ((item.value || 0) / maxValue) * 100;
+          const widthPercentage = ((item.value || 0) / maxValue) * 100;
+          const realPercentage = totalValue > 0 ? ((item.value || 0) / totalValue) * 100 : 0;
+          
           return (
             <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
-              <div className="flex justify-between text-xs mb-1">
+              <div className="flex justify-between items-end text-xs mb-1.5">
                 <span className="font-medium text-gray-600 truncate mr-2" title={item.label}>{item.label}</span>
-                <span className="font-bold text-gray-800">{item.value || 0}</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-6 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000 ease-out flex items-center" style={{ width: `${Math.max(percentage, 2)}%`, backgroundColor: item.color || color }}>
-                  {percentage > 10 && <span className="text-white text-xs font-bold ml-2">{percentage.toFixed(0)}%</span>}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-black text-gray-800">{item.value || 0}</span>
+                  <span className="text-gray-400 font-medium">({realPercentage.toFixed(1)}%)</span>
                 </div>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-1000 ease-out" 
+                  style={{ width: `${Math.max(widthPercentage, 2)}%`, backgroundColor: item.color || color }}
+                ></div>
               </div>
             </div>
           );
