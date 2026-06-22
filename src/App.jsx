@@ -1419,7 +1419,6 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
 const BarChart = ({ data, title, color = '#F4B41A' }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
-  const totalValue = (data || []).reduce((sum, d) => sum + (d.value || 0), 0);
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -1427,7 +1426,6 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
       <div className="space-y-4">
         {(data || []).map((item, index) => {
           const widthPercentage = ((item.value || 0) / maxValue) * 100;
-          const realPercentage = totalValue > 0 ? ((item.value || 0) / totalValue) * 100 : 0;
           
           return (
             <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
@@ -1435,7 +1433,6 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
                 <span className="font-medium text-gray-600 truncate mr-2" title={item.label}>{item.label}</span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="font-black text-gray-800">{item.value || 0}</span>
-                  <span className="text-gray-400 font-medium">({realPercentage.toFixed(1)}%)</span>
                 </div>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
@@ -1451,7 +1448,6 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
     </div>
   );
 };
-
 const PieChartComponent = ({ data, title }) => {
   if (!data || data.length === 0) return null;
   const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
