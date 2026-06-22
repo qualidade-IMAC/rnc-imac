@@ -1435,9 +1435,9 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
                   <span className="font-black text-gray-800">{item.value || 0}</span>
                 </div>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden shadow-inner">
                 <div 
-                  className="h-full rounded-full transition-all duration-1000 ease-out" 
+                  className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm" 
                   style={{ width: `${Math.max(widthPercentage, 2)}%`, backgroundColor: item.color || color }}
                 ></div>
               </div>
@@ -3356,12 +3356,12 @@ const duplicateReport = (registro) => {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {pieStatusData.length > 0 && <PieChartComponent data={pieStatusData} title="Status dos Relatórios" />}
-            {produtoBarData.length > 0 && <BarChart data={produtoBarData} title="Top 5 Produtos Recorrentes" color="#8B5CF6" />}
+            {produtoBarData.length > 0 && <BarChart data={produtoBarData} title="Top 5 Produtos Recorrentes" color="#3B82F6" />}
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {barData.length > 0 && <BarChart data={barData} title="Top 10 Fornecedores Com Mais Ocorrências" color="#EF4444" />}
-            {clienteBarData.length > 0 && <BarChart data={clienteBarData} title="Top 10 Clientes Com Mais Ocorrências" color="#4F46E5" />}
+            {barData.length > 0 && <BarChart data={barData} title="Top 10 Fornecedores Com Mais Ocorrências" color="#F4B41A" />}
+            {clienteBarData.length > 0 && <BarChart data={clienteBarData} title="Top 10 Clientes Com Mais Ocorrências" color="#5C3A21" />}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
