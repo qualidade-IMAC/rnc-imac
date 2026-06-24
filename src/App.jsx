@@ -2462,20 +2462,51 @@ const processedUrl = useRef(false);
     const urlParams = new URLSearchParams(window.location.search);
     const reportIdToOpen = urlParams.get('rnc');
     
+    // Se não tem link de compartilhamento, marca como processado e segue a vida
     if (!reportIdToOpen) {
       processedUrl.current = true;
       return;
     }
 
-    if (registros && registros.length > 0) {
-      const report = registros.find(r => String(r.id) === reportIdToOpen);
-      if (report) {
-        setRegistroToView(report);
-        window.history.replaceState(null, '', window.location.pathname);
-        processedUrl.current = true;
-      }
+    // Só tenta abrir se a pessoa já passou da tela de login (está no painel)
+    if (view === 'dashboard') {
+      const buscarRelatorioDireto = async () => {
+        try {
+          // 1. TENTA BUSCAR DIRETO NO BANCO (MUITO MAIS RÁPIDO - NÃO BAIXA A LISTA TODA)
+          if (db && isConfigured) {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'registros', reportIdToOpen);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+              setRegistroToView({ id: docSnap.id, ...docSnap.data() });
+              processedUrl.current = true; // Marca que já abriu
+              window.history.replaceState(null, '', window.location.pathname); // Limpa a URL
+              return; // Para a execução aqui, sucesso!
+            }
+          }
+
+          // 2. FALLBACK: Se falhar a internet rápida, tenta achar no cache local da pessoa
+          if (registros && registros.length > 0) {
+            const report = registros.find(r => String(r.id) === reportIdToOpen);
+            if (report) {
+              setRegistroToView(report);
+              processedUrl.current = true;
+              window.history.replaceState(null, '', window.location.pathname);
+            } else {
+              // Se procurou e não achou (relatório apagado, ex), limpa a URL para não travar
+              processedUrl.current = true;
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao abrir link pelo WhatsApp:", error);
+          processedUrl.current = true; // Previne loops de travamento
+        }
+      };
+
+      buscarRelatorioDireto();
     }
-  }, [registros]);
+  }, [view, registros, db, isConfigured]); // Atualizado para vigiar quando entra no 'dashboard'
   const handleImageUpload = async (e, isLogo = false) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
