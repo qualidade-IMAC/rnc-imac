@@ -1317,17 +1317,12 @@ const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave })
   );
 };
 
-const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto }) => {
+const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
-  
-  // Verifica se o usuário atual já assinou este relatório
-  const currentAssinaturas = Array.isArray(registro?.assinaturas) ? registro.assinaturas : [];
-  const jaAssinou = currentAssinaturas.some(a => a.nome === userName);
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
   const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
   const [arquivado, setArquivado] = useState(registro?.arquivado || false);
-
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
@@ -1515,7 +1510,7 @@ const HistoricoModal = ({ isOpen, onClose, solicitante, urgencia }) => {
   );
 };
 
-const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual }) => {
+const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
@@ -1537,6 +1532,9 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
       return d.toLocaleDateString('pt-BR');
     } catch (error) { return ''; }
   };
+
+  const currentAssinaturas = Array.isArray(registro?.assinaturas) ? registro.assinaturas : [];
+  const jaAssinou = currentAssinaturas.some(a => a.nome === userName);
 
   let tituloRelatorio = registro.customTituloRelatorio || "RELATÓRIO DE OCORRÊNCIA PRODUTO";
   let tituloSecao1 = registro.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
@@ -1749,7 +1747,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
           </div>
         </div>
 
-<div className="bg-white border-t-2 border-gray-200 p-4 sm:px-6 sm:py-5 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="bg-white border-t-2 border-gray-200 p-4 sm:px-6 sm:py-5 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           {canApprove ? (
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -1840,6 +1838,11 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
             </div>
           )}
         </div>
+
+      </div>
+    </div>
+  );
+};
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
