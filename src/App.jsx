@@ -1317,8 +1317,12 @@ const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave })
   );
 };
 
-const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) => {
+const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
+  
+  // Verifica se o usuário atual já assinou este relatório
+  const currentAssinaturas = Array.isArray(registro?.assinaturas) ? registro.assinaturas : [];
+  const jaAssinou = currentAssinaturas.some(a => a.nome === userName);
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
   const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
@@ -1745,7 +1749,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
           </div>
         </div>
 
-        <div className="bg-white border-t-2 border-gray-200 p-4 sm:px-6 sm:py-5 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div className="bg-white border-t-2 border-gray-200 p-4 sm:px-6 sm:py-5 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           {canApprove ? (
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -1799,6 +1803,11 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 <button onClick={onClose} className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition w-full md:w-auto">
                   Fechar
                 </button>
+                {isManager && !jaAssinou && (
+                  <button onClick={() => onDarVisto(registro)} className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
+                    <PenTool size={20}/> Assinar
+                  </button>
+                )}
                 <button onClick={() => onSaveStatus(registro.id, status, status === 'Não Liberado' ? obs : '', enviado, dataEnvio, arquivado)} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
                   <Check size={20}/> Salvar Avaliação
                 </button>
@@ -1820,15 +1829,17 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 )}
                 </span>
               </div>
-              <button onClick={onClose} className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-bold transition">Fechar Janela</button>
+              <div className="flex gap-2">
+                {isManager && !jaAssinou && (
+                  <button onClick={() => onDarVisto(registro)} className="px-6 py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-bold transition flex items-center gap-2 shadow-md">
+                    <PenTool size={18}/> Assinar Relatório
+                  </button>
+                )}
+                <button onClick={onClose} className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-bold transition">Fechar Janela</button>
+              </div>
             </div>
           )}
         </div>
-
-      </div>
-    </div>
-  );
-};
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
@@ -3191,6 +3202,9 @@ const duplicateReport = (registro) => {
   }}
   canApprove={canApprove}
   avaliadorAtual={userName}
+  isManager={appUser?.isManager}
+  userName={userName}
+  onDarVisto={(reg) => { handleDarVisto(reg); setRegistroToView(null); }}
 />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} canApprove={canApprove} />}
         <HistoricoModal 
@@ -3362,9 +3376,11 @@ const duplicateReport = (registro) => {
   <button onClick={() => setRegistroToView(reg)} className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold transition flex justify-center items-center gap-1 shadow-sm border border-blue-200">
     <Eye size={16}/> Visualizar e Avaliar
   </button>
- <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
-  <MessageCircle size={16}/>
-</button>
+ {!appUser?.isManager && (
+  <button onClick={() => shareViaWhatsApp(reg)} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-xs transition flex justify-center items-center shadow-sm border border-green-200" title="Cobrar por WhatsApp">
+    <MessageCircle size={16}/>
+  </button>
+)}
 </div>
                     </div>
                   );
@@ -3443,7 +3459,9 @@ const duplicateReport = (registro) => {
                                <button onClick={() => handleDarVisto(reg)} className="text-pink-600 hover:text-pink-800 bg-pink-50 hover:bg-pink-100 p-2 rounded-lg transition" title="Dar Visto (Assinar)"><PenTool size={16} /></button>
                             )}
                             <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Marcar Envio"><CheckCircle size={16} /></button>
-                            <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
+                            {!appUser?.isManager && (
+  <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
+)}
                             <button onClick={() => { startEditingReport(reg); setView('preview'); }} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar Documento"><Eye size={16} /></button>
                             <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
                             <button onClick={() => duplicateReport(reg)} className="text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 p-2 rounded-lg transition" title="Duplicar Relatório"><Copy size={16} /></button>
