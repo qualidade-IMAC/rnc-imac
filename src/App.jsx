@@ -1510,13 +1510,16 @@ const HistoricoModal = ({ isOpen, onClose, solicitante, urgencia }) => {
   );
 };
 
-const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto }) => {
+const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto, onSolicitarCorrecao }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
   const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
   const [arquivado, setArquivado] = useState(registro?.arquivado || false);
   const [showHistorico, setShowHistorico] = useState(false);
+  
+  // NOVO: Estado para guardar o texto da gerente
+  const [obsGerencia, setObsGerencia] = useState('');
 
   if (!registro) return null;
 
@@ -1747,7 +1750,30 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
           </div>
         </div>
 
+        {/* BARRA INFERIOR DE OPÇÕES / AVALIAÇÃO */}
         <div className="bg-white border-t-2 border-gray-200 p-4 sm:px-6 sm:py-5 shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          
+          {/* CAIXA DE TEXTO DA GERENTE (Oculta se ela já assinou) */}
+          {isManager && !jaAssinou && (
+            <div className="w-full bg-pink-50 p-4 rounded-lg border border-pink-200 mb-5 animate-fade-in-up">
+              <label className="block text-[13px] font-bold text-pink-800 mb-2">Área da Gerência - Solicitar Ajuste (Opcional)</label>
+              <textarea 
+                rows="2" 
+                value={obsGerencia} 
+                onChange={(e) => setObsGerencia(e.target.value)} 
+                placeholder="Se precisar que a Qualidade corrija algo, digite aqui e clique em Devolver. Caso contrário, apenas Assine abaixo..."
+                className="w-full border border-pink-300 p-3 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none resize-y text-sm bg-white text-gray-800"
+              />
+              {obsGerencia.trim() && (
+                <div className="flex justify-end mt-3">
+                  <button onClick={() => onSolicitarCorrecao(registro.id, obsGerencia)} className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold transition flex items-center gap-2 shadow-md text-sm">
+                    <X size={16}/> Devolver Relatório para Qualidade
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {canApprove ? (
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -1801,7 +1827,8 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 <button onClick={onClose} className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition w-full md:w-auto">
                   Fechar
                 </button>
-                {isManager && !jaAssinou && (
+                {/* Se a gerente digitou uma alteração, escondemos o botão de assinar para evitar clique acidental */}
+                {isManager && !jaAssinou && obsGerencia.trim() === '' && (
                   <button onClick={() => onDarVisto(registro)} className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
                     <PenTool size={20}/> Assinar
                   </button>
@@ -1828,7 +1855,8 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </span>
               </div>
               <div className="flex gap-2">
-                {isManager && !jaAssinou && (
+                {/* Se a gerente digitou uma alteração, escondemos o botão de assinar para evitar clique acidental */}
+                {isManager && !jaAssinou && obsGerencia.trim() === '' && (
                   <button onClick={() => onDarVisto(registro)} className="px-6 py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-bold transition flex items-center gap-2 shadow-md">
                     <PenTool size={18}/> Assinar Relatório
                   </button>
@@ -3197,18 +3225,22 @@ const duplicateReport = (registro) => {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal 
-  registro={registroToView} 
-  onClose={() => setRegistroToView(null)} 
-  onSaveStatus={(id, status, obs, enviado, dataEnvio, arquivado) => {
-    handleUpdateStatus(id, status, obs, enviado, dataEnvio, arquivado);
-    setRegistroToView(null);
-  }}
-  canApprove={canApprove}
-  avaliadorAtual={userName}
-  isManager={appUser?.isManager}
-  userName={userName}
-  onDarVisto={(reg) => { handleDarVisto(reg); setRegistroToView(null); }}
-/>}
+          registro={registroToView} 
+          onClose={() => setRegistroToView(null)} 
+          onSaveStatus={(id, status, obs, enviado, dataEnvio, arquivado) => {
+            handleUpdateStatus(id, status, obs, enviado, dataEnvio, arquivado);
+            setRegistroToView(null);
+          }}
+          canApprove={canApprove}
+          avaliadorAtual={userName}
+          isManager={appUser?.isManager}
+          userName={userName}
+          onDarVisto={(reg) => { handleDarVisto(reg); setRegistroToView(null); }}
+          onSolicitarCorrecao={(id, obsText) => {
+            handleUpdateStatus(id, 'Não Liberado', `[Ajuste Solicitado pela Gerência]\n${obsText}`, registroToView.enviado, registroToView.dataEnvio, registroToView.arquivado);
+            setRegistroToView(null);
+          }}
+        />}
         {evaluatingRegistro && <StatusModal registro={evaluatingRegistro} onClose={() => setEvaluatingRegistro(null)} onSave={handleUpdateStatus} avaliadorAtual={userName} canApprove={canApprove} />}
         <HistoricoModal 
           isOpen={!!historicoToView} 
