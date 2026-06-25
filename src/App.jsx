@@ -1880,7 +1880,7 @@ function App() {
     sectionGap: 24,
     fontSize: 14
   });
-  
+  const [globalSearch, setGlobalSearch] = useState('');
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
@@ -2911,7 +2911,7 @@ const duplicateReport = (registro) => {
     setRegistroToDelete(null);
   };
 
-  const getFilteredRecords = () => {
+const getFilteredRecords = () => {
     return (registros || []).filter(r => {
       if(!r || !r.dataCriacao) return false;
       const d = new Date(r.dataCriacao); 
@@ -2927,6 +2927,22 @@ const duplicateReport = (registro) => {
       
       const recordStatus = r.status || 'Pendente';
       if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters.status === 'Pendente' && !r.status)) return false;
+
+      // NOVO: Filtro de Busca Global (Pesquisa)
+      if (globalSearch.trim() !== '') {
+        const term = globalSearch.toLowerCase();
+        const id = String(r.id || '').toLowerCase();
+        const prod = String(r.produto || '').toLowerCase();
+        const ocor = String(r.ocorrencia || '').toLowerCase();
+        const forn = String(r.fornecedor || '').toLowerCase();
+        const lote = String(r.lote || '').toLowerCase();
+        const loja = String(r.lojaLocal || '').toLowerCase();
+
+        // Se o termo não estiver em NENHUM desses lugares, esconde o relatório
+        if (!id.includes(term) && !prod.includes(term) && !ocor.includes(term) && !forn.includes(term) && !lote.includes(term) && !loja.includes(term)) {
+          return false;
+        }
+      }
 
       return true;
     });
@@ -3453,11 +3469,32 @@ const duplicateReport = (registro) => {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="font-bold text-gray-700">Histórico de Emissões <span className="text-gray-400 font-normal ml-2">({filteredRecords.length} registros)</span></h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+  <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <h2 className="font-bold text-gray-700 whitespace-nowrap">Histórico de Emissões <span className="text-gray-400 font-normal ml-2">({filteredRecords.length} registros)</span></h2>
+    
+    {/* NOVA BARRA DE PESQUISA NA UI */}
+    <div className="relative w-full sm:w-72">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        {/* Ícone de Lupa */}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </div>
+      <input 
+        type="text" 
+        placeholder="Buscar ID, produto, lote, fornecedor..." 
+        value={globalSearch}
+        onChange={(e) => setGlobalSearch(e.target.value)}
+        className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm transition-shadow bg-white"
+      />
+      {globalSearch && (
+        <button onClick={() => setGlobalSearch('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition" title="Limpar busca">
+          <X size={16} />
+        </button>
+      )}
+    </div>
+  </div>
+  
+  <div className="overflow-x-auto">
+    <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 text-gray-500"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
