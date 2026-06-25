@@ -1421,24 +1421,35 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
+      <h3 className="text-sm font-bold text-gray-700 mb-5">{title}</h3>
       <div className="space-y-4">
         {(data || []).map((item, index) => {
           const widthPercentage = ((item.value || 0) / maxValue) * 100;
           
+          // Regra ágil: Destacar o 1º lugar (maior gargalo) se ele representar um valor alto
+          const isTopOffender = index === 0 && item.value > maxValue * 0.5 && data.length > 1;
+          const barColor = item.color || (isTopOffender ? '#EF4444' : color); // Fica vermelho se for muito discrepante
+          
           return (
-            <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
-              <div className="flex justify-between items-end text-xs mb-1.5">
-                <span className="font-medium text-gray-600 truncate mr-2" title={item.label}>{item.label}</span>
+            <div key={index} className="animate-fade-in-up group" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="flex justify-between items-end text-sm mb-1.5">
+                <span className="font-semibold text-gray-700 truncate pr-4" title={item.label}>
+                  {index + 1}. {item.label}
+                </span>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="font-black text-gray-800">{item.value || 0}</span>
+                  <span className={`font-black ${isTopOffender ? 'text-red-600' : 'text-gray-900'} text-base`}>
+                    {item.value || 0}
+                  </span>
                 </div>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden shadow-inner">
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
                 <div 
-                  className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm" 
-                  style={{ width: `${Math.max(widthPercentage, 2)}%`, backgroundColor: item.color || color }}
-                ></div>
+                  className="h-full rounded-full transition-all duration-1000 ease-out relative" 
+                  style={{ width: `${Math.max(widthPercentage, 2)}%`, backgroundColor: barColor }}
+                >
+                  {/* Efeito de brilho suave na barra */}
+                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-full"></div>
+                </div>
               </div>
             </div>
           );
