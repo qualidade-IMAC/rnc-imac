@@ -1874,6 +1874,12 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
+  const [printConfig, setPrintConfig] = useState({
+    lineHeight: 1.5,
+    paragraphGap: 8,
+    sectionGap: 24,
+    fontSize: 14
+  });
   
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
@@ -3973,8 +3979,77 @@ if (view === 'form') {
           </div>
         </div>
 
+        {/* INÍCIO DO NOVO PAINEL DE FORMATAÇÃO */}
+        <div className="max-w-4xl mx-auto mb-6 bg-white p-4 rounded-xl shadow border border-[#F4B41A]/50 no-print flex flex-col md:flex-row items-center gap-6 animate-fade-in-up">
+          <div className="flex items-center gap-2 text-[#5C3A21] font-black w-full md:w-auto shrink-0">
+            <Settings size={24} />
+            Ajustes Visuais
+          </div>
+          
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-gray-600 uppercase">Tamanho da Fonte: {printConfig.fontSize}px</label>
+              <input type="range" min="10" max="20" step="1" value={printConfig.fontSize} onChange={(e) => setPrintConfig({...printConfig, fontSize: Number(e.target.value)})} className="accent-[#5C3A21] cursor-pointer" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-gray-600 uppercase">Altura da Linha: {printConfig.lineHeight}</label>
+              <input type="range" min="1" max="2.5" step="0.1" value={printConfig.lineHeight} onChange={(e) => setPrintConfig({...printConfig, lineHeight: Number(e.target.value)})} className="accent-[#5C3A21] cursor-pointer" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-gray-600 uppercase">Parágrafos: {printConfig.paragraphGap}px</label>
+              <input type="range" min="0" max="30" step="2" value={printConfig.paragraphGap} onChange={(e) => setPrintConfig({...printConfig, paragraphGap: Number(e.target.value)})} className="accent-[#5C3A21] cursor-pointer" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-gray-600 uppercase">Entre Tópicos: {printConfig.sectionGap}px</label>
+              <input type="range" min="10" max="80" step="2" value={printConfig.sectionGap} onChange={(e) => setPrintConfig({...printConfig, sectionGap: Number(e.target.value)})} className="accent-[#5C3A21] cursor-pointer" />
+            </div>
+          </div>
+          
+          <button onClick={() => setPrintConfig({ lineHeight: 1.5, paragraphGap: 8, sectionGap: 24, fontSize: 14 })} className="text-xs font-bold text-gray-400 hover:text-red-500 underline transition shrink-0">Restaurar</button>
+        </div>
+
+        <style>{`
+          #relatorio-preview-conteudo {
+            line-height: ${printConfig.lineHeight} !important;
+          }
+          #relatorio-preview-conteudo .text-[14px], 
+          #relatorio-preview-conteudo .text-[15px],
+          #relatorio-preview-conteudo p,
+          #relatorio-preview-conteudo strong {
+            font-size: ${printConfig.fontSize}px !important;
+          }
+          #relatorio-preview-conteudo .text-[16px] {
+            font-size: ${printConfig.fontSize + 2}px !important;
+          }
+          #relatorio-preview-conteudo .text-[13px] {
+            font-size: ${printConfig.fontSize - 1}px !important;
+          }
+          #relatorio-preview-conteudo .text-[12px],
+          #relatorio-preview-conteudo .text-[11px] {
+            font-size: ${printConfig.fontSize - 2}px !important;
+          }
+          #relatorio-preview-conteudo .rich-text-content div,
+          #relatorio-preview-conteudo .rich-text-content p {
+            margin-bottom: ${printConfig.paragraphGap}px !important;
+          }
+          #relatorio-preview-conteudo .mb-5,
+          #relatorio-preview-conteudo .mb-6,
+          #relatorio-preview-conteudo .mb-8,
+          #relatorio-preview-conteudo .mt-6 {
+            margin-bottom: ${printConfig.sectionGap}px !important;
+          }
+          @media print {
+            #relatorio-preview-conteudo .print\\:mb-3,
+            #relatorio-preview-conteudo .print\\:mb-2,
+            #relatorio-preview-conteudo .print\\:mb-4,
+            #relatorio-preview-conteudo .print\\:mb-5 {
+              margin-bottom: ${printConfig.sectionGap}px !important;
+            }
+          }
+        `}</style>
+        {/* FIM DO NOVO PAINEL */}
+
         <div id="relatorio-preview-conteudo" className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
-          <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
             
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
