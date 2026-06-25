@@ -4012,22 +4012,31 @@ if (view === 'form') {
           #relatorio-preview-conteudo {
             line-height: ${printConfig.lineHeight} !important;
           }
-          #relatorio-preview-conteudo .text-[14px], 
-          #relatorio-preview-conteudo .text-[15px],
+          
+          /* ATUALIZADO: Escapando os colchetes com \\ para o CSS reconhecer as classes do Tailwind */
           #relatorio-preview-conteudo p,
-          #relatorio-preview-conteudo strong {
+          #relatorio-preview-conteudo span,
+          #relatorio-preview-conteudo li,
+          #relatorio-preview-conteudo strong,
+          #relatorio-preview-conteudo .rich-text-content,
+          #relatorio-preview-conteudo .text-\\[14px\\], 
+          #relatorio-preview-conteudo .text-\\[15px\\] {
             font-size: ${printConfig.fontSize}px !important;
           }
-          #relatorio-preview-conteudo .text-[16px] {
+          
+          #relatorio-preview-conteudo .text-\\[16px\\] {
             font-size: ${printConfig.fontSize + 2}px !important;
           }
-          #relatorio-preview-conteudo .text-[13px] {
+          
+          #relatorio-preview-conteudo .text-\\[13px\\] {
             font-size: ${printConfig.fontSize - 1}px !important;
           }
-          #relatorio-preview-conteudo .text-[12px],
-          #relatorio-preview-conteudo .text-[11px] {
+          
+          #relatorio-preview-conteudo .text-\\[12px\\],
+          #relatorio-preview-conteudo .text-\\[11px\\] {
             font-size: ${printConfig.fontSize - 2}px !important;
           }
+
           #relatorio-preview-conteudo .rich-text-content div,
           #relatorio-preview-conteudo .rich-text-content p {
             margin-bottom: ${printConfig.paragraphGap}px !important;
