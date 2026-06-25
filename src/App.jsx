@@ -1458,6 +1458,51 @@ const BarChart = ({ data, title, color = '#F4B41A' }) => {
     </div>
   );
 };
+const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
+  if (!data || data.length === 0) return null;
+  const maxValue = Math.max(...data.map(d => d.value || 0), 1);
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col h-full min-h-[280px]">
+      <h3 className="text-sm font-bold text-gray-700 mb-6">{title}</h3>
+      <div className="flex-1 flex items-end justify-between gap-1 mt-auto h-32 relative">
+        {/* Linhas de fundo para guiar a leitura */}
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+          <div className="w-full border-t border-gray-400 border-dashed"></div>
+          <div className="w-full border-t border-gray-400 border-dashed"></div>
+          <div className="w-full border-t border-gray-400 border-dashed"></div>
+        </div>
+
+        {data.map((item, index) => {
+          const hPercent = `${((item.value / maxValue) * 100)}%`;
+          return (
+            <div key={index} className="flex flex-col items-center flex-1 group z-10">
+              <div className="w-full flex items-end justify-center h-28 relative">
+                {/* Tooltip (balãozinho) que aparece ao passar o mouse */}
+                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-gray-800 text-white text-xs px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-md">
+                  {item.value} Ocorrências
+                  {/* Triângulo do balãozinho */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+                {/* Barra do gráfico */}
+                <div 
+                  className="w-full max-w-[28px] rounded-t-sm transition-all duration-1000 ease-out hover:opacity-80 relative"
+                  style={{ height: hPercent === '0%' ? '4px' : hPercent, backgroundColor: color }}
+                >
+                   {/* Brilho interno para dar volume */}
+                   <div className="absolute top-0 left-0 right-0 h-2 bg-white/30 rounded-t-sm"></div>
+                </div>
+              </div>
+              <span className="text-[10px] text-gray-500 mt-2 font-medium truncate max-w-full text-center">
+                {item.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 const PieChartComponent = ({ data, title }) => {
   if (!data || data.length === 0) return null;
   const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
@@ -3254,6 +3299,26 @@ const getFilteredRecords = () => {
     const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
     const pendingRecords = (registros || []).filter(r => r.status === 'Pendente' || !r.status);
+    // NOVO: Lógica para o gráfico de Linha do Tempo (Últimos 10 dias com movimento)
+    const timelineMap = {};
+    filteredRecords.forEach(r => {
+      if (r.dataCriacao) {
+        const d = new Date(r.dataCriacao);
+        if (!isNaN(d.getTime())) {
+          // Usa o formato YYYY-MM-DD para conseguir ordenar cronologicamente depois
+          const key = d.toISOString().split('T')[0];
+          timelineMap[key] = (timelineMap[key] || 0) + 1;
+        }
+      }
+    });
+
+    const timelineData = Object.entries(timelineMap)
+      .sort((a, b) => a[0].localeCompare(b[0])) // Ordena do mais antigo para o mais novo
+      .slice(-10) // Mostra no máximo os últimos 10 dias de movimento
+      .map(([dateStr, value]) => {
+        const [y, m, d] = dateStr.split('-');
+        return { label: `${d}/${m}`, value }; // Fica "Dia/Mês", ex: "24/06"
+      });
 
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
@@ -3465,9 +3530,9 @@ const getFilteredRecords = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {pieData.length > 0 && <PieChartComponent data={pieData} title="Distribuição por Tipo" />}
-            {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" />}
-          </div>
+  {timelineData.length > 0 && <TimelineChart color="#5C3A21" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
+  {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" />}
+</div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {pieStatusData.length > 0 && <PieChartComponent data={pieStatusData} title="Status dos Relatórios" />}
