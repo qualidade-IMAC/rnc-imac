@@ -3522,26 +3522,41 @@ const getFilteredRecords = () => {
             </div>
           )}
 
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-[#5C3A21]"><p className="text-xs font-bold text-gray-500 uppercase">Total no Período</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{filteredRecords.length}</p></div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-[#EF4444]"><p className="text-xs font-bold text-gray-500 uppercase">Fornecedores</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{Object.keys(fornecedorCounts).length}</p></div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-[#F4B41A]"><p className="text-xs font-bold text-gray-500 uppercase">Tipos</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{pieData.length}</p></div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-[#22C55E]"><p className="text-xs font-bold text-gray-500 uppercase">Período</p><p className="text-sm font-black text-[#5C3A21] mt-1">{dashboardFilters.periodo.replace('_', ' ').toUpperCase()}</p></div>
+{/* CARDS SUPERIORES MODERNIZADOS COM ÍCONES */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Emitidos</p><p className="text-3xl font-black text-gray-800 mt-1">{filteredRecords.length}</p></div>
+              <div className="bg-blue-50 p-3 rounded-lg"><FileText size={24} className="text-blue-600" /></div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aguardando Avaliação</p><p className="text-3xl font-black text-orange-600 mt-1">{pendingRecords.length}</p></div>
+              <div className="bg-orange-50 p-3 rounded-lg"><Clock size={24} className="text-orange-500" /></div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Relatórios Liberados</p><p className="text-3xl font-black text-green-600 mt-1">{filteredRecords.filter(r => r.status === 'Liberado').length}</p></div>
+              <div className="bg-green-50 p-3 rounded-lg"><CheckCircle size={24} className="text-green-500" /></div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Fornecedores Afetados</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{Object.keys(fornecedorCounts).length}</p></div>
+              <div className="bg-[#5C3A21]/10 p-3 rounded-lg"><Truck size={24} className="text-[#5C3A21]" /></div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-  {timelineData.length > 0 && <TimelineChart color="#5C3A21" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
-  {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" />}
-</div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {pieStatusData.length > 0 && <PieChartComponent data={pieStatusData} title="Status dos Relatórios" />}
-            {produtoBarData.length > 0 && <BarChart data={produtoBarData} title="Top 5 Produtos Recorrentes" color="#3B82F6" />}
+          {/* GRÁFICOS - LINHA 1 (Evolução + Tipos) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2">
+              {timelineData.length > 0 && <TimelineChart color="#5C3A21" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
+            </div>
+            <div className="lg:col-span-1 flex flex-col">
+              {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" />}
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {barData.length > 0 && <BarChart data={barData} title="Top 10 Fornecedores Com Mais Ocorrências" color="#F4B41A" />}
-            {clienteBarData.length > 0 && <BarChart data={clienteBarData} title="Top 10 Clientes Com Mais Ocorrências" color="#5C3A21" />}
+          {/* GRÁFICOS - LINHA 2 (Top 5s Compactos) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {produtoBarData.length > 0 && <BarChart data={produtoBarData.slice(0, 5)} title="Top 5 Produtos Ofensores" color="#3B82F6" />}
+            {barData.length > 0 && <BarChart data={barData.slice(0, 5)} title="Top 5 Fornecedores Ofensores" color="#F4B41A" />}
+            {clienteBarData.length > 0 && <BarChart data={clienteBarData.slice(0, 5)} title="Top 5 Clientes/Lojas" color="#8B5CF6" />}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
