@@ -1460,38 +1460,59 @@ const BarChart = ({ data, title, isTypes = false }) => {
 const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...data.map(d => d.value || 0), 1);
+  const midValue = Math.ceil(maxValue / 2);
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[320px]">
       <h3 className="text-sm font-bold text-gray-700 mb-6">{title}</h3>
-      <div className="flex-1 flex items-end justify-between gap-3 mt-auto h-48 relative">
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
-          <div className="w-full border-t border-gray-400 border-dashed"></div>
-          <div className="w-full border-t border-gray-400 border-dashed"></div>
-          <div className="w-full border-t border-gray-400 border-dashed"></div>
+      
+      <div className="flex-1 flex mt-2">
+        {/* Eixo Y (Escala Numérica) */}
+        <div className="w-8 relative border-r-2 border-gray-200 pb-8 shrink-0">
+          <span className="absolute top-0 -translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">{maxValue}</span>
+          <span className="absolute top-1/2 -translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">{midValue}</span>
+          <span className="absolute bottom-8 translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">0</span>
         </div>
 
-        {data.map((item, index) => {
-          const hPercent = `${((item.value / maxValue) * 100)}%`;
-          return (
-            <div key={index} className="flex flex-col items-center flex-1 group z-10">
-              <div className="w-full flex items-end justify-center h-44 relative">
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-gray-800 text-white text-[11px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm font-bold">
-                  {item.value} Ocorrências
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+        {/* Área do Gráfico */}
+        <div className="flex-1 relative">
+          
+          {/* Linhas de Grade e Eixo X */}
+          <div className="absolute inset-0 pb-8 flex flex-col justify-between pointer-events-none">
+            <div className="w-full border-t border-gray-200 border-dashed"></div>
+            <div className="w-full border-t border-gray-200 border-dashed"></div>
+            {/* Linha Sólida do Eixo X (Chão do gráfico) */}
+            <div className="w-full border-t-2 border-gray-300"></div> 
+          </div>
+
+          {/* Barras Verticais */}
+          <div className="absolute inset-0 pb-8 flex items-end justify-between px-2">
+            {data.map((item, index) => {
+              const hPercent = `${((item.value / maxValue) * 100)}%`;
+              return (
+                <div key={index} className="flex flex-col items-center flex-1 group z-10 h-full justify-end relative">
+                  
+                  {/* Balão flutuante ao passar o mouse */}
+                  <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[11px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm font-bold">
+                    {item.value} Ocorrências
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                  
+                  {/* Coluna (Base plana, topo arredondado) */}
+                  <div 
+                    className="w-full max-w-[16px] rounded-t-sm transition-all duration-1000 ease-out hover:opacity-80"
+                    style={{ height: hPercent === '0%' ? '0px' : hPercent, backgroundColor: color }}
+                  ></div>
+
+                  {/* Eixo X - Label (Datas) */}
+                  <span className="absolute top-full mt-2 text-[10px] text-gray-500 font-bold truncate max-w-full text-center">
+                    {item.label}
+                  </span>
                 </div>
-                {/* Colunas mais altas e gordinhas */}
-                <div 
-                  className="w-full max-w-[20px] rounded-full transition-all duration-1000 ease-out hover:opacity-80"
-                  style={{ height: hPercent === '0%' ? '4px' : hPercent, backgroundColor: color }}
-                ></div>
-              </div>
-              <span className="text-[10px] text-gray-400 mt-3 font-bold truncate max-w-full text-center uppercase tracking-wider">
-                {item.label}
-              </span>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
