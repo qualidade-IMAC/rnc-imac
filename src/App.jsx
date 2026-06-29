@@ -1462,9 +1462,9 @@ const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
   const maxValue = Math.max(...data.map(d => d.value || 0), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[260px]">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[320px]">
       <h3 className="text-sm font-bold text-gray-700 mb-6">{title}</h3>
-      <div className="flex-1 flex items-end justify-between gap-2 mt-auto h-32 relative">
+      <div className="flex-1 flex items-end justify-between gap-3 mt-auto h-48 relative">
         <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
           <div className="w-full border-t border-gray-400 border-dashed"></div>
           <div className="w-full border-t border-gray-400 border-dashed"></div>
@@ -1475,18 +1475,18 @@ const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
           const hPercent = `${((item.value / maxValue) * 100)}%`;
           return (
             <div key={index} className="flex flex-col items-center flex-1 group z-10">
-              <div className="w-full flex items-end justify-center h-28 relative">
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-gray-800 text-white text-[10px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm">
+              <div className="w-full flex items-end justify-center h-44 relative">
+                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-gray-800 text-white text-[11px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm font-bold">
                   {item.value} Ocorrências
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                 </div>
-                {/* Colunas muito mais finas e arredondadas */}
+                {/* Colunas mais altas e gordinhas */}
                 <div 
-                  className="w-full max-w-[12px] rounded-full transition-all duration-1000 ease-out hover:opacity-80"
+                  className="w-full max-w-[20px] rounded-full transition-all duration-1000 ease-out hover:opacity-80"
                   style={{ height: hPercent === '0%' ? '4px' : hPercent, backgroundColor: color }}
                 ></div>
               </div>
-              <span className="text-[9px] text-gray-400 mt-2 font-medium truncate max-w-full text-center">
+              <span className="text-[10px] text-gray-400 mt-3 font-bold truncate max-w-full text-center uppercase tracking-wider">
                 {item.label}
               </span>
             </div>
@@ -1931,6 +1931,7 @@ function App() {
   });
   const [globalSearch, setGlobalSearch] = useState('');
   const [activeTopTab, setActiveTopTab] = useState('produtos');
+  const [dashboardMode, setDashboardMode] = useState('graficos');
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
@@ -3522,169 +3523,193 @@ const getFilteredRecords = () => {
             </div>
           )}
 
-{/* CARDS SUPERIORES MODERNIZADOS COM ÍCONES */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Emitidos</p><p className="text-3xl font-black text-gray-800 mt-1">{registrosEstatisticas.length}</p></div>
-              <div className="bg-blue-50 p-3 rounded-lg"><FileText size={24} className="text-blue-600" /></div>
-            </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aguardando Avaliação</p><p className="text-3xl font-black text-orange-600 mt-1">{pendingRecords.length}</p></div>
-              <div className="bg-orange-50 p-3 rounded-lg"><Clock size={24} className="text-orange-500" /></div>
-            </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Relatórios Liberados</p><p className="text-3xl font-black text-green-600 mt-1">{filteredRecords.filter(r => r.status === 'Liberado').length}</p></div>
-              <div className="bg-green-50 p-3 rounded-lg"><CheckCircle size={24} className="text-green-500" /></div>
-            </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Fornecedores Afetados</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{Object.keys(fornecedorCounts).length}</p></div>
-              <div className="bg-[#5C3A21]/10 p-3 rounded-lg"><Truck size={24} className="text-[#5C3A21]" /></div>
-            </div>
+{/* BOTÕES DE NAVEGAÇÃO (GRÁFICOS VS HISTÓRICO) */}
+          <div className="flex flex-wrap gap-2 mb-6 bg-gray-200/60 p-1.5 rounded-xl w-fit border border-gray-300/50">
+            <button 
+              onClick={() => setDashboardMode('graficos')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${dashboardMode === 'graficos' ? 'bg-white text-[#5C3A21] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
+            >
+              <BarChart2 size={18} /> Visão Geral
+            </button>
+            <button 
+              onClick={() => setDashboardMode('historico')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${dashboardMode === 'historico' ? 'bg-white text-[#5C3A21] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
+            >
+              <ClipboardList size={18} /> Histórico de Registros
+            </button>
           </div>
 
-          {/* GRÁFICOS - LINHA 1 (Evolução + Tipos) */}
-          {/* GRÁFICOS - LINHA 1 (Evolução + Tipos) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2">
-              <TimelineChart color="#F4B41A" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />
-            </div>
-            <div className="lg:col-span-1 flex flex-col">
-              {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" isTypes={true} />}
-            </div>
-          </div>
-          
-          {/* GRÁFICOS - LINHA 2 (Agrupado em Abas para limpar a tela) */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 flex flex-col md:flex-row">
-            
-            {/* Menu Lateral/Superior de Abas */}
-            <div className="flex flex-row md:flex-col bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 md:w-64 shrink-0">
-              <div className="p-4 hidden md:block">
-  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top 5 Ocorrências</p>
-</div>
-              <button 
-                onClick={() => setActiveTopTab('produtos')} 
-                className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'produtos' ? 'bg-white text-blue-600 border-b-2 md:border-b-0 md:border-l-4 border-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-              >
-                Produtos
-              </button>
-              <button 
-                onClick={() => setActiveTopTab('fornecedores')} 
-                className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'fornecedores' ? 'bg-white text-red-500 border-b-2 md:border-b-0 md:border-l-4 border-red-500 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-              >
-                Fornecedores
-              </button>
-              <button 
-                onClick={() => setActiveTopTab('clientes')} 
-                className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'clientes' ? 'bg-white text-purple-600 border-b-2 md:border-b-0 md:border-l-4 border-purple-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-              >
-                Clientes / Lojas
-              </button>
-            </div>
+          {dashboardMode === 'graficos' ? (
+            <>
+              {/* CARDS SUPERIORES MODERNIZADOS COM ÍCONES */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-fade-in-up">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                  <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Emitidos</p><p className="text-3xl font-black text-gray-800 mt-1">{registrosEstatisticas.length}</p></div>
+                  <div className="bg-blue-50 p-3 rounded-lg"><FileText size={24} className="text-blue-600" /></div>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                  <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aguardando Avaliação</p><p className="text-3xl font-black text-orange-600 mt-1">{pendingRecords.length}</p></div>
+                  <div className="bg-orange-50 p-3 rounded-lg"><Clock size={24} className="text-orange-500" /></div>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                  <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Relatórios Liberados</p><p className="text-3xl font-black text-green-600 mt-1">{registrosEstatisticas.filter(r => r.status === 'Liberado').length}</p></div>
+                  <div className="bg-green-50 p-3 rounded-lg"><CheckCircle size={24} className="text-green-500" /></div>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                  <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Fornecedores Afetados</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{Object.keys(fornecedorCounts).length}</p></div>
+                  <div className="bg-[#5C3A21]/10 p-3 rounded-lg"><Truck size={24} className="text-[#5C3A21]" /></div>
+                </div>
+              </div>
 
-            {/* Área que mostra apenas 1 gráfico por vez */}
-<div className="p-2 flex-1 w-full min-h-[300px]">
-  {activeTopTab === 'produtos' && (produtoBarData.length > 0 ? <BarChart data={produtoBarData.slice(0, 5)} title="Produtos com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-  {activeTopTab === 'fornecedores' && (barData.length > 0 ? <BarChart data={barData.slice(0, 5)} title="Fornecedores com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-  {activeTopTab === 'clientes' && (clienteBarData.length > 0 ? <BarChart data={clienteBarData.slice(0, 5)} title="Lojas/Clientes com mais chamados" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-  <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-    <h2 className="font-bold text-gray-700 whitespace-nowrap">Histórico de Emissões <span className="text-gray-400 font-normal ml-2">({filteredRecords.length} registros)</span></h2>
-    
-    {/* NOVA BARRA DE PESQUISA NA UI */}
-    <div className="relative w-full sm:w-72">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        {/* Ícone de Lupa */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      </div>
-      <input 
-        type="text" 
-        placeholder="Buscar ID, produto, lote, fornecedor..." 
-        value={globalSearch}
-        onChange={(e) => setGlobalSearch(e.target.value)}
-        className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm transition-shadow bg-white"
-      />
-      {globalSearch && (
-        <button onClick={() => setGlobalSearch('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition" title="Limpar busca">
-          <X size={16} />
-        </button>
-      )}
-    </div>
-  </div>
-  
-{/* NOVO: Scroll interno e altura máxima para não esticar a página */}
-            <div className="overflow-auto max-h-[500px] border-t border-gray-200 relative">
-              <table className="w-full text-left text-sm relative">
-                {/* NOVO: Cabeçalho que fica grudado no topo (sticky) ao rolar para baixo */}
-                <thead className="bg-gray-100 text-gray-600 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-opacity-90">
-                  <tr>
-                    <th className="px-4 py-3 font-bold">Data</th>
-                    <th className="px-4 py-3 font-bold">Tipo</th>
-                    <th className="px-4 py-3 font-bold">Produto</th>
-                    <th className="px-4 py-3 font-bold">Autor</th>
-                    <th className="px-4 py-3 font-bold">Ocorrência</th>
-                    <th className="px-4 py-3 font-bold">Status</th>
-                    <th className="px-4 py-3 font-bold text-center">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
-                    filteredRecords.map(reg => (
-                      <tr key={reg.id || Math.random()} className="hover:bg-gray-50 transition">
-                        <td className="px-4 py-3 whitespace-nowrap text-xs">{safeDate(reg.dataCriacao)}</td>
-                        <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? 'Cliente' : (reg.tipoRelatorio || 'Desconhecido')}</span></td>
-                        <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto || ''}>{reg.produto || ''}</td>
-                        <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>{typeof reg.autorNome === 'string' ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
-                        <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || ''}>{reg.ocorrencia || ''}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col gap-1 items-start">
-                            <span className={`px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
-                              (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                              reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
-                              'bg-red-50 text-red-700 border-red-200'
-                            }`}>
-                              {reg.status || 'Pendente'}
-                            </span>
-                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
-                              reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
-                            }`}>
-                              <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
-                            </span>
-                            {reg.arquivado && (
-                              <span className="px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300 mt-1">
-                                <Archive size={10} /> Arquivado
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            {reg.solicitante && (
-  <button onClick={() => setHistoricoToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Ver Origem da Solicitação">
-    <Clock size={16} />
-  </button>
-)}
-                            {appUser?.isManager && (
-                               <button onClick={() => handleDarVisto(reg)} className="text-pink-600 hover:text-pink-800 bg-pink-50 hover:bg-pink-100 p-2 rounded-lg transition" title="Dar Visto (Assinar)"><PenTool size={16} /></button>
-                            )}
-                            <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Marcar Envio"><CheckCircle size={16} /></button>
-                            {!appUser?.isManager && (
-  <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
-)}
-                            <button onClick={() => { startEditingReport(reg); setView('preview'); }} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar Documento"><Eye size={16} /></button>
-                            <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
-                            <button onClick={() => duplicateReport(reg)} className="text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 p-2 rounded-lg transition" title="Duplicar Relatório"><Copy size={16} /></button>
-                            <button onClick={() => setRegistroToDelete(reg.id)} className="text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition" title="Apagar"><Trash2 size={16} /></button>
-                          </div>
-                        </td>
+              {/* GRÁFICO DE EVOLUÇÃO - FULL WIDTH */}
+              <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                {timelineData.length > 0 && <TimelineChart color="#F4B41A" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
+              </div>
+              
+              {/* GRÁFICOS INFERIORES - Tipos e Top 5 Lado a Lado */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <div className="lg:col-span-1 flex flex-col h-full">
+                  {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" isTypes={true} />}
+                </div>
+                
+                <div className="lg:col-span-2">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col md:flex-row">
+                    <div className="flex flex-row md:flex-col bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 md:w-56 shrink-0">
+                      <div className="p-4 hidden md:block">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top 5 Ocorrências</p>
+                      </div>
+                      <button 
+                        onClick={() => setActiveTopTab('produtos')} 
+                        className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'produtos' ? 'bg-white text-blue-600 border-b-2 md:border-b-0 md:border-l-4 border-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                      >
+                        Produtos
+                      </button>
+                      <button 
+                        onClick={() => setActiveTopTab('fornecedores')} 
+                        className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'fornecedores' ? 'bg-white text-red-500 border-b-2 md:border-b-0 md:border-l-4 border-red-500 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                      >
+                        Fornecedores
+                      </button>
+                      <button 
+                        onClick={() => setActiveTopTab('clientes')} 
+                        className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'clientes' ? 'bg-white text-purple-600 border-b-2 md:border-b-0 md:border-l-4 border-purple-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                      >
+                        Lojas/Clientes
+                      </button>
+                    </div>
+
+                    <div className="p-2 flex-1 w-full min-h-[300px]">
+                      {activeTopTab === 'produtos' && (produtoBarData.length > 0 ? <BarChart data={produtoBarData.slice(0, 5)} title="Produtos com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+                      {activeTopTab === 'fornecedores' && (barData.length > 0 ? <BarChart data={barData.slice(0, 5)} title="Fornecedores com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+                      {activeTopTab === 'clientes' && (clienteBarData.length > 0 ? <BarChart data={clienteBarData.slice(0, 5)} title="Lojas/Clientes com mais chamados" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* TABELA DE HISTÓRICO */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 mb-6 animate-fade-in-up">
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <h2 className="font-bold text-gray-700 whitespace-nowrap">Histórico de Emissões <span className="text-gray-400 font-normal ml-2">({filteredRecords.length} registros)</span></h2>
+                  
+                  <div className="relative w-full sm:w-72">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="Buscar ID, produto, lote, fornecedor..." 
+                      value={globalSearch}
+                      onChange={(e) => setGlobalSearch(e.target.value)}
+                      className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm transition-shadow bg-white"
+                    />
+                    {globalSearch && (
+                      <button onClick={() => setGlobalSearch('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition" title="Limpar busca">
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="overflow-auto max-h-[600px] relative">
+                  <table className="w-full text-left text-sm relative">
+                    <thead className="bg-gray-100 text-gray-600 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-opacity-90">
+                      <tr>
+                        <th className="px-4 py-3 font-bold">Data</th>
+                        <th className="px-4 py-3 font-bold">Tipo</th>
+                        <th className="px-4 py-3 font-bold">Produto</th>
+                        <th className="px-4 py-3 font-bold">Autor</th>
+                        <th className="px-4 py-3 font-bold">Ocorrência</th>
+                        <th className="px-4 py-3 font-bold">Status</th>
+                        <th className="px-4 py-3 font-bold text-center">Ações</th>
                       </tr>
-                    ))
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
+                        filteredRecords.map(reg => (
+                          <tr key={reg.id || Math.random()} className={`hover:bg-gray-50 transition ${reg.ocultarEstatistica ? 'bg-blue-50/30' : ''}`}>
+                            <td className="px-4 py-3 whitespace-nowrap text-xs">
+                              {safeDate(reg.dataCriacao)}
+                              {reg.ocultarEstatistica && <span className="block mt-0.5 text-[9px] font-bold text-blue-500 uppercase">Documento</span>}
+                            </td>
+                            <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? 'Cliente' : (reg.tipoRelatorio || 'Desconhecido')}</span></td>
+                            <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto || ''}>{reg.produto || ''}</td>
+                            <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>{typeof reg.autorNome === 'string' ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
+                            <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || ''}>{reg.ocorrencia || ''}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-col gap-1 items-start">
+                                <span className={`px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
+                                  (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                  reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  'bg-red-50 text-red-700 border-red-200'
+                                }`}>
+                                  {reg.status || 'Pendente'}
+                                </span>
+                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
+                                  reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
+                                }`}>
+                                  <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
+                                </span>
+                                {reg.arquivado && (
+                                  <span className="px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300 mt-1">
+                                    <Archive size={10} /> Arquivado
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                {reg.solicitante && (
+                                  <button onClick={() => setHistoricoToView(reg)} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Ver Origem da Solicitação">
+                                    <Clock size={16} />
+                                  </button>
+                                )}
+                                {appUser?.isManager && !reg.ocultarEstatistica && (
+                                   <button onClick={() => handleDarVisto(reg)} className="text-pink-600 hover:text-pink-800 bg-pink-50 hover:bg-pink-100 p-2 rounded-lg transition" title="Dar Visto (Assinar)"><PenTool size={16} /></button>
+                                )}
+                                {!reg.ocultarEstatistica && (
+                                  <button onClick={() => setEvaluatingRegistro(reg)} className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 p-2 rounded-lg transition" title="Avaliar / Marcar Envio"><CheckCircle size={16} /></button>
+                                )}
+                                {!appUser?.isManager && (
+                                  <button onClick={() => shareViaWhatsApp(reg)} className="text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition" title="Cobrar por WhatsApp"><MessageCircle size={16} /></button>
+                                )}
+                                <button onClick={() => { startEditingReport(reg); setView('preview'); }} className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition" title="Visualizar Documento"><Eye size={16} /></button>
+                                <button onClick={() => startEditingReport(reg)} className="text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 p-2 rounded-lg transition" title="Editar este Relatório"><Edit3 size={16} /></button>
+                                <button onClick={() => duplicateReport(reg)} className="text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 p-2 rounded-lg transition" title="Duplicar Relatório"><Copy size={16} /></button>
+                                <button onClick={() => setRegistroToDelete(reg.id)} className="text-gray-400 hover:text-red-600 bg-gray-100 hover:bg-red-50 p-2 rounded-lg transition" title="Apagar"><Trash2 size={16} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
           <div className="text-center mt-6 text-xs text-gray-400 no-print">
             Desenvolvido por: Cristiamberg
           </div>
