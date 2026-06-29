@@ -3559,8 +3559,8 @@ const getFilteredRecords = () => {
             {/* Menu Lateral/Superior de Abas */}
             <div className="flex flex-row md:flex-col bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 md:w-64 shrink-0">
               <div className="p-4 hidden md:block">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top 5 Ofensores</p>
-              </div>
+  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top 5 Ocorrências</p>
+</div>
               <button 
                 onClick={() => setActiveTopTab('produtos')} 
                 className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'produtos' ? 'bg-white text-blue-600 border-b-2 md:border-b-0 md:border-l-4 border-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
@@ -3582,11 +3582,11 @@ const getFilteredRecords = () => {
             </div>
 
             {/* Área que mostra apenas 1 gráfico por vez */}
-            <div className="p-2 flex-1 w-full min-h-[300px]">
-              {activeTopTab === 'produtos' && (produtoBarData.length > 0 ? <BarChart data={produtoBarData.slice(0, 5)} title="Maiores ofensores por Produto" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-              {activeTopTab === 'fornecedores' && (barData.length > 0 ? <BarChart data={barData.slice(0, 5)} title="Maiores ofensores por Fornecedor" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-              {activeTopTab === 'clientes' && (clienteBarData.length > 0 ? <BarChart data={clienteBarData.slice(0, 5)} title="Lojas/Clientes com mais chamados" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-            </div>
+<div className="p-2 flex-1 w-full min-h-[300px]">
+  {activeTopTab === 'produtos' && (produtoBarData.length > 0 ? <BarChart data={produtoBarData.slice(0, 5)} title="Produtos com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+  {activeTopTab === 'fornecedores' && (barData.length > 0 ? <BarChart data={barData.slice(0, 5)} title="Fornecedores com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+  {activeTopTab === 'clientes' && (clienteBarData.length > 0 ? <BarChart data={clienteBarData.slice(0, 5)} title="Lojas/Clientes com mais chamados" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+</div>
           </div>
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
   <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
