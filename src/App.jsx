@@ -1457,55 +1457,51 @@ const BarChart = ({ data, title, isTypes = false }) => {
     </div>
   );
 };
-const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
+const TimelineChart = ({ data, title, color = '#F4B41A', onSelectDate, selectedDate }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...data.map(d => d.value || 0), 1);
   const midValue = Math.ceil(maxValue / 2);
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[320px]">
-      <h3 className="text-sm font-bold text-gray-700 mb-6">{title}</h3>
+      <h3 className="text-sm font-bold text-gray-700 mb-6 flex justify-between">
+        <span>{title}</span>
+        {selectedDate && <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-1 rounded-full animate-pulse">Mostrando dia {selectedDate.split('-').reverse().join('/')}</span>}
+      </h3>
       
       <div className="flex-1 flex mt-2">
-        {/* Eixo Y (Escala Numérica) */}
         <div className="w-8 relative border-r-2 border-gray-200 pb-8 shrink-0">
           <span className="absolute top-0 -translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">{maxValue}</span>
           <span className="absolute top-1/2 -translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">{midValue}</span>
           <span className="absolute bottom-8 translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">0</span>
         </div>
 
-        {/* Área do Gráfico */}
         <div className="flex-1 relative">
-          
-          {/* Linhas de Grade e Eixo X */}
           <div className="absolute inset-0 pb-8 flex flex-col justify-between pointer-events-none">
             <div className="w-full border-t border-gray-200 border-dashed"></div>
             <div className="w-full border-t border-gray-200 border-dashed"></div>
-            {/* Linha Sólida do Eixo X (Chão do gráfico) */}
             <div className="w-full border-t-2 border-gray-300"></div> 
           </div>
 
-          {/* Barras Verticais */}
           <div className="absolute inset-0 pb-8 flex items-end justify-between px-2">
             {data.map((item, index) => {
               const hPercent = `${((item.value / maxValue) * 100)}%`;
+              const isSelected = selectedDate === item.fullDate;
               return (
                 <div key={index} className="flex flex-col items-center flex-1 group z-10 h-full justify-end relative">
-                  
-                  {/* Balão flutuante ao passar o mouse */}
                   <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[11px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm font-bold">
-                    {item.value} Ocorrências
+                    {item.value} Ocorrências (Clique para ver)
                     <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                   </div>
                   
-                  {/* Coluna (Base plana, topo arredondado) */}
-                  <div 
-                    className="w-full max-w-[16px] rounded-t-sm transition-all duration-1000 ease-out hover:opacity-80"
-                    style={{ height: hPercent === '0%' ? '0px' : hPercent, backgroundColor: color }}
-                  ></div>
+                  {/* Transformamos a div em botão clicável */}
+                  <button 
+                    onClick={() => onSelectDate && onSelectDate(item.fullDate)}
+                    className={`w-full max-w-[16px] rounded-t-sm transition-all duration-300 hover:opacity-80 cursor-pointer ${isSelected ? 'ring-4 ring-blue-200 scale-110' : ''}`}
+                    style={{ height: hPercent === '0%' ? '0px' : hPercent, backgroundColor: isSelected ? '#3B82F6' : color }}
+                  ></button>
 
-                  {/* Eixo X - Label (Datas) */}
-                  <span className="absolute top-full mt-2 text-[10px] text-gray-500 font-bold truncate max-w-full text-center">
+                  <span className={`absolute top-full mt-2 text-[10px] font-bold truncate max-w-full text-center ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
                     {item.label}
                   </span>
                 </div>
@@ -1952,6 +1948,7 @@ function App() {
   });
   const [globalSearch, setGlobalSearch] = useState('');
   const [selectedAnalysisType, setSelectedAnalysisType] = useState('Problema com Fornecedor');
+  const [selectedDate, setSelectedDate] = useState(null); // Guarda o dia clicado no gráfico
   const [dashboardMode, setDashboardMode] = useState('graficos');
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
@@ -3362,8 +3359,23 @@ const getFilteredRecords = () => {
       .slice(-10) // Mostra no máximo os últimos 10 dias de movimento
       .map(([dateStr, value]) => {
         const [y, m, d] = dateStr.split('-');
-        return { label: `${d}/${m}`, value }; // Fica "Dia/Mês", ex: "24/06"
+        return { label: `${d}/${m}`, value, fullDate: dateStr }; // NOVO: Adicionado fullDate aqui
       });
+
+    // NOVO: Matemática para o Zoom do Dia Clicado
+    const filteredByDate = selectedDate ? registrosEstatisticas.filter(r => {
+       if(!r.dataCriacao) return false;
+       return new Date(r.dataCriacao).toISOString().split('T')[0] === selectedDate;
+    }) : [];
+
+    const dateProdutoCounts = {};
+    const dateFornecedorCounts = {};
+    filteredByDate.forEach(r => {
+        if (r.produto && r.produto !== 'Não especificado') dateProdutoCounts[r.produto] = (dateProdutoCounts[r.produto] || 0) + 1;
+        if (r.fornecedor) dateFornecedorCounts[r.fornecedor] = (dateFornecedorCounts[r.fornecedor] || 0) + 1;
+    });
+    const topProdutosDate = Object.entries(dateProdutoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+    const topFornecedoresDate = Object.entries(dateFornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
@@ -3605,9 +3617,44 @@ const getFilteredRecords = () => {
                 </div>
               </div>
 
-              {/* GRÁFICO DE EVOLUÇÃO - FULL WIDTH */}
+              {/* GRÁFICO DE EVOLUÇÃO E PAINEL DE DETALHAMENTO DIÁRIO */}
               <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                {timelineData.length > 0 && <TimelineChart color="#F4B41A" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
+                {timelineData.length > 0 && (
+                  <TimelineChart 
+                    color="#F4B41A" 
+                    data={timelineData} 
+                    title="Evolução Temporal (Clique nas barras para investigar)" 
+                    onSelectDate={setSelectedDate}
+                    selectedDate={selectedDate}
+                  />
+                )}
+                
+                {/* CAIXA DE ZOOM DO DIA (Só aparece quando clica numa barra) */}
+                {selectedDate && (
+                  <div className="mt-4 bg-blue-50/50 border border-blue-200 rounded-xl p-6 relative animate-fade-in-up shadow-sm">
+                    <button onClick={() => setSelectedDate(null)} className="absolute top-4 right-4 text-blue-400 hover:text-red-500 bg-white rounded-lg p-1 shadow-sm transition" title="Fechar detalhamento"><X size={20}/></button>
+                    
+                    <h3 className="text-lg font-black text-blue-900 mb-6 flex items-center gap-2">
+                      <Clock size={20} className="text-blue-600"/> 
+                      Raio-X do dia: {selectedDate.split('-').reverse().join('/')} 
+                      <span className="text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full ml-2">{filteredByDate.length} Ocorrência(s)</span>
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {topProdutosDate.length > 0 ? (
+                        <BarChart data={topProdutosDate} title="Produtos Envolvidos Neste Dia" />
+                      ) : (
+                        <div className="bg-white rounded-xl p-6 text-center border border-blue-100 flex items-center justify-center h-[200px]"><span className="text-blue-300 text-sm font-bold">Nenhum produto rastreável hoje</span></div>
+                      )}
+                      
+                      {topFornecedoresDate.length > 0 ? (
+                        <BarChart data={topFornecedoresDate} title="Fornecedores Envolvidos Neste Dia" />
+                      ) : (
+                        <div className="bg-white rounded-xl p-6 text-center border border-blue-100 flex items-center justify-center h-[200px]"><span className="text-blue-300 text-sm font-bold">Nenhum fornecedor rastreável hoje</span></div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               
 {/* ANÁLISE APROFUNDADA INTERATIVA (DRILL-DOWN) */}
