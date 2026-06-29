@@ -3329,8 +3329,10 @@ const getFilteredRecords = () => {
     const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
     const pendingRecords = (registros || []).filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
-    // NOVO: Matemática do Painel Interativo (Drill-down)
+// NOVO: Matemática do Painel Interativo (Drill-down Corrigido)
     const maxValueTipos = Math.max(...tipoBarras.map(t => t.value), 1);
+    
+    // Filtro unificado que entende que o nome na tela pode ser diferente do banco
     const dbTypeToFilter = selectedAnalysisType === 'Reclamação de Cliente' ? 'Relatório de Não Conformidade - Cliente' : selectedAnalysisType;
     const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio || 'Problema com Fornecedor') === dbTypeToFilter);
 
@@ -3339,14 +3341,21 @@ const getFilteredRecords = () => {
     const typeClienteCounts = {};
 
     filteredByType.forEach(r => {
-      if (r.produto && r.produto !== 'Não especificado') typeProdutoCounts[r.produto] = (typeProdutoCounts[r.produto] || 0) + 1;
-      if (r.fornecedor) typeFornecedorCounts[r.fornecedor] = (typeFornecedorCounts[r.fornecedor] || 0) + 1;
-      if (r.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') {
-        if(r.lojasLocais && r.lojasLocais.length > 0) {
-          r.lojasLocais.forEach(l => typeClienteCounts[l] = (typeClienteCounts[l] || 0) + 1);
-        } else if (r.lojaLocal) {
-          typeClienteCounts[r.lojaLocal] = (typeClienteCounts[r.lojaLocal] || 0) + 1;
-        }
+      // Busca produto (se existir)
+      if (r.produto && r.produto !== 'Não especificado') {
+        typeProdutoCounts[r.produto] = (typeProdutoCounts[r.produto] || 0) + 1;
+      }
+      
+      // Busca fornecedor
+      if (r.fornecedor) {
+        typeFornecedorCounts[r.fornecedor] = (typeFornecedorCounts[r.fornecedor] || 0) + 1;
+      }
+      
+      // Busca loja específica (para o caso de Clientes)
+      if (r.lojaLocal) {
+        typeClienteCounts[r.lojaLocal] = (typeClienteCounts[r.lojaLocal] || 0) + 1;
+      } else if (r.lojasLocais && Array.isArray(r.lojasLocais)) {
+        r.lojasLocais.forEach(l => typeClienteCounts[l] = (typeClienteCounts[l] || 0) + 1);
       }
     });
 
@@ -3715,13 +3724,13 @@ const getFilteredRecords = () => {
                       </div>
                     )}
 
-                    {/* Gráfico 2: Alterna entre Fornecedor ou Cliente dependendo da Categoria */}
+                    {/* Gráfico 2: Fornecedor ou Cliente */}
                     {selectedAnalysisType === 'Reclamação de Cliente' ? (
                       topClientesType.length > 0 ? (
                         <BarChart data={topClientesType} title="Top 5 Lojas/Clientes Afetados" />
                       ) : (
                         <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100 flex flex-col justify-center h-[200px]">
-                          <span className="text-gray-400 text-sm font-bold">Nenhuma loja listada</span>
+                          <span className="text-gray-400 text-sm font-bold">Nenhuma loja listada nos registros</span>
                         </div>
                       )
                     ) : (
