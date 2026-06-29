@@ -3158,10 +3158,13 @@ const getFilteredRecords = () => {
 
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">Tipo de Problema</label>
-                  <select required value={solicitacaoForm.tipoRelatorio} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, tipoRelatorio: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none">
+                  <select required value={solicitacaoForm.tipoRelatorio} onChange={(e) => setSolicitacaoForm({...solicitacaoForm, tipoRelatorio: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-[#F4B41A] outline-none font-medium text-gray-800">
                     <option value="Problema com Fornecedor">Problema com Fornecedor / Matéria-prima</option>
+                    <option value="Insumo ou Embalagem">Problema com Insumo ou Embalagem</option>
                     <option value="Relatório de Não Conformidade - Cliente">Reclamação de Cliente / Loja</option>
                     <option value="Ocorrência Interna">Problema Interno</option>
+                    <option value="Teste de Produto">Teste de Produto</option>
+                    <option value="Teste de Equipamento">Teste de Equipamento</option>
                   </select>
                 </div>
                 <div>
