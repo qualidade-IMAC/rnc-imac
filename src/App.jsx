@@ -2004,7 +2004,7 @@ function App() {
  imagensConclusao: [],
     imagensDescricao: [], 
     imagensConsideracoes: [],
-  solicitante: '', urgencia: ''
+  solicitante: '', urgencia: '',
     ocultarEstatistica: false,
 });
 
