@@ -3617,7 +3617,17 @@ const getFilteredRecords = () => {
             <div className="overflow-auto max-h-[500px] border-t border-gray-200 relative">
               <table className="w-full text-left text-sm relative">
                 {/* NOVO: Cabeçalho que fica grudado no topo (sticky) ao rolar para baixo */}
-                <thead className="bg-gray-100 text-gray-600 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-opacity-90"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead> py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
+                <thead className="bg-gray-100 text-gray-600 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-opacity-90">
+                  <tr>
+                    <th className="px-4 py-3 font-bold">Data</th>
+                    <th className="px-4 py-3 font-bold">Tipo</th>
+                    <th className="px-4 py-3 font-bold">Produto</th>
+                    <th className="px-4 py-3 font-bold">Autor</th>
+                    <th className="px-4 py-3 font-bold">Ocorrência</th>
+                    <th className="px-4 py-3 font-bold">Status</th>
+                    <th className="px-4 py-3 font-bold text-center">Ações</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
                     filteredRecords.map(reg => (
