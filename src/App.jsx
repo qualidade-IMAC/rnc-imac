@@ -1951,7 +1951,7 @@ function App() {
     fontSize: 14
   });
   const [globalSearch, setGlobalSearch] = useState('');
-  const [activeTopTab, setActiveTopTab] = useState('produtos');
+  const [selectedAnalysisType, setSelectedAnalysisType] = useState('Problema com Fornecedor');
   const [dashboardMode, setDashboardMode] = useState('graficos');
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
@@ -3322,6 +3322,29 @@ const getFilteredRecords = () => {
     const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
     const pendingRecords = (registros || []).filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
+    // NOVO: Matemática do Painel Interativo (Drill-down)
+    const maxValueTipos = Math.max(...tipoBarras.map(t => t.value), 1);
+    const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio || 'Problema com Fornecedor') === selectedAnalysisType);
+
+    const typeProdutoCounts = {};
+    const typeFornecedorCounts = {};
+    const typeClienteCounts = {};
+
+    filteredByType.forEach(r => {
+      if (r.produto && r.produto !== 'Não especificado') typeProdutoCounts[r.produto] = (typeProdutoCounts[r.produto] || 0) + 1;
+      if (r.fornecedor) typeFornecedorCounts[r.fornecedor] = (typeFornecedorCounts[r.fornecedor] || 0) + 1;
+      if (r.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') {
+        if(r.lojasLocais && r.lojasLocais.length > 0) {
+          r.lojasLocais.forEach(l => typeClienteCounts[l] = (typeClienteCounts[l] || 0) + 1);
+        } else if (r.lojaLocal) {
+          typeClienteCounts[r.lojaLocal] = (typeClienteCounts[r.lojaLocal] || 0) + 1;
+        }
+      }
+    });
+
+    const topProdutosType = Object.entries(typeProdutoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+    const topFornecedoresType = Object.entries(typeFornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+    const topClientesType = Object.entries(typeClienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
     const timelineMap = {};
     registrosEstatisticas.forEach(r => {
       if (r.dataCriacao) {
@@ -3587,43 +3610,71 @@ const getFilteredRecords = () => {
                 {timelineData.length > 0 && <TimelineChart color="#F4B41A" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
               </div>
               
-              {/* GRÁFICOS INFERIORES - Tipos e Top 5 Lado a Lado */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <div className="lg:col-span-1 flex flex-col h-full">
-                  {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" isTypes={true} />}
-                </div>
+{/* ANÁLISE APROFUNDADA INTERATIVA (DRILL-DOWN) */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 flex flex-col lg:flex-row animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 
-                <div className="lg:col-span-2">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col md:flex-row">
-                    <div className="flex flex-row md:flex-col bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 md:w-56 shrink-0">
-                      <div className="p-4 hidden md:block">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top 5 Ocorrências</p>
-                      </div>
-                      <button 
-                        onClick={() => setActiveTopTab('produtos')} 
-                        className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'produtos' ? 'bg-white text-blue-600 border-b-2 md:border-b-0 md:border-l-4 border-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-                      >
-                        Produtos
-                      </button>
-                      <button 
-                        onClick={() => setActiveTopTab('fornecedores')} 
-                        className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'fornecedores' ? 'bg-white text-red-500 border-b-2 md:border-b-0 md:border-l-4 border-red-500 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-                      >
-                        Fornecedores
-                      </button>
-                      <button 
-                        onClick={() => setActiveTopTab('clientes')} 
-                        className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'clientes' ? 'bg-white text-purple-600 border-b-2 md:border-b-0 md:border-l-4 border-purple-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-                      >
-                        Lojas/Clientes
-                      </button>
-                    </div>
+                {/* Lado Esquerdo: Menu Interativo (Ocorrências por Tipo) */}
+                <div className="flex flex-col bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200 lg:w-[35%] shrink-0 p-6">
+                  <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Filter size={16}/> Análise por Categoria</h3>
+                  <p className="text-[11px] text-gray-500 mb-5 uppercase tracking-wider font-bold">Clique em uma categoria para detalhar</p>
+                  
+                  <div className="space-y-3">
+                    {tipoBarras.map((item, index) => {
+                      const isSelected = selectedAnalysisType === item.label;
+                      const widthPercentage = ((item.value || 0) / maxValueTipos) * 100;
+                      return (
+                        <button 
+                          key={index} 
+                          onClick={() => setSelectedAnalysisType(item.label)} 
+                          className={`w-full text-left p-3.5 rounded-xl border transition-all ${isSelected ? 'bg-white border-blue-400 shadow-md ring-1 ring-blue-400' : 'border-transparent hover:bg-gray-200/50'}`}
+                        >
+                          <div className="flex justify-between items-end text-xs mb-2">
+                            <span className={`font-bold truncate pr-2 ${isSelected ? 'text-blue-700' : 'text-gray-600'}`}>{item.label}</span>
+                            <span className={`font-black ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>{item.value}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(widthPercentage, 1)}%`, backgroundColor: item.color || '#9CA3AF' }}></div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
 
-                    <div className="p-2 flex-1 w-full min-h-[300px]">
-                      {activeTopTab === 'produtos' && (produtoBarData.length > 0 ? <BarChart data={produtoBarData.slice(0, 5)} title="Produtos com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-                      {activeTopTab === 'fornecedores' && (barData.length > 0 ? <BarChart data={barData.slice(0, 5)} title="Fornecedores com mais problemas" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-                      {activeTopTab === 'clientes' && (clienteBarData.length > 0 ? <BarChart data={clienteBarData.slice(0, 5)} title="Lojas/Clientes com mais chamados" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
-                    </div>
+                {/* Lado Direito: Área de Detalhamento do Tipo Selecionado */}
+                <div className="p-6 lg:p-8 flex-1 w-full bg-white flex flex-col">
+                  <h3 className="text-lg font-black text-[#5C3A21] mb-8 border-b border-gray-100 pb-4">
+                    Detalhamento: <span className="text-blue-600">{selectedAnalysisType}</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
+                    {/* Gráfico 1: Produtos (Aparece para todos) */}
+                    {topProdutosType.length > 0 ? (
+                      <BarChart data={topProdutosType} title="Top 5 Produtos Envolvidos" />
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100 flex flex-col justify-center h-[200px]">
+                        <span className="text-gray-400 text-sm font-bold">Nenhum produto listado</span>
+                      </div>
+                    )}
+
+                    {/* Gráfico 2: Alterna entre Fornecedor ou Cliente dependendo da Categoria */}
+                    {selectedAnalysisType === 'Relatório de Não Conformidade - Cliente' ? (
+                      topClientesType.length > 0 ? (
+                        <BarChart data={topClientesType} title="Top 5 Lojas/Clientes Afetados" />
+                      ) : (
+                        <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100 flex flex-col justify-center h-[200px]">
+                          <span className="text-gray-400 text-sm font-bold">Nenhuma loja listada</span>
+                        </div>
+                      )
+                    ) : (
+                      topFornecedoresType.length > 0 ? (
+                        <BarChart data={topFornecedoresType} title="Top 5 Fornecedores Envolvidos" />
+                      ) : (
+                        <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-100 flex flex-col justify-center h-[200px]">
+                          <span className="text-gray-400 text-sm font-bold">Nenhum fornecedor listado</span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
