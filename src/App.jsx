@@ -3331,7 +3331,8 @@ const getFilteredRecords = () => {
     const pendingRecords = (registros || []).filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
     // NOVO: Matemática do Painel Interativo (Drill-down)
     const maxValueTipos = Math.max(...tipoBarras.map(t => t.value), 1);
-    const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio || 'Problema com Fornecedor') === selectedAnalysisType);
+    const dbTypeToFilter = selectedAnalysisType === 'Reclamação de Cliente' ? 'Relatório de Não Conformidade - Cliente' : selectedAnalysisType;
+    const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio || 'Problema com Fornecedor') === dbTypeToFilter);
 
     const typeProdutoCounts = {};
     const typeFornecedorCounts = {};
@@ -3715,7 +3716,7 @@ const getFilteredRecords = () => {
                     )}
 
                     {/* Gráfico 2: Alterna entre Fornecedor ou Cliente dependendo da Categoria */}
-                    {selectedAnalysisType === 'Relatório de Não Conformidade - Cliente' ? (
+                    {selectedAnalysisType === 'Reclamação de Cliente' ? (
                       topClientesType.length > 0 ? (
                         <BarChart data={topClientesType} title="Top 5 Lojas/Clientes Afetados" />
                       ) : (
