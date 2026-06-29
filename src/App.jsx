@@ -1930,6 +1930,7 @@ function App() {
     fontSize: 14
   });
   const [globalSearch, setGlobalSearch] = useState('');
+  const [activeTopTab, setActiveTopTab] = useState('produtos');
   const [editingImageIndex, setEditingImageIndex] = useState(null); 
   const [registros, setRegistros] = useState([]); 
   const [registroToDelete, setRegistroToDelete] = useState(null); 
@@ -3552,11 +3553,40 @@ const getFilteredRecords = () => {
             </div>
           </div>
           
-          {/* GRÁFICOS - LINHA 2 (Top 5s Minimalistas) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {produtoBarData.length > 0 && <BarChart data={produtoBarData.slice(0, 5)} title="Top 5 Produtos Ofensores" />}
-            {barData.length > 0 && <BarChart data={barData.slice(0, 5)} title="Top 5 Fornecedores Ofensores" />}
-            {clienteBarData.length > 0 && <BarChart data={clienteBarData.slice(0, 5)} title="Top 5 Clientes/Lojas" />}
+          {/* GRÁFICOS - LINHA 2 (Agrupado em Abas para limpar a tela) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 flex flex-col md:flex-row">
+            
+            {/* Menu Lateral/Superior de Abas */}
+            <div className="flex flex-row md:flex-col bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 md:w-64 shrink-0">
+              <div className="p-4 hidden md:block">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top 5 Ofensores</p>
+              </div>
+              <button 
+                onClick={() => setActiveTopTab('produtos')} 
+                className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'produtos' ? 'bg-white text-blue-600 border-b-2 md:border-b-0 md:border-l-4 border-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                Produtos
+              </button>
+              <button 
+                onClick={() => setActiveTopTab('fornecedores')} 
+                className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'fornecedores' ? 'bg-white text-red-500 border-b-2 md:border-b-0 md:border-l-4 border-red-500 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                Fornecedores
+              </button>
+              <button 
+                onClick={() => setActiveTopTab('clientes')} 
+                className={`flex-1 md:flex-none text-left px-4 py-3 text-sm font-bold transition-colors ${activeTopTab === 'clientes' ? 'bg-white text-purple-600 border-b-2 md:border-b-0 md:border-l-4 border-purple-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                Clientes / Lojas
+              </button>
+            </div>
+
+            {/* Área que mostra apenas 1 gráfico por vez */}
+            <div className="p-2 flex-1 w-full min-h-[300px]">
+              {activeTopTab === 'produtos' && (produtoBarData.length > 0 ? <BarChart data={produtoBarData.slice(0, 5)} title="Maiores ofensores por Produto" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+              {activeTopTab === 'fornecedores' && (barData.length > 0 ? <BarChart data={barData.slice(0, 5)} title="Maiores ofensores por Fornecedor" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+              {activeTopTab === 'clientes' && (clienteBarData.length > 0 ? <BarChart data={clienteBarData.slice(0, 5)} title="Lojas/Clientes com mais chamados" /> : <div className="flex h-full items-center justify-center text-gray-400 font-medium">Nenhum dado no período</div>)}
+            </div>
           </div>
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
   <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -3583,9 +3613,11 @@ const getFilteredRecords = () => {
     </div>
   </div>
   
-  <div className="overflow-x-auto">
-    <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
+{/* NOVO: Scroll interno e altura máxima para não esticar a página */}
+            <div className="overflow-auto max-h-[500px] border-t border-gray-200 relative">
+              <table className="w-full text-left text-sm relative">
+                {/* NOVO: Cabeçalho que fica grudado no topo (sticky) ao rolar para baixo */}
+                <thead className="bg-gray-100 text-gray-600 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-opacity-90"><tr><th className="px-4 py-3 font-bold">Data</th><th className="px-4 py-3 font-bold">Tipo</th><th className="px-4 py-3 font-bold">Produto</th><th className="px-4 py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead> py-3 font-bold">Autor</th><th className="px-4 py-3 font-bold">Ocorrência</th><th className="px-4 py-3 font-bold">Status</th><th className="px-4 py-3 font-bold text-center">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
                     filteredRecords.map(reg => (
