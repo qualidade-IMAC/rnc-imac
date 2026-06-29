@@ -2781,7 +2781,7 @@ const processedUrl = useRef(false);
       imagensAcaoCorretiva: Array.isArray(registro.imagensAcaoCorretiva) ? registro.imagensAcaoCorretiva : [],
       imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : [],
       imagensDescricao: Array.isArray(registro.imagensDescricao) ? registro.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
-      imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro.imagensConsideracoes : [] // <--- ADICIONAR ESTA LINHA
+     imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro.imagensConsideracoes : [],
       ocultarEstatistica: registro.ocultarEstatistica || false,
     });
     setEditingReportId(registro.id);
@@ -2897,7 +2897,7 @@ const duplicateReport = (registro) => {
       imagensAcaoCorretiva: Array.isArray(formData.imagensAcaoCorretiva) ? formData.imagensAcaoCorretiva : [],
       imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : [],
       imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
-      imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [] // <--- ADICIONAR ESTA LINHA
+      imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [],
       ocultarEstatistica: formData.ocultarEstatistica || false,
     };
 
