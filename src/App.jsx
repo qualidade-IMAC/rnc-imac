@@ -3284,7 +3284,7 @@ const getFilteredRecords = () => {
     // NOVO: Remove os registros documentais de todos os gráficos e cálculos matemáticos
     const registrosEstatisticas = filteredRecords.filter(r => !r.ocultarEstatistica);
 
-    const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0 };
+   const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Relatório de Não Conformidade - Cliente': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0 };
     const fornecedorCounts = {};
     const clienteCounts = {};
     const produtoCounts = {};
@@ -3313,7 +3313,14 @@ const getFilteredRecords = () => {
 
     const pieData = Object.entries(countsPorTipo).filter(([_, v]) => v > 0).map(([label, value]) => ({ label, value }));
     const barData = Object.entries(fornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
-    const tipoBarras = Object.entries(countsPorTipo).map(([nome, valor]) => ({ label: nome, value: valor, color: nome.includes('Fornecedor') ? '#EF4444' : nome.includes('Insumo') ? '#F59E0B' : nome.includes('Interna') ? '#3B82F6' : nome.includes('Produto') ? '#22C55E' : '#8B5CF6' }));
+    const tipoBarras = [
+      { label: 'Problema com Fornecedor', value: countsPorTipo['Problema com Fornecedor'] || 0, color: '#EF4444' },
+      { label: 'Insumo ou Embalagem', value: countsPorTipo['Insumo ou Embalagem'] || 0, color: '#F59E0B' },
+      { label: 'Reclamação de Cliente', value: countsPorTipo['Relatório de Não Conformidade - Cliente'] || 0, color: '#8B5CF6' },
+      { label: 'Ocorrência Interna', value: countsPorTipo['Ocorrência Interna'] || 0, color: '#3B82F6' },
+      { label: 'Teste de Produto', value: countsPorTipo['Teste de Produto'] || 0, color: '#10B981' },
+      { label: 'Teste de Equipamento', value: countsPorTipo['Teste de Equipamento'] || 0, color: '#EC4899' }
+    ];
 
     const pieStatusData = Object.entries(statusCounts).filter(([_, v]) => v > 0).map(([label, value]) => ({ 
       label, value, color: label === 'Liberado' ? '#22C55E' : label === 'Não Liberado' ? '#EF4444' : '#F59E0B' 
