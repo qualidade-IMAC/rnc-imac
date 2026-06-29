@@ -2005,6 +2005,7 @@ function App() {
     imagensDescricao: [], 
     imagensConsideracoes: [],
   solicitante: '', urgencia: ''
+    ocultarEstatistica: false,
 });
 
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
@@ -2781,6 +2782,7 @@ const processedUrl = useRef(false);
       imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : [],
       imagensDescricao: Array.isArray(registro.imagensDescricao) ? registro.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
       imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro.imagensConsideracoes : [] // <--- ADICIONAR ESTA LINHA
+      ocultarEstatistica: registro.ocultarEstatistica || false,
     });
     setEditingReportId(registro.id);
     setView('form');
@@ -2896,6 +2898,7 @@ const duplicateReport = (registro) => {
       imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : [],
       imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
       imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [] // <--- ADICIONAR ESTA LINHA
+      ocultarEstatistica: formData.ocultarEstatistica || false,
     };
 
     let currentId = editingReportId;
@@ -3261,13 +3264,17 @@ const getFilteredRecords = () => {
 
   if (view === 'dashboard') {
     const filteredRecords = getFilteredRecords();
+    
+    // NOVO: Remove os registros documentais de todos os gráficos e cálculos matemáticos
+    const registrosEstatisticas = filteredRecords.filter(r => !r.ocultarEstatistica);
+
     const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0 };
     const fornecedorCounts = {};
     const clienteCounts = {};
     const produtoCounts = {};
     const statusCounts = { 'Pendente': 0, 'Liberado': 0, 'Não Liberado': 0 };
     
-    filteredRecords.forEach(r => {
+    registrosEstatisticas.forEach(r => {
       const tipo = r.tipoRelatorio || 'Problema com Fornecedor';
       if (countsPorTipo[tipo] !== undefined) countsPorTipo[tipo]++;
       if (r.fornecedor) fornecedorCounts[r.fornecedor] = (fornecedorCounts[r.fornecedor] || 0) + 1;
@@ -3298,10 +3305,9 @@ const getFilteredRecords = () => {
     const clienteBarData = Object.entries(clienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
     const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
-    const pendingRecords = (registros || []).filter(r => r.status === 'Pendente' || !r.status);
-    // NOVO: Lógica para o gráfico de Linha do Tempo (Últimos 10 dias com movimento)
+    const pendingRecords = (registros || []).filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
     const timelineMap = {};
-    filteredRecords.forEach(r => {
+    registrosEstatisticas.forEach(r => {
       if (r.dataCriacao) {
         const d = new Date(r.dataCriacao);
         if (!isNaN(d.getTime())) {
@@ -3525,7 +3531,7 @@ const getFilteredRecords = () => {
 {/* CARDS SUPERIORES MODERNIZADOS COM ÍCONES */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Emitidos</p><p className="text-3xl font-black text-gray-800 mt-1">{filteredRecords.length}</p></div>
+              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Emitidos</p><p className="text-3xl font-black text-gray-800 mt-1">{registrosEstatisticas.length}</p></div>
               <div className="bg-blue-50 p-3 rounded-lg"><FileText size={24} className="text-blue-600" /></div>
             </div>
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
@@ -3727,6 +3733,23 @@ if (view === 'form') {
                 </div>
               </div>
 
+              {/* CAIXA DE REGISTRO DOCUMENTAL FICA FORA DO GRID */}
+              <div className="mb-4 bg-blue-50 border border-blue-200 p-3.5 rounded-lg">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={formData.ocultarEstatistica || false} 
+                    onChange={(e) => setFormData(p => ({ ...p, ocultarEstatistica: e.target.checked }))} 
+                    className="w-5 h-5 accent-blue-600 cursor-pointer" 
+                  />
+                  <div>
+                    <span className="block text-sm font-bold text-blue-900">Registro apenas Documental</span>
+                    <span className="block text-xs text-blue-700 mt-0.5">Marque esta opção para ocultar este documento dos gráficos, das estatísticas e da lista de pendências da gerência.</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* GRID DIVIDE A TELA EM 2 COLUNAS */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold mb-1 text-gray-700">Origem da Ocorrência</label>
