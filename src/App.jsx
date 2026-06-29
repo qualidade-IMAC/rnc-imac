@@ -1415,41 +1415,40 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   );
 };
 
-const BarChart = ({ data, title, color = '#F4B41A' }) => {
+const BarChart = ({ data, title, isTypes = false }) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-sm font-bold text-gray-700 mb-5">{title}</h3>
-      <div className="space-y-4">
+    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 h-full">
+      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
+      <div className="space-y-3.5">
         {(data || []).map((item, index) => {
           const widthPercentage = ((item.value || 0) / maxValue) * 100;
           
-          // Regra ágil: Destacar o 1º lugar (maior gargalo) se ele representar um valor alto
-          const isTopOffender = index === 0 && item.value > maxValue * 0.5 && data.length > 1;
-          const barColor = item.color || (isTopOffender ? '#EF4444' : color); // Fica vermelho se for muito discrepante
-          
+          // Lógica Minimalista: 
+          // Se for o gráfico de Tipos, usa as cores originais. 
+          // Se for o Top 5, pinta SÓ o 1º lugar de Vermelho, o resto de cinza suave.
+          let barColor = item.color || '#E5E7EB'; 
+          if (!isTypes) {
+             barColor = index === 0 ? '#EF4444' : '#D1D5DB'; // Vermelho pro 1º, Cinza pro resto
+          }
+
           return (
-            <div key={index} className="animate-fade-in-up group" style={{ animationDelay: `${index * 0.1}s` }}>
-              <div className="flex justify-between items-end text-sm mb-1.5">
-                <span className="font-semibold text-gray-700 truncate pr-4" title={item.label}>
-                  {index + 1}. {item.label}
+            <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+              <div className="flex justify-between items-end text-xs mb-1.5">
+                <span className={`truncate pr-2 ${!isTypes && index === 0 ? 'font-bold text-gray-800' : 'font-medium text-gray-500'}`} title={item.label}>
+                  {!isTypes ? `${index + 1}. ` : ''}{item.label}
                 </span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className={`font-black ${isTopOffender ? 'text-red-600' : 'text-gray-900'} text-base`}>
-                    {item.value || 0}
-                  </span>
-                </div>
+                <span className={`font-black ${!isTypes && index === 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                  {item.value || 0}
+                </span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
+              <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
                 <div 
-                  className="h-full rounded-full transition-all duration-1000 ease-out relative" 
-                  style={{ width: `${Math.max(widthPercentage, 2)}%`, backgroundColor: barColor }}
-                >
-                  {/* Efeito de brilho suave na barra */}
-                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-full"></div>
-                </div>
+                  className="h-full rounded-full transition-all duration-1000 ease-out" 
+                  style={{ width: `${Math.max(widthPercentage, 1)}%`, backgroundColor: barColor }}
+                ></div>
               </div>
             </div>
           );
@@ -1463,11 +1462,10 @@ const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
   const maxValue = Math.max(...data.map(d => d.value || 0), 1);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col h-full min-h-[280px]">
+    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[260px]">
       <h3 className="text-sm font-bold text-gray-700 mb-6">{title}</h3>
-      <div className="flex-1 flex items-end justify-between gap-1 mt-auto h-32 relative">
-        {/* Linhas de fundo para guiar a leitura */}
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+      <div className="flex-1 flex items-end justify-between gap-2 mt-auto h-32 relative">
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
           <div className="w-full border-t border-gray-400 border-dashed"></div>
           <div className="w-full border-t border-gray-400 border-dashed"></div>
           <div className="w-full border-t border-gray-400 border-dashed"></div>
@@ -1478,22 +1476,17 @@ const TimelineChart = ({ data, title, color = '#F4B41A' }) => {
           return (
             <div key={index} className="flex flex-col items-center flex-1 group z-10">
               <div className="w-full flex items-end justify-center h-28 relative">
-                {/* Tooltip (balãozinho) que aparece ao passar o mouse */}
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-gray-800 text-white text-xs px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-md">
+                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-gray-800 text-white text-[10px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm">
                   {item.value} Ocorrências
-                  {/* Triângulo do balãozinho */}
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                 </div>
-                {/* Barra do gráfico */}
+                {/* Colunas muito mais finas e arredondadas */}
                 <div 
-                  className="w-full max-w-[28px] rounded-t-sm transition-all duration-1000 ease-out hover:opacity-80 relative"
+                  className="w-full max-w-[12px] rounded-full transition-all duration-1000 ease-out hover:opacity-80"
                   style={{ height: hPercent === '0%' ? '4px' : hPercent, backgroundColor: color }}
-                >
-                   {/* Brilho interno para dar volume */}
-                   <div className="absolute top-0 left-0 right-0 h-2 bg-white/30 rounded-t-sm"></div>
-                </div>
+                ></div>
               </div>
-              <span className="text-[10px] text-gray-500 mt-2 font-medium truncate max-w-full text-center">
+              <span className="text-[9px] text-gray-400 mt-2 font-medium truncate max-w-full text-center">
                 {item.label}
               </span>
             </div>
@@ -3549,22 +3542,22 @@ const getFilteredRecords = () => {
           </div>
 
           {/* GRÁFICOS - LINHA 1 (Evolução + Tipos) */}
+          {/* GRÁFICOS - LINHA 1 (Evolução + Tipos) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2">
-              {timelineData.length > 0 && <TimelineChart color="#5C3A21" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />}
+              <TimelineChart color="#F4B41A" data={timelineData} title="Evolução Temporal (Últimos 10 dias)" />
             </div>
             <div className="lg:col-span-1 flex flex-col">
-              {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" />}
+              {tipoBarras.some(t => t.value > 0) && <BarChart data={tipoBarras} title="Ocorrências por Tipo" isTypes={true} />}
             </div>
           </div>
           
-          {/* GRÁFICOS - LINHA 2 (Top 5s Compactos) */}
+          {/* GRÁFICOS - LINHA 2 (Top 5s Minimalistas) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {produtoBarData.length > 0 && <BarChart data={produtoBarData.slice(0, 5)} title="Top 5 Produtos Ofensores" color="#3B82F6" />}
-            {barData.length > 0 && <BarChart data={barData.slice(0, 5)} title="Top 5 Fornecedores Ofensores" color="#F4B41A" />}
-            {clienteBarData.length > 0 && <BarChart data={clienteBarData.slice(0, 5)} title="Top 5 Clientes/Lojas" color="#8B5CF6" />}
+            {produtoBarData.length > 0 && <BarChart data={produtoBarData.slice(0, 5)} title="Top 5 Produtos Ofensores" />}
+            {barData.length > 0 && <BarChart data={barData.slice(0, 5)} title="Top 5 Fornecedores Ofensores" />}
+            {clienteBarData.length > 0 && <BarChart data={clienteBarData.slice(0, 5)} title="Top 5 Clientes/Lojas" />}
           </div>
-
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
   <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
     <h2 className="font-bold text-gray-700 whitespace-nowrap">Histórico de Emissões <span className="text-gray-400 font-normal ml-2">({filteredRecords.length} registros)</span></h2>
