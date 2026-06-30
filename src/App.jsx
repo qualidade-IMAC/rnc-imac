@@ -1668,23 +1668,22 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
               </div>
 
               {!isLivre && (
-              <div className="mb-6">
-                <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
-                  <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao1}</p>
-                </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 ml-1">
-                  {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
-                    <>
-                      <p><strong>CLIENTE(S):</strong> {(registro.lojasLocais && registro.lojasLocais.length > 0) ? registro.lojasLocais.join(', ') : (registro.lojaLocal || 'Não informado')}</p>
-                      <p><strong>SUPERVISOR:</strong> {registro.supervisor}</p>
-                      <p><strong>PRODUTO:</strong> {registro.produto}</p>
-                      <p><strong>LOTE:</strong> {registro.lote}</p>
-                      <p><strong>DATA DE FABRICAÇÃO:</strong> {registro.dataFabricacao}</p>
-                      <p><strong>DATA VALIDADE:</strong> {registro.validade}</p>
-                      <p className="col-span-1 sm:col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {registro.quantidade}</p>
-                    </>
-                  ) : (
+  <div className="mb-6">
+    <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
+      <p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p>
+    </div>
+    
+    {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
+      <div className="grid ...">
+         {/* ... campos do cliente ... */}
+      </div>
+    ) : (
+      <div className="grid ...">
+         {/* ... campos normais ... */}
+      </div>
+    )}
+  </div>
+)}
                     <>
                       <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
                       <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
@@ -4144,18 +4143,14 @@ if (view === 'form') {
               </>
         ) : (
               <>
-                {isLivre && (
-                  <div className="space-y-4 mt-4 bg-blue-50 p-5 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800 font-bold">📄 MODO LIVRE ATIVADO</p>
-                    <p className="text-xs text-blue-600 mt-1">Os campos de rastreabilidade, produto, lote, etc. foram ocultados. Escreva o conteúdo do documento livremente no campo de <b>Corpo do Documento</b> abaixo.</p>
-                  </div>
-                )}
-                {!isLivre && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
-                    <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                    <span className="text-xs text-gray-500 font-bold bg-gray-100 px-2 py-1 rounded hidden md:block">💡 Dica: Clique nos títulos dos campos abaixo para renomeá-los</span>
-                  </div>
+               {!isLivre && (
+  <div className="space-y-4">
+    <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
+      <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+    </div>
+    {/* ... resto dos campos do formulário ... */}
+  </div>
+)}
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <div>
@@ -4454,7 +4449,7 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
             </div>
             
             {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
-             <>
+             <div>
                 {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
