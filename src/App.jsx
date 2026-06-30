@@ -1585,7 +1585,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   const [arquivado, setArquivado] = useState(registro?.arquivado || false);
   const [showHistorico, setShowHistorico] = useState(false);
   
-  // NOVO: Estado para guardar o texto da gerente
   const [obsGerencia, setObsGerencia] = useState('');
 
   if (!registro) return null;
@@ -1629,6 +1628,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
   const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
   const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
+  const isLivre = tipoStr === 'Comunicado / Parecer Livre';
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm no-print">
@@ -1672,22 +1672,32 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                   <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                     <p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 ml-1">
-                    <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
-                    <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
-                    {registro.dataOcorrencia && <p><strong>{registro.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {registro.dataOcorrencia}</p>}
-                    {registro.lote && <p><strong>{registro.labelLote || 'Lote'}:</strong> {registro.lote}</p>}
-                    {registro.quantidade && <p><strong>{registro.labelQuantidade || 'Quantidade Afetada'}:</strong> {registro.quantidade}</p>}
-                    {registro.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
-                    {registro.validade && showValidade && <p><strong>{registro.labelValidade || 'Data de Validade'}:</strong> {registro.validade}</p>}
-                    {registro.dataRecebimento && isFornecedor && <p><strong>{registro.labelDataRecebimento || 'Data de Recebimento'}:</strong> {registro.dataRecebimento}</p>}
-                    {registro.nf && isFornecedor && <p><strong>{registro.labelNf || 'Nota Fiscal'}:</strong> {registro.nf}</p>}
-                    {registro.horarioEmbalamento && requiresHorario && <p><strong>{registro.labelHorario || 'Horário / Turno'}:</strong> {registro.horarioEmbalamento}</p>}
-                  </div>
+                  
+                  {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 ml-1">
+                      <p><strong>Loja(s) / Cliente(s):</strong> {(registro.lojasLocais && registro.lojasLocais.length > 0) ? registro.lojasLocais.join(', ') : (registro.lojaLocal || 'Não informado')}</p>
+                      <p><strong>Supervisor:</strong> {registro.supervisor}</p>
+                      <p><strong>Produto:</strong> {registro.produto}</p>
+                      <p><strong>Lote:</strong> {registro.lote}</p>
+                      <p><strong>Fabricação:</strong> {registro.dataFabricacao}</p>
+                      <p><strong>Validade:</strong> {registro.validade}</p>
+                      <p className="col-span-1 md:col-span-2"><strong>Qtd. Não Conforme:</strong> {registro.quantidade}</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 ml-1">
+                      <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
+                      <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
+                      {registro.dataOcorrencia && <p><strong>{registro.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {registro.dataOcorrencia}</p>}
+                      {registro.lote && <p><strong>{registro.labelLote || 'Lote'}:</strong> {registro.lote}</p>}
+                      {registro.quantidade && <p><strong>{registro.labelQuantidade || 'Quantidade Afetada'}:</strong> {registro.quantidade}</p>}
+                      {registro.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
+                      {registro.validade && showValidade && <p><strong>{registro.labelValidade || 'Data de Validade'}:</strong> {registro.validade}</p>}
+                      {registro.dataRecebimento && isFornecedor && <p><strong>{registro.labelDataRecebimento || 'Data de Recebimento'}:</strong> {registro.dataRecebimento}</p>}
+                      {registro.nf && isFornecedor && <p><strong>{registro.labelNf || 'Nota Fiscal'}:</strong> {registro.nf}</p>}
+                      {registro.horarioEmbalamento && requiresHorario && <p><strong>{registro.labelHorario || 'Horário / Turno'}:</strong> {registro.horarioEmbalamento}</p>}
+                    </div>
+                  )}
                 </div>
-              )}
-                </div>
-              </div>
               )}
 
               {registro.descricao && (
@@ -1885,7 +1895,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 <button onClick={onClose} className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold transition w-full md:w-auto">
                   Fechar
                 </button>
-                {/* Se a gerente digitou uma alteração, escondemos o botão de assinar para evitar clique acidental */}
                 {isManager && !jaAssinou && obsGerencia.trim() === '' && (
                   <button onClick={() => onDarVisto(registro)} className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-bold transition flex items-center justify-center gap-2 shadow-md w-full md:w-auto whitespace-nowrap">
                     <PenTool size={20}/> Assinar
@@ -1913,7 +1922,6 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </span>
               </div>
               <div className="flex gap-2">
-                {/* Se a gerente digitou uma alteração, escondemos o botão de assinar para evitar clique acidental */}
                 {isManager && !jaAssinou && obsGerencia.trim() === '' && (
                   <button onClick={() => onDarVisto(registro)} className="px-6 py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-bold transition flex items-center gap-2 shadow-md">
                     <PenTool size={18}/> Assinar Relatório
@@ -4450,7 +4458,9 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
                     <p className="text-[14px] col-span-2"><strong>QUANTIDADE NÃO CONFORME:</strong> {formData.quantidade}</p>
                   </div>
                 </div>
+                )}
 
+                {formData.descricao && (
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao2}</p></div>
                   
@@ -4465,6 +4475,7 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
                      <div className="border border-gray-200 p-2 rounded bg-gray-50 text-center"><span className="block text-[11px] font-bold text-gray-500 uppercase">Temp. °C</span><span className="text-[14px] font-semibold">{formData.temperatura || 'Não informado'}</span></div>
                   </div>
                 </div>
+                )}
 
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
@@ -4556,7 +4567,7 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
                     ))}
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <>
                 <div className="mb-5 print:mb-3 break-inside-avoid">
@@ -4574,7 +4585,6 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
                     {formData.horarioEmbalamento && requiresHorario && <p><strong>{formData.labelHorario || 'Horário / Turno'}:</strong> {formData.horarioEmbalamento}</p>}
                   </div>
                 </div>
-                )}
 
                 {formData.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
