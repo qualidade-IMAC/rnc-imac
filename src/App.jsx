@@ -3995,226 +3995,172 @@ if (view === 'form') {
             </div>
 
             {isCliente ? (
-              <>
-                <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                       <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
-                         <Store size={16} className="text-[#5C3A21]" /> Clientes Afetados (Multipla Seleção)
-                       </label>
-                       <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[32px]">
-                         {(!formData.lojasLocais || formData.lojasLocais.length === 0) && <span className="text-sm text-gray-400">Nenhum selecionado...</span>}
-                         {(formData.lojasLocais || []).map((loja, idx) => (
-                           <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
-                             <span className="font-bold text-indigo-800 text-xs">{loja}</span>
-                             <button type="button" onClick={() => setFormData(p => ({ ...p, lojasLocais: p.lojasLocais.filter((_, i) => i !== idx) }))} className="text-indigo-400 hover:text-red-500 ml-1"><X size={14}/></button>
+                  <>
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Dados do Produto</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                           <label className="block text-sm font-bold mb-1 text-gray-700 flex items-center gap-2">
+                             <Store size={16} className="text-[#5C3A21]" /> Clientes Afetados (Multipla Seleção)
+                           </label>
+                           <div className="flex flex-wrap items-center gap-2 mb-2 min-h-[32px]">
+                             {(!formData.lojasLocais || formData.lojasLocais.length === 0) && <span className="text-sm text-gray-400">Nenhum selecionado...</span>}
+                             {(formData.lojasLocais || []).map((loja, idx) => (
+                               <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+                                 <span className="font-bold text-indigo-800 text-xs">{loja}</span>
+                                 <button type="button" onClick={() => setFormData(p => ({ ...p, lojasLocais: p.lojasLocais.filter((_, i) => i !== idx) }))} className="text-indigo-400 hover:text-red-500 ml-1"><X size={14}/></button>
+                               </div>
+                             ))}
                            </div>
-                         ))}
-                       </div>
-                       <ClienteSelect
-                         value={formData.lojasLocais || []}
-                         onChange={(novasLojas) => {
-                           if (Array.isArray(novasLojas)) {
-                               setFormData(prev => ({ ...prev, lojasLocais: novasLojas }));
-                           } else if (typeof novasLojas === 'string' && novasLojas !== '') {
-                               setFormData(prev => ({ ...prev, lojasLocais: [...(prev.lojasLocais || []), novasLojas] }));
-                           }
-                         }}
-                         clientes={clientes}
-                         onAddCliente={addCliente}
-                       />
+                           <ClienteSelect
+                             value={formData.lojasLocais || []}
+                             onChange={(novasLojas) => {
+                               if (Array.isArray(novasLojas)) {
+                                   setFormData(prev => ({ ...prev, lojasLocais: novasLojas }));
+                               } else if (typeof novasLojas === 'string' && novasLojas !== '') {
+                                   setFormData(prev => ({ ...prev, lojasLocais: [...(prev.lojasLocais || []), novasLojas] }));
+                               }
+                             }}
+                             clientes={clientes}
+                             onAddCliente={addCliente}
+                           />
+                        </div>
+                        
+                        <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                        <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                        <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                        <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                        <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                        <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
+                      </div>
                     </div>
-                    
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Supervisor / Responsável</label><input type="text" maxLength={80} name="supervisor" value={formData.supervisor || ''} onChange={handleChange} placeholder="Ex: Rhadassa" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Produto ou Material</label><input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Fabricação</label><input type="text" maxLength={40} name="dataFabricacao" value={formData.dataFabricacao || ''} onChange={handleChange} placeholder="Ex: 14/08/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Lote</label><input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Validade</label><input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 14/10/25" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                    <div className="md:col-span-2"><label className="block text-sm font-bold mb-1 text-gray-700">Quantidade Não Conforme</label><input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
-                  </div>
-                </div>
 
-                <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
-                  <div>
-                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descrição da Não Conformidade Apresentada</label></div>
-                    <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
-                  </div>
-                  
-                  <div>
-                     <label className="block text-sm font-bold mb-3 text-gray-700">Características do Produto</label>
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                       <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
-                     </div>
-                  </div>
-                </div>
+                    <div className="space-y-6">
+                      <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
+                      <div>
+                        <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descrição da Não Conformidade Apresentada</label></div>
+                        <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                      </div>
+                      
+                      <div>
+                         <label className="block text-sm font-bold mb-3 text-gray-700">Características do Produto</label>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                           <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Sabor</label><input type="text" maxLength={40} name="sabor" value={formData.sabor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                           <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Odor</label><input type="text" maxLength={40} name="odor" value={formData.odor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                           <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Cor</label><input type="text" maxLength={40} name="cor" value={formData.cor || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                           <div><label className="block text-xs font-bold mb-1 text-gray-500 uppercase">Temp. °C</label><input type="text" maxLength={40} name="temperatura" value={formData.temperatura || ''} onChange={handleChange} placeholder="Ex: Não informado" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm text-sm font-semibold" /></div>
+                         </div>
+                      </div>
+                    </div>
 
-                <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Registro Fotográfico</h2>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                      <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
-                      <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                      <span className="text-xs text-gray-500 mt-1 font-medium">Você pode redimensionar e arrastar as fotos depois de anexar</span>
-                      <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  </div>
-                  {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
-                    <div className="flex flex-wrap gap-4 mt-4">
-                      {formData.imagens.map((img, index) => {
-                        const src = typeof img === 'string' ? img : img?.displaySrc;
-                        const tamanho = img?.tamanho || 'pequeno';
-                        let widthClass = 'w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)]';
-                        if (tamanho === 'medio') widthClass = 'w-full sm:w-[calc(100%)] md:w-[calc(50%-0.5rem)]';
-                        if (tamanho === 'grande') widthClass = 'w-full';
+                    <div className="space-y-6">
+                      <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
+                      
+                      <div>
+                         <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
+                         <select name="statusParecer" value={formData.statusParecer || ''} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
+                            <option value="">Selecione uma opção...</option>
+                            <option value="PROCEDENTE">Procedente</option>
+                            <option value="NÃO PROCEDENTE">Não Procedente</option>
+                            <option value="NÃO APLICADO">Não Aplicado</option>
+                         </select>
+                      </div>
 
-                        return (
-                          <div 
-                            key={index} draggable onDragStart={(e) => handleDragStart(e, index, 'imagens')} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index, 'imagens')}
-                            className={`group rounded-lg overflow-hidden border border-gray-300 shadow-sm bg-gray-100 flex flex-col cursor-move transition-all duration-300 ${widthClass}`}
-                          >
-                            <div className="relative">
-                              <img src={src} alt="Preview" className={`w-full object-contain bg-white ${tamanho === 'grande' ? 'max-h-[600px]' : 'h-48'}`} />
-                              <div className="absolute top-1 left-1 flex gap-1 bg-white/90 p-1 rounded backdrop-blur-sm shadow opacity-0 group-hover:opacity-100 transition z-10">
-                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'pequeno')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'pequeno' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Pequena">P</button>
-                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'medio')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'medio' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Média">M</button>
-                                <button type="button" onClick={() => changeImageSize(index, 'imagens', 'grande')} className={`px-2 py-0.5 text-[10px] font-bold rounded ${tamanho === 'grande' ? 'bg-[#F4B41A] text-[#5C3A21]' : 'hover:bg-gray-200'}`} title="Grande">G</button>
-                              </div>
-                              <div className="absolute top-1 right-1 flex gap-1 z-10">
-                                <button type="button" onClick={() => setEditingImageIndex(index)} className="bg-blue-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-blue-700"><PenTool size={16} /></button>
-                                <button type="button" onClick={() => removeImage(index)} className="bg-red-600 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700"><Trash2 size={16} /></button>
-                              </div>
-                            </div>
-                            <div className="bg-white border-t border-[#F4B41A]/40 p-2 flex-1 flex flex-col">
-                              <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">Legenda (Arraste a foto para mover)</label>
-                              <textarea
-                                value={typeof img === 'string' ? '' : (img?.legenda || '')}
-                                onChange={(e) => updateImageCaption(index, e.target.value)}
-                                placeholder="Ex.: Produto com alteração visual..."
-                                className="w-full flex-1 min-h-[40px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] bg-yellow-50/40 text-gray-800"
-                                rows={2}
-                              />
-                            </div>
+                      <div>
+                        <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
+                        <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
+                        {renderMiniImageUploader('Investigação', 'imagensInvestigacao')}
+                      </div>
+
+                      <div>
+                        <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
+                        <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
+                        {renderMiniImageUploader('Ação Corretiva', 'imagensAcaoCorretiva')}
+                      </div>
+
+                      <div>
+                        <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
+                        <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
+                        {renderMiniImageUploader('Conclusão', 'imagensConclusao')}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      {!isLivre && (
+                        <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
+                          <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
+                        <div>
+                          <input type="text" name="labelProduto" value={formData.labelProduto || ''} placeholder="Produto ou Material" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>
+                        <div>
+                          <input type="text" name="labelOcorrencia" value={formData.labelOcorrencia || ''} placeholder="Resumo do Problema" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>
+                        <div>
+                          <input type="text" name="labelDataOcorrencia" value={formData.labelDataOcorrencia || ''} placeholder="Data da Ocorrência" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>
+                        <div>
+                          <input type="text" name="labelLote" value={formData.labelLote || ''} placeholder="Lote" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>
+                        <div>
+                          <input type="text" name="labelQuantidade" value={formData.labelQuantidade || ''} placeholder="Quantidade" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>
+                        {showValidade && <div>
+                          <input type="text" name="labelValidade" value={formData.labelValidade || ''} placeholder="Data de Validade" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>}
+                        {isFornecedor && <>
+                          <div>
+                            <input type="text" name="labelDataRecebimento" value={formData.labelDataRecebimento || ''} placeholder="Data de Recebimento" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                            <input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
-                  
-                  <div>
-                     <label className="block text-sm font-bold mb-2 text-gray-700">Status do Parecer</label>
-                     <select name="statusParecer" value={formData.statusParecer || ''} onChange={handleChange} className="w-full md:w-1/2 border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm font-bold text-gray-700">
-                        <option value="">Selecione uma opção...</option>
-                        <option value="PROCEDENTE">Procedente</option>
-                        <option value="NÃO PROCEDENTE">Não Procedente</option>
-                        <option value="NÃO APLICADO">Não Aplicado</option>
-                     </select>
-                  </div>
-
-                  <div>
-                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descritivo de Investigação</label></div>
-                    <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder="Ex: Após o recebimento da reclamação, o processo investigativo foi realizado..." />
-                    {renderMiniImageUploader('Investigação', 'imagensInvestigacao')}
-                  </div>
-
-                  <div>
-                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Ação Corretiva</label></div>
-                    <RichTextEditor value={formData.acaoCorretiva || ''} onChange={(val) => setFormData(prev => ({ ...prev, acaoCorretiva: val }))} placeholder="Ex: Nenhuma ação aplicada / Notificar fornecedor..." />
-                    {renderMiniImageUploader('Ação Corretiva', 'imagensAcaoCorretiva')}
-                  </div>
-
-                  <div>
-                    <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Conclusão</label></div>
-                    <RichTextEditor value={formData.conclusaoParecer || ''} onChange={(val) => setFormData(prev => ({ ...prev, conclusaoParecer: val }))} placeholder="Ex: Atenciosamente, Controle de Qualidade..." />
-                    {renderMiniImageUploader('Conclusão', 'imagensConclusao')}
-                  </div>
-                </div>
-             </>
-        ) : (
-              <>
-                {!isLivre && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
-                      <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-                    </div>
-                  </div>
-                )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
-                    <div>
-                      <input type="text" name="labelProduto" value={formData.labelProduto || ''} placeholder="Produto ou Material" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={80} name="produto" value={formData.produto || ''} onChange={handleChange} placeholder={placeholders.produto} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>
-                    <div>
-                      <input type="text" name="labelOcorrencia" value={formData.labelOcorrencia || ''} placeholder="Resumo do Problema" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={80} name="ocorrencia" value={formData.ocorrencia || ''} onChange={handleChange} placeholder={placeholders.ocorrencia} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>
-                    <div>
-                      <input type="text" name="labelDataOcorrencia" value={formData.labelDataOcorrencia || ''} placeholder="Data da Ocorrência" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={40} name="dataOcorrencia" value={formData.dataOcorrencia || ''} onChange={handleChange} placeholder="Ex: 13/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>
-                    <div>
-                      <input type="text" name="labelLote" value={formData.labelLote || ''} placeholder="Lote" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={40} name="lote" value={formData.lote || ''} onChange={handleChange} placeholder={placeholders.lote} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>
-                    <div>
-                      <input type="text" name="labelQuantidade" value={formData.labelQuantidade || ''} placeholder="Quantidade" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={40} name="quantidade" value={formData.quantidade || ''} onChange={handleChange} placeholder={placeholders.quantidade} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>
-                    {showValidade && <div>
-                      <input type="text" name="labelValidade" value={formData.labelValidade || ''} placeholder="Data de Validade" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={40} name="validade" value={formData.validade || ''} onChange={handleChange} placeholder="Ex: 21/06/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>}
-                    {isFornecedor && <>
-                      <div>
-                        <input type="text" name="labelDataRecebimento" value={formData.labelDataRecebimento || ''} placeholder="Data de Recebimento" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                        <input type="text" maxLength={40} name="dataRecebimento" value={formData.dataRecebimento || ''} onChange={handleChange} placeholder="Ex: 22/04/2026" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                          <div>
+                            <input type="text" name="labelNf" value={formData.labelNf || ''} placeholder="Nota Fiscal" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                            <input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                          </div>
+                        </>}
+                        {requiresHorario && <div>
+                          <input type="text" name="labelHorario" value={formData.labelHorario || ''} placeholder="Horário / Turno" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
+                          <input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
+                        </div>}
                       </div>
-                      <div>
-                        <input type="text" name="labelNf" value={formData.labelNf || ''} placeholder="Nota Fiscal" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                        <input type="text" maxLength={40} name="nf" value={formData.nf || ''} onChange={handleChange} placeholder="Ex: 14612" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                      </div>
-                    </>}
-                    {requiresHorario && <div>
-                      <input type="text" name="labelHorario" value={formData.labelHorario || ''} placeholder="Horário / Turno" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
-                      <input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
-                    </div>}
-                  </div>
-                </div>
-                )}
+                    </div>
 
-                <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">
-                    {isLivre ? "Corpo do Documento" : "Descrição e Considerações"}
-                  </h2>
-                  <div>
-                    <div className="mb-1">
-                      <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
+                    <div className="space-y-6">
+                      <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">
+                        {isLivre ? "Corpo do Documento" : "Descrição e Considerações"}
+                      </h2>
+                      <div>
+                        <div className="mb-1">
+                          <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
+                        </div>
+                        <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
+                        {renderMiniImageUploader('Descrição Detalhada', 'imagensDescricao')}
+                      </div>
+                      {!isLivre && (
+                        <div>
+                          <div className="mb-1">
+                            <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
+                          </div>
+                          <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
+                          {renderMiniImageUploader('Considerações Finais', 'imagensConsideracoes')}
+                        </div>
+                      )}
                     </div>
-                    <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
-                    {renderMiniImageUploader('Descrição Detalhada', 'imagensDescricao')}
-                  </div>
-{!isLivre && (
-                  <div>
-                    <div className="mb-1">
-                      <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
-                    </div>
-                    <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
-                    {renderMiniImageUploader('Considerações Finais', 'imagensConsideracoes')}
-                  </div>
-                  )}
-                </div>
+                  </>
                 )}
 
                 <div className="space-y-4">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Fotos e Evidências</h2>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
                     <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
                       <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
@@ -4227,6 +4173,7 @@ if (view === 'form') {
                     <div className="flex flex-wrap gap-4 mt-4">
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
+                        const legenda = typeof img === 'string' ? '' : (img?.legenda || '');
                         const tamanho = img?.tamanho || 'pequeno';
                         let widthClass = 'w-full sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)]';
                         if (tamanho === 'medio') widthClass = 'w-full sm:w-[calc(100%)] md:w-[calc(50%-0.5rem)]';
@@ -4252,7 +4199,7 @@ if (view === 'form') {
                             <div className="bg-white border-t border-[#F4B41A]/40 p-2 flex-1 flex flex-col">
                               <label className="block text-[11px] font-bold text-[#5C3A21] mb-1 uppercase">Legenda (Arraste a foto para mover)</label>
                               <textarea
-                                value={typeof img === 'string' ? '' : (img?.legenda || '')}
+                                value={legenda}
                                 onChange={(e) => updateImageCaption(index, e.target.value)}
                                 placeholder="Ex.: Produto com alteração visual..."
                                 className="w-full flex-1 min-h-[40px] text-xs border border-gray-300 rounded-md p-2 resize-y outline-none focus:ring-2 focus:ring-[#F4B41A] bg-yellow-50/40 text-gray-800"
@@ -4288,6 +4235,7 @@ if (view === 'form') {
                 </div>
               </>
             )}
+
           </div>
 
           <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
