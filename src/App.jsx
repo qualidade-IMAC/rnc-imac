@@ -1668,35 +1668,24 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
               </div>
 
               {!isLivre && (
-  <div className="mb-6">
-    <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
-      <p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p>
-    </div>
-    
-    {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
-      <div className="grid ...">
-         {/* ... campos do cliente ... */}
-      </div>
-    ) : (
-      <div className="grid ...">
-         {/* ... campos normais ... */}
-      </div>
-    )}
-  </div>
-)}
-                    <>
-                      <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
-                      <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
-                      {registro.dataOcorrencia && <p><strong>{registro.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {registro.dataOcorrencia}</p>}
-                      {registro.lote && <p><strong>{registro.labelLote || 'Lote'}:</strong> {registro.lote}</p>}
-                      {registro.quantidade && <p><strong>{registro.labelQuantidade || 'Quantidade Afetada'}:</strong> {registro.quantidade}</p>}
-                      {registro.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
-                      {registro.validade && showValidade && <p><strong>{registro.labelValidade || 'Data de Validade'}:</strong> {registro.validade}</p>}
-                      {registro.dataRecebimento && isFornecedor && <p><strong>{registro.labelDataRecebimento || 'Data de Recebimento'}:</strong> {registro.dataRecebimento}</p>}
-                      {registro.nf && isFornecedor && <p><strong>{registro.labelNf || 'Nota Fiscal'}:</strong> {registro.nf}</p>}
-                      {registro.horarioEmbalamento && requiresHorario && <p><strong>{registro.labelHorario || 'Horário / Turno'}:</strong> {registro.horarioEmbalamento}</p>}
-                    </>
-                  )}
+                <div className="mb-6">
+                  <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
+                    <p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 ml-1">
+                    <p><strong>{registro.labelProduto || 'Produto / Material'}:</strong> {registro.produto}</p>
+                    <p><strong>{registro.labelOcorrencia || 'Resumo do Problema'}:</strong> {registro.ocorrencia}</p>
+                    {registro.dataOcorrencia && <p><strong>{registro.labelDataOcorrencia || 'Data da ocorrência'}:</strong> {registro.dataOcorrencia}</p>}
+                    {registro.lote && <p><strong>{registro.labelLote || 'Lote'}:</strong> {registro.lote}</p>}
+                    {registro.quantidade && <p><strong>{registro.labelQuantidade || 'Quantidade Afetada'}:</strong> {registro.quantidade}</p>}
+                    {registro.fornecedor && isFornecedor && <p><strong>Fornecedor:</strong> {registro.fornecedor}</p>}
+                    {registro.validade && showValidade && <p><strong>{registro.labelValidade || 'Data de Validade'}:</strong> {registro.validade}</p>}
+                    {registro.dataRecebimento && isFornecedor && <p><strong>{registro.labelDataRecebimento || 'Data de Recebimento'}:</strong> {registro.dataRecebimento}</p>}
+                    {registro.nf && isFornecedor && <p><strong>{registro.labelNf || 'Nota Fiscal'}:</strong> {registro.nf}</p>}
+                    {registro.horarioEmbalamento && requiresHorario && <p><strong>{registro.labelHorario || 'Horário / Turno'}:</strong> {registro.horarioEmbalamento}</p>}
+                  </div>
+                </div>
+              )}
                 </div>
               </div>
               )}
@@ -4140,18 +4129,16 @@ if (view === 'form') {
                     {renderMiniImageUploader('Conclusão', 'imagensConclusao')}
                   </div>
                 </div>
-              </>
+             </>
         ) : (
               <>
-               {!isLivre && (
-  <div className="space-y-4">
-    <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
-      <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
-    </div>
-    {/* ... resto dos campos do formulário ... */}
-  </div>
-)}
-                  )}
+                {!isLivre && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
+                      <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
+                    </div>
+                  </div>
+                )}
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <div>
                       <input type="text" name="labelProduto" value={formData.labelProduto || ''} placeholder="Produto ou Material" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
@@ -4591,12 +4578,12 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
 
                 {formData.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-  {!isLivre && (
-    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5">
-      <p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p>
-    </div>
-  )}
-  <div className="text-justify text-black ml-1 rich-text-content break-words" ...
+                    {!isLivre && (
+                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5">
+                        <p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p>
+                      </div>
+                    )}
+                    <div className="text-justify text-black ml-1 rich-text-content break-words" dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
                     
                     {formData.imagensDescricao && formData.imagensDescricao.length > 0 && (
                       <div className="grid gap-4 ml-1 mt-3 break-inside-avoid grid-cols-2 print:grid-cols-2">
