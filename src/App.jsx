@@ -4093,6 +4093,7 @@ if (view === 'form') {
                           <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
                         </div>
                       )}
+                      {!isLivre && (
                       <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                         <div>
                           <input type="text" name="labelProduto" value={formData.labelProduto || ''} placeholder="Produto ou Material" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
@@ -4133,6 +4134,7 @@ if (view === 'form') {
                           <input type="text" maxLength={40} name="horarioEmbalamento" value={formData.horarioEmbalamento || ''} onChange={handleChange} placeholder="Ex: 14:30h" className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" />
                         </div>}
                       </div>
+                      )}
                     </div>
 
                     <div className="space-y-6">
@@ -4513,6 +4515,7 @@ if (view === 'form') {
               </div>
             ) : (
               <>
+                {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
                   <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
@@ -4528,6 +4531,7 @@ if (view === 'form') {
                     {formData.horarioEmbalamento && requiresHorario && <p><strong>{formData.labelHorario || 'Horário / Turno'}:</strong> {formData.horarioEmbalamento}</p>}
                   </div>
                 </div>
+                )}
 
                 {formData.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
