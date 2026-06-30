@@ -4233,8 +4233,6 @@ if (view === 'form') {
                   <label className="block text-sm font-bold mb-1 text-gray-700">Data e Local</label>
                   <input type="text" name="localData" value={formData.localData || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none text-gray-600 shadow-sm" />
                 </div>
-              </>
-            )}
 
           </div>
 
@@ -4275,14 +4273,11 @@ if (view === 'form') {
       if (!formData.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
     }
 
-    if (tipoStr === 'Comunicado / Parecer Livre' && !registro.customTituloRelatorio) {
-  tituloRelatorio = "COMUNICADO OFICIAL";
-}
-const isLivre = tipoStr === 'Comunicado / Parecer Livre';
+    const isLivre = tipoStr === 'Comunicado / Parecer Livre';
     if (isLivre && !formData.customTituloRelatorio) {
         tituloRelatorio = "COMUNICADO OFICIAL";
     }
-const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
+    const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
 
