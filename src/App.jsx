@@ -1672,6 +1672,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                   <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao1}</p>
                 </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 ml-1">
                   {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
                     <>
@@ -4155,6 +4156,7 @@ if (view === 'form') {
                     <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
                     <span className="text-xs text-gray-500 font-bold bg-gray-100 px-2 py-1 rounded hidden md:block">💡 Dica: Clique nos títulos dos campos abaixo para renomeá-los</span>
                   </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <div>
                       <input type="text" name="labelProduto" value={formData.labelProduto || ''} placeholder="Produto ou Material" onChange={handleChange} className="block text-sm font-bold mb-1 text-gray-700 placeholder-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[#F4B41A] outline-none w-full transition-colors cursor-text" title="Renomear campo" />
@@ -4219,6 +4221,7 @@ if (view === 'form') {
                   </div>
                   )}
                 </div>
+                )}
 
                 <div className="space-y-4">
                   <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Fotos e Evidências</h2>
