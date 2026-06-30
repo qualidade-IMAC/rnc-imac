@@ -1410,6 +1410,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
         <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
         <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
         <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
+<option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
       </select>
     </div>
   );
@@ -1666,6 +1667,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                 </div>
               </div>
 
+              {!isLivre && (
               <div className="mb-6">
                 <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                   <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao1}</p>
@@ -1697,6 +1699,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
                   )}
                 </div>
               </div>
+              )}
 
               {registro.descricao && (
                 <div className="mb-6 w-full overflow-hidden">
@@ -3029,7 +3032,8 @@ const getFilteredRecords = () => {
 
   const tipoRelAtual = String(formData.tipoRelatorio || 'Problema com Fornecedor');
   const isFornecedor = tipoRelAtual === 'Problema com Fornecedor' || tipoRelAtual === 'Insumo ou Embalagem';
-  const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
+ const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
+const isLivre = tipoRelAtual === 'Comunicado / Parecer Livre';
   const requiresHorario = tipoRelAtual.includes('Teste') || tipoRelAtual === 'Ocorrência Interna';
   const showValidade = !tipoRelAtual.includes('Insumo') && !tipoRelAtual.includes('Equipamento');
 
@@ -3040,7 +3044,8 @@ const getFilteredRecords = () => {
       'Ocorrência Interna': { produto: "Ex: Pão Hot Dog", ocorrencia: "Ex: Presença de corpo estranho", lote: "Ex: A 0103", quantidade: "Ex: 1 pacote (5kg)", descricao: "Durante a rotina de operação...", consideracoes: "Solicitamos que a equipe reforce a atenção..." },
       'Relatório de Não Conformidade - Cliente': { produto: "Ex: Pão de Queijo 400g", ocorrencia: "A loja relatou que...", lote: "Ex: 213094", quantidade: "Ex: 2 pacotes", lojaLocal: "Ex: São Luiz - Cambeba", descricao: "Cliente reportou que...", consideracoes: "Após o recebimento da reclamação..." },
       'Teste de Produto': { produto: "Ex: Pão de Queijo", ocorrencia: "Ex: Teste de formulação", lote: "Ex: Lote Teste 01", quantidade: "Ex: Escala reduzida", descricao: "A avaliação foi realizada após...", consideracoes: "Os resultados obtidos..." },
-      'Teste de Equipamento': { produto: "Ex: Seladora Automática", ocorrencia: "Ex: Oscilação na temperatura", lote: "Ex: N/A", quantidade: "Ex: N/A", descricao: "Durante o processamento...", consideracoes: "Como medida de contingência..." }
+      'Teste de Equipamento': { produto: "Ex: Seladora Automática", ocorrencia: "Ex: Oscilação na temperatura", lote: "Ex: N/A", quantidade: "Ex: N/A", descricao: "Durante o processamento...", consideracoes: "Como medida de contingência..." },
+'Comunicado / Parecer Livre': { descricao: "Redija aqui livremente o conteúdo do seu documento..." }
     };
     return p[tipoRelAtual] || p['Problema com Fornecedor'];
   };
@@ -3165,6 +3170,7 @@ const getFilteredRecords = () => {
                     <option value="Ocorrência Interna">Problema Interno</option>
                     <option value="Teste de Produto">Teste de Produto</option>
                     <option value="Teste de Equipamento">Teste de Equipamento</option>
+<option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
                   </select>
                 </div>
                 <div>
@@ -3319,7 +3325,8 @@ const getFilteredRecords = () => {
       { label: 'Reclamação de Cliente', value: countsPorTipo['Relatório de Não Conformidade - Cliente'] || 0, color: '#8B5CF6' },
       { label: 'Ocorrência Interna', value: countsPorTipo['Ocorrência Interna'] || 0, color: '#3B82F6' },
       { label: 'Teste de Produto', value: countsPorTipo['Teste de Produto'] || 0, color: '#10B981' },
-      { label: 'Teste de Equipamento', value: countsPorTipo['Teste de Equipamento'] || 0, color: '#EC4899' }
+      { label: 'Teste de Equipamento', value: countsPorTipo['Teste de Equipamento'] || 0, color: '#EC4899' },
+{ label: 'Comunicado / Livre', value: countsPorTipo['Comunicado / Parecer Livre'] || 0, color: '#64748B' }
     ];
 
     const pieStatusData = Object.entries(statusCounts).filter(([_, v]) => v > 0).map(([label, value]) => ({ 
@@ -3957,6 +3964,7 @@ if (view === 'form') {
                     <option value="Ocorrência Interna">Ocorrência Interna</option>
                     <option value="Relatório de Não Conformidade - Cliente">Relatório de Não Conformidade - Cliente</option>
                     <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
+<option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
                   </select>
                 </div>
                 <div><label className="block text-sm font-bold mb-1 text-gray-700">Data de Emissão</label><input type="text" name="dataRelatorio" value={formData.dataRelatorio || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none shadow-sm" /></div>
@@ -4133,8 +4141,15 @@ if (view === 'form') {
                   </div>
                 </div>
               </>
-            ) : (
+        ) : (
               <>
+                {isLivre && (
+                  <div className="space-y-4 mt-4 bg-blue-50 p-5 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800 font-bold">📄 MODO LIVRE ATIVADO</p>
+                    <p className="text-xs text-blue-600 mt-1">Os campos de rastreabilidade, produto, lote, etc. foram ocultados. Escreva o conteúdo do documento livremente no campo de <b>Corpo do Documento</b> abaixo.</p>
+                  </div>
+                )}
+                {!isLivre && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b-2 border-[#F4B41A] pb-2">
                     <h2 className="text-lg font-bold text-[#5C3A21]">1. Informações e Rastreabilidade</h2>
@@ -4181,9 +4196,12 @@ if (view === 'form') {
                     </div>}
                   </div>
                 </div>
+                )}
 
                 <div className="space-y-6">
-                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21]">Descrição e Considerações</h2>
+                  <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">
+                    {isLivre ? "Corpo do Documento" : "Descrição e Considerações"}
+                  </h2>
                   <div>
                     <div className="mb-1">
                       <label className="block text-sm font-bold text-gray-700">2. Descrição Detalhada</label>
@@ -4191,6 +4209,7 @@ if (view === 'form') {
                     <RichTextEditor value={formData.descricao || ''} onChange={(val) => setFormData(prev => ({ ...prev, descricao: val }))} placeholder={placeholders.descricao} />
                     {renderMiniImageUploader('Descrição Detalhada', 'imagensDescricao')}
                   </div>
+{!isLivre && (
                   <div>
                     <div className="mb-1">
                       <label className="block text-sm font-bold text-gray-700">3. Considerações Finais</label>
@@ -4198,6 +4217,7 @@ if (view === 'form') {
                     <RichTextEditor value={formData.consideracoes || ''} onChange={(val) => setFormData(prev => ({ ...prev, consideracoes: val }))} placeholder={placeholders.consideracoes} />
                     {renderMiniImageUploader('Considerações Finais', 'imagensConsideracoes')}
                   </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -4314,7 +4334,15 @@ if (view === 'form') {
       if (!formData.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
     }
 
-    const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
+    if (tipoStr === 'Comunicado / Parecer Livre' && !registro.customTituloRelatorio) {
+  tituloRelatorio = "COMUNICADO OFICIAL";
+}
+const isLivre = tipoStr === 'Comunicado / Parecer Livre';
+if (tipoStr === 'Comunicado / Parecer Livre' && !formData.customTituloRelatorio) {
+  tituloRelatorio = "COMUNICADO OFICIAL";
+}
+const isLivre = tipoStr === 'Comunicado / Parecer Livre';
+const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
 
@@ -4424,9 +4452,10 @@ if (view === 'form') {
             </div>
             
             {tipoStr === 'Relatório de Não Conformidade - Cliente' ? (
-              <>
+             <>
+                {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE(S):</strong> {(formData.lojasLocais && formData.lojasLocais.length > 0) ? formData.lojasLocais.join(', ') : (formData.lojaLocal || 'Não informado')}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
@@ -4561,10 +4590,11 @@ if (view === 'form') {
                     {formData.horarioEmbalamento && requiresHorario && <p><strong>{formData.labelHorario || 'Horário / Turno'}:</strong> {formData.horarioEmbalamento}</p>}
                   </div>
                 </div>
+                )}
 
                 {formData.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-                    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>
+                    {!isLivre && <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>}
                     <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
                     
                     {formData.imagensDescricao && formData.imagensDescricao.length > 0 && (
