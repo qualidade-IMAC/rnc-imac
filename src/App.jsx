@@ -4338,10 +4338,9 @@ if (view === 'form') {
   tituloRelatorio = "COMUNICADO OFICIAL";
 }
 const isLivre = tipoStr === 'Comunicado / Parecer Livre';
-if (tipoStr === 'Comunicado / Parecer Livre' && !formData.customTituloRelatorio) {
-  tituloRelatorio = "COMUNICADO OFICIAL";
-}
-const isLivre = tipoStr === 'Comunicado / Parecer Livre';
+    if (isLivre && !formData.customTituloRelatorio) {
+        tituloRelatorio = "COMUNICADO OFICIAL";
+    }
 const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
@@ -4594,8 +4593,12 @@ const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insum
 
                 {formData.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-                    {!isLivre && <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p></div>}
-                    <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
+  {!isLivre && (
+    <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5">
+      <p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p>
+    </div>
+  )}
+  <div className="text-justify text-black ml-1 rich-text-content break-words" ...
                     
                     {formData.imagensDescricao && formData.imagensDescricao.length > 0 && (
                       <div className="grid gap-4 ml-1 mt-3 break-inside-avoid grid-cols-2 print:grid-cols-2">
