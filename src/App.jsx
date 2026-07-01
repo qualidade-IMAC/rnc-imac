@@ -2819,6 +2819,30 @@ const duplicateReport = (registro) => {
     setView('dashboard');
   };
 
+  // Ctrl+S para salvar o formulario
+  useEffect(() => {
+    if (view !== 'form') return;
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSaveReport('save_and_preview');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [view, formData, editingReportId]);
+
+  // Aviso ao tentar sair com formulario preenchido
+  useEffect(() => {
+    if (view !== 'form') return;
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [view]);
+
   const handleDarVisto = (reg) => {
     if (!appUser?.isManager) return;
     const currentAssinaturas = Array.isArray(reg.assinaturas) ? reg.assinaturas : [];
@@ -2912,7 +2936,7 @@ const duplicateReport = (registro) => {
       imagensInvestigacao: Array.isArray(formData.imagensInvestigacao) ? formData.imagensInvestigacao : [],
       imagensAcaoCorretiva: Array.isArray(formData.imagensAcaoCorretiva) ? formData.imagensAcaoCorretiva : [],
       imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : [],
-      imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
+      imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [],
       imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [],
       ocultarEstatistica: formData.ocultarEstatistica || false,
     };
@@ -2944,7 +2968,7 @@ const duplicateReport = (registro) => {
       } else { setAppMessage("💾 Edição salva localmente"); }
       
     } else {
-      const tempId = Date.now().toString();
+      const tempId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString();
       const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
       currentId = tempId;
 
@@ -3003,7 +3027,6 @@ const getFilteredRecords = () => {
       const recordStatus = r.status || 'Pendente';
       if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters.status === 'Pendente' && !r.status)) return false;
 
-      // NOVO: Filtro de Busca Global (Pesquisa)
       if (globalSearch.trim() !== '') {
         const term = globalSearch.toLowerCase();
         const id = String(r.id || '').toLowerCase();
@@ -3012,9 +3035,10 @@ const getFilteredRecords = () => {
         const forn = String(r.fornecedor || '').toLowerCase();
         const lote = String(r.lote || '').toLowerCase();
         const loja = String(r.lojaLocal || '').toLowerCase();
+        const lojas = Array.isArray(r.lojasLocais) ? r.lojasLocais.join(' ').toLowerCase() : '';
+        const autor = String(r.autorNome || '').toLowerCase();
 
-        // Se o termo não estiver em NENHUM desses lugares, esconde o relatório
-        if (!id.includes(term) && !prod.includes(term) && !ocor.includes(term) && !forn.includes(term) && !lote.includes(term) && !loja.includes(term)) {
+        if (!id.includes(term) && !prod.includes(term) && !ocor.includes(term) && !forn.includes(term) && !lote.includes(term) && !loja.includes(term) && !lojas.includes(term) && !autor.includes(term)) {
           return false;
         }
       }
@@ -3032,8 +3056,8 @@ const getFilteredRecords = () => {
 
   const tipoRelAtual = String(formData.tipoRelatorio || 'Problema com Fornecedor');
   const isFornecedor = tipoRelAtual === 'Problema com Fornecedor' || tipoRelAtual === 'Insumo ou Embalagem';
- const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
-const isLivre = tipoRelAtual === 'Comunicado / Parecer Livre';
+  const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
+  const isLivre = tipoRelAtual === 'Comunicado / Parecer Livre';
   const requiresHorario = tipoRelAtual.includes('Teste') || tipoRelAtual === 'Ocorrência Interna';
   const showValidade = !tipoRelAtual.includes('Insumo') && !tipoRelAtual.includes('Equipamento');
 
@@ -3290,7 +3314,7 @@ const isLivre = tipoRelAtual === 'Comunicado / Parecer Livre';
     // NOVO: Remove os registros documentais de todos os gráficos e cálculos matemáticos
     const registrosEstatisticas = filteredRecords.filter(r => !r.ocultarEstatistica);
 
-   const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Relatório de Não Conformidade - Cliente': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0 };
+   const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Relatório de Não Conformidade - Cliente': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0, 'Comunicado / Parecer Livre': 0 };
     const fornecedorCounts = {};
     const clienteCounts = {};
     const produtoCounts = {};
@@ -3335,12 +3359,14 @@ const isLivre = tipoRelAtual === 'Comunicado / Parecer Livre';
     const clienteBarData = Object.entries(clienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
     const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
 
-    const pendingRecords = (registros || []).filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
+    const pendingRecords = filteredRecords.filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
 // NOVO: Matemática do Painel Interativo (Drill-down Corrigido)
     const maxValueTipos = Math.max(...tipoBarras.map(t => t.value), 1);
     
-    // Filtro unificado que entende que o nome na tela pode ser diferente do banco
-    const dbTypeToFilter = selectedAnalysisType === 'Reclamação de Cliente' ? 'Relatório de Não Conformidade - Cliente' : selectedAnalysisType;
+    const dbTypeToFilter = 
+      selectedAnalysisType === 'Reclamação de Cliente' ? 'Relatório de Não Conformidade - Cliente' :
+      selectedAnalysisType === 'Comunicado / Livre' ? 'Comunicado / Parecer Livre' :
+      selectedAnalysisType;
     const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio || 'Problema com Fornecedor') === dbTypeToFilter);
 
     const typeProdutoCounts = {};
