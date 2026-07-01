@@ -1624,11 +1624,12 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     if (!registro.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; 
     if (!registro.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
   }
+  const isLivre = tipoStr === 'Comunicado / Parecer Livre';
+  if (isLivre && !registro.customTituloRelatorio) tituloRelatorio = "COMUNICADO OFICIAL";
 
   const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
   const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
   const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
-  const isLivre = tipoStr === 'Comunicado / Parecer Livre';
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm no-print">
@@ -1702,9 +1703,11 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
 
               {registro.descricao && (
                 <div className="mb-6 w-full overflow-hidden">
+                  {!isLivre && (
                   <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
                     <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao2}</p>
                   </div>
+                  )}
                   
                   <div className="text-justify text-black ml-1 rich-text-content break-words" dangerouslySetInnerHTML={{ __html: registro.descricao }} />
                   
@@ -4506,7 +4509,7 @@ if (view === 'form') {
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-6 text-[14px] mt-6 mb-4 print:mt-3 print:mb-2 break-inside-avoid print-grid-signatures">
                     {(Array.isArray(formData.assinaturas) ? formData.assinaturas : []).filter(Boolean).map((assinatura, index) => (
                       <div key={index} className={(formData.assinaturas || []).length % 2 !== 0 && index === (formData.assinaturas || []).length - 1 ? "md:col-span-2 print:col-span-2" : ""}>
-                        <p className="font-bold uppercase">Responsável: {assinatura?.nome}</p>
+                        <p className="font-bold uppercase">{assinatura?.nome}</p>
                         <p className="leading-snug whitespace-pre-line text-gray-600">{assinatura?.cargo}</p>
                       </div>
                     ))}
