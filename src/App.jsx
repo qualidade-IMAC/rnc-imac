@@ -3689,7 +3689,7 @@ const getFilteredRecords = () => {
                     
                     <h3 className="text-lg font-black text-blue-900 mb-6 flex items-center gap-2">
                       <Clock size={20} className="text-blue-600"/> 
-                      Detalahemnto do Dia: {selectedDate.split('-').reverse().join('/')} 
+                      Detalhamento do Dia: {selectedDate.split('-').reverse().join('/')} 
                       <span className="text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full ml-2">{filteredByDate.length} Ocorrência(s)</span>
                     </h3>
                     
