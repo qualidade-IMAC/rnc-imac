@@ -1391,28 +1391,33 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
   const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
 
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-3 items-center">
-      <Filter size={18} className="text-gray-500" />
-      <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+return (
+    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-wrap gap-3 items-center">
+      <Filter size={20} className="text-[#5C3A21] ml-1" />
+
+      <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
         <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
         <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
       </select>
-      <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+
+      <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
         <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
       </select>
-      <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+
+      <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
         <option value="">Todos Fornecedores</option>
         {(fornecedores || []).filter(f => typeof f === 'string').map((f, i) => <option key={i} value={f}>{f}</option>)}
       </select>
-      <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-[#F4B41A] outline-none">
+
+      <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
         <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
         <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
         <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
         <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
-<option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
+        <option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
       </select>
     </div>
+  );
   );
 };
 
@@ -3807,7 +3812,7 @@ const getFilteredRecords = () => {
                 
                 <div className="overflow-auto max-h-[600px] relative">
                   <table className="w-full text-left text-sm relative">
-                    <thead className="bg-gray-100 text-gray-600 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-opacity-90">
+                    <thead className="bg-white/80 text-gray-500 text-[11px] uppercase tracking-wider sticky top-0 z-10 shadow-sm backdrop-blur-md">
                       <tr>
                         <th className="px-4 py-3 font-bold">Data</th>
                         <th className="px-4 py-3 font-bold">Tipo</th>
@@ -4194,14 +4199,16 @@ if (view === 'form') {
 
                 <div className="space-y-4">
                   <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Fotos e Evidências</h2>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50/50">
-                    <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
-                      <div className="bg-white p-3 rounded-full shadow-sm mb-3 border border-gray-200"><ImagePlus size={28} className="text-[#5C3A21]" /></div>
-                      <span className="text-[14px] font-bold text-[#5C3A21]">Clique para anexar fotos</span>
-                      <span className="text-xs text-gray-500 mt-1 font-medium">Você pode redimensionar e arrastar as fotos depois de anexar</span>
-                      <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-[#F4B41A] hover:bg-[#F4B41A]/5 transition-all duration-300 cursor-pointer bg-white group">
+  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+    <div className="bg-gray-50 p-4 rounded-full shadow-sm mb-4 border border-gray-100 group-hover:scale-110 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
+      <ImagePlus size={32} className="text-[#5C3A21] opacity-70 group-hover:opacity-100 transition-opacity" />
+    </div>
+    <span className="text-[15px] font-black text-[#5C3A21]">Clique aqui para anexar fotos</span>
+    <span className="text-xs text-gray-400 mt-1.5 font-medium">Você pode redimensionar e arrastar as fotos para ordenar depois de anexar</span>
+    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+  </label>
+</div>
                   {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                     <div className="flex flex-wrap gap-4 mt-4">
                       {formData.imagens.map((img, index) => {
