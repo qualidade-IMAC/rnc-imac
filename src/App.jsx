@@ -3652,19 +3652,19 @@ const getFilteredRecords = () => {
             <>
               {/* CARDS SUPERIORES MODERNIZADOS COM ÍCONES */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-fade-in-up">
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Emitidos</p><p className="text-3xl font-black text-gray-800 mt-1">{registrosEstatisticas.length}</p></div>
                   <div className="bg-blue-50 p-3 rounded-lg"><FileText size={24} className="text-blue-600" /></div>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aguardando Avaliação</p><p className="text-3xl font-black text-orange-600 mt-1">{pendingRecords.length}</p></div>
                   <div className="bg-orange-50 p-3 rounded-lg"><Clock size={24} className="text-orange-500" /></div>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Relatórios Liberados</p><p className="text-3xl font-black text-green-600 mt-1">{registrosEstatisticas.filter(r => r.status === 'Liberado').length}</p></div>
                   <div className="bg-green-50 p-3 rounded-lg"><CheckCircle size={24} className="text-green-500" /></div>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Fornecedores Afetados</p><p className="text-3xl font-black text-[#5C3A21] mt-1">{Object.keys(fornecedorCounts).length}</p></div>
                   <div className="bg-[#5C3A21]/10 p-3 rounded-lg"><Truck size={24} className="text-[#5C3A21]" /></div>
                 </div>
@@ -3819,7 +3819,7 @@ const getFilteredRecords = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr> : 
+                      {filteredRecords.length === 0 ? <tr><td colSpan="7" className="text-center py-16 text-gray-400"><div className="flex flex-col items-center justify-center gap-3"><Filter size={48} className="text-gray-200" /><p className="text-base font-medium text-gray-500">Nenhum registro encontrado com estes filtros.</p></div></td></tr> :
                         filteredRecords.map(reg => (
                           <tr key={reg.id || Math.random()} className={`hover:bg-gray-50 transition ${reg.ocultarEstatistica ? 'bg-blue-50/30' : ''}`}>
                             <td className="px-4 py-3 whitespace-nowrap text-xs">
@@ -3832,7 +3832,7 @@ const getFilteredRecords = () => {
                             <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || ''}>{reg.ocorrencia || ''}</td>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-1 items-start">
-                                <span className={`px-2 py-1 rounded-md text-[11px] font-bold whitespace-nowrap border tracking-wide uppercase ${
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black whitespace-nowrap border tracking-wide uppercase ${
                                   (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                                   reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
                                   'bg-red-50 text-red-700 border-red-200'
@@ -3840,14 +3840,14 @@ const getFilteredRecords = () => {
                                   {reg.status || 'Pendente'}
                                 </span>
                                 {!reg.ocultarEstatistica && (
-  <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
+  <span className={`px-3 py-1 rounded-full text-[9px] font-black whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
     reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
   }`}>
     <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
   </span>
 )}
                                 {reg.arquivado && (
-                                  <span className="px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300 mt-1">
+                                  <span className="px-3 py-1 rounded-full text-[9px] font-black whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300 mt-1">
                                     <Archive size={10} /> Arquivado
                                   </span>
                                 )}
@@ -3958,7 +3958,7 @@ if (view === 'form') {
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="bg-gray-50/60 p-5 sm:p-7 rounded-2xl border border-gray-200 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
                 <h2 className="text-lg font-bold text-[#5C3A21]">Configurações do Relatório</h2>
                 <div className="flex items-center gap-2">
@@ -4066,7 +4066,7 @@ if (view === 'form') {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="bg-gray-50/60 p-5 sm:p-7 rounded-2xl border border-gray-200 space-y-6">
                       <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Informações sobre a Ocorrência</h2>
                       <div>
                         <div className="mb-1"><label className="block text-sm font-bold text-gray-700">Descrição da Não Conformidade Apresentada</label></div>
@@ -4084,7 +4084,7 @@ if (view === 'form') {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="bg-gray-50/60 p-5 sm:p-7 rounded-2xl border border-gray-200 space-y-6">
                       <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">Parecer Técnico</h2>
                       
                       <div>
@@ -4168,7 +4168,7 @@ if (view === 'form') {
                       )}
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="bg-gray-50/60 p-5 sm:p-7 rounded-2xl border border-gray-200 space-y-6">
                       <h2 className="text-lg font-bold border-b-2 border-[#F4B41A] pb-2 text-[#5C3A21] mt-6">
                         {isLivre ? "Corpo do Documento" : "Descrição e Considerações"}
                       </h2>
@@ -4246,7 +4246,7 @@ if (view === 'form') {
                   )}
                 </div>
 
-                <div className="space-y-4 pt-4">
+                <div className="bg-gray-50/60 p-5 sm:p-7 rounded-2xl border border-gray-200 space-y-4 mt-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-[#F4B41A] pb-2 gap-3">
                     <h2 className="text-lg font-bold text-[#5C3A21]">Assinaturas / Responsável</h2>
                     <button onClick={addAssinatura} className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded flex items-center gap-1 transition"><Plus size={14} /> ADICIONAR</button>
@@ -4269,7 +4269,7 @@ if (view === 'form') {
 
           </div>
 
-          <div className="bg-[#f8f9fa] p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl no-print">
+          <div className="sticky bottom-0 z-50 bg-white/95 backdrop-blur-md p-4 sm:p-6 border-t border-gray-200 flex justify-between items-center rounded-b-xl shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.1)] no-print">
             {editingReportId ? (
               <span className="font-bold text-gray-600">Editando {String(editingReportId).substring(0, 8)}...</span>
             ) : <span />}
