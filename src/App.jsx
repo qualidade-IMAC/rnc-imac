@@ -1418,7 +1418,6 @@ return (
       </select>
     </div>
   );
-  );
 };
 
 const BarChart = ({ data, title, isTypes = false }) => {
