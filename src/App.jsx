@@ -72,9 +72,20 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
 }
 
 const saveToLocalStorage = (key, data) => {
-  // O setTimeout tira essa tarefa da fila principal, destravando a tela imediatamente
   setTimeout(() => {
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch (error) { console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`); }
+    try { 
+      let dataToSave = data;
+      // Se for a chave de registros, removemos as imagens em base64 do cache local
+      // Isso evita que o navegador congele ao processar dezenas de megabytes na inicialização
+      if (key === 'imac_registros' && Array.isArray(data)) {
+        dataToSave = data.map(r => ({
+          ...r, 
+          imagens: [], imagensDescricao: [], imagensConsideracoes: [], 
+          imagensInvestigacao: [], imagensAcaoCorretiva: [], imagensConclusao: [], logo: null
+        }));
+      }
+      localStorage.setItem(key, JSON.stringify(dataToSave)); 
+    } catch (error) { console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`); }
   }, 10);
 };
 
