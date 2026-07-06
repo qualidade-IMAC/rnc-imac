@@ -3839,11 +3839,13 @@ const getFilteredRecords = () => {
                                 }`}>
                                   {reg.status || 'Pendente'}
                                 </span>
-                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
-                                  reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
-                                }`}>
-                                  <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
-                                </span>
+                                {!reg.ocultarEstatistica && (
+  <span className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
+    reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
+  }`}>
+    <Send size={10} /> {reg.enviado ? (reg.dataEnvio ? `Enviado: ${safeDate(reg.dataEnvio)}` : 'Enviado') : 'Não Enviado'}
+  </span>
+)}
                                 {reg.arquivado && (
                                   <span className="px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 bg-gray-200 text-gray-700 border-gray-300 mt-1">
                                     <Archive size={10} /> Arquivado
