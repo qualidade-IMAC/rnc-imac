@@ -27,7 +27,6 @@ const app = isConfigured ? initializeApp(firebaseConfig) : null;
 const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
 const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
 
 if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
@@ -3161,20 +3160,14 @@ const getFilteredRecords = () => {
             {checkingDirectory ? (
               <div className="flex flex-col items-center justify-center py-10 animate-fade-in-up">
                 <div className="relative w-20 h-20 flex items-center justify-center mb-6">
-                  {/* Fundo que pulsa */}
                   <div className="absolute inset-0 bg-[#F4B41A]/10 rounded-2xl animate-pulse border border-[#F4B41A]/30 transform rotate-3"></div>
                   <div className="absolute inset-0 bg-[#5C3A21]/5 rounded-2xl animate-pulse transform -rotate-3" style={{animationDelay: '0.5s'}}></div>
-                  
-                  {/* Ícone girando devagar */}
                   <RefreshCw size={32} className="text-[#5C3A21] animate-spin" style={{ animationDuration: '2.5s' }} />
-                  
-                  {/* Luz indicadora verde */}
                   <div className="absolute -bottom-1 -right-1 flex h-4 w-4">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
                   </div>
                 </div>
-                
                 <h3 className="text-gray-800 font-black text-lg mb-1 tracking-wide">Sincronizando acesso</h3>
                 <p className="text-gray-500 text-sm font-medium flex items-center justify-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
