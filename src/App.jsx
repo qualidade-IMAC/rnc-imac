@@ -10,7 +10,7 @@ if (typeof __firebase_config !== 'undefined') {
   firebaseConfig = JSON.parse(__firebase_config);
   isConfigured = true;
 } else {
-  firebaseConfig = {const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
+  firebaseConfig = {
     apiKey: "AIzaSyAomEpViVLeoDdILS88SjjozJNr4BtjjNU",
     authDomain: "rnc-imac-51124.firebaseapp.com",
     projectId: "rnc-imac-51124",
@@ -27,6 +27,10 @@ const app = isConfigured ? initializeApp(firebaseConfig) : null;
 const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
+const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
+
+if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
 const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
 
 if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
