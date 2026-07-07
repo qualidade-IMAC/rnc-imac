@@ -27,6 +27,7 @@ const app = isConfigured ? initializeApp(firebaseConfig) : null;
 const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
+const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
 
 if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
   const style = document.createElement('style');
@@ -2025,7 +2026,7 @@ function App() {
   const getEmptyForm = () => ({
     customTituloRelatorio: '', customTitulo1: '', customTitulo2: '', customTitulo3: '',
     labelProduto: '', labelOcorrencia: '', labelDataOcorrencia: '', labelLote: '', labelQuantidade: '', labelValidade: '', labelDataRecebimento: '', labelNf: '', labelHorario: '',
-    logo: localStorage.getItem('imac_logo_oficial') || null,
+    logo: LOGO_IMAC,
     tipoRelatorio: 'Problema com Fornecedor',
     dataRelatorio: new Date().toLocaleDateString('pt-BR'),
     dataOcorrencia: '', produto: '', ocorrencia: '', lote: '', quantidade: '', validade: '',
@@ -3111,7 +3112,7 @@ const getFilteredRecords = () => {
             <Lock size={24} className="text-[#5C3A21] animate-pulse" />
           </div>
 
-          <h2 className="text-2xl font-black text-[#5C3A21] tracking-tight mb-2">IMAC</h2>
+         <img src={LOGO_IMAC} alt="Logo IMAC" className="w-40 object-contain mb-4 drop-shadow-sm" />
           <div className="flex items-center gap-1.5">
             <p className="text-gray-600 font-bold uppercase tracking-wider text-sm">Carregando sistema seguro</p>
             {/* Pontinhos pulando */}
@@ -3139,13 +3140,7 @@ const getFilteredRecords = () => {
         
         <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden relative z-10 border-t-[8px] border-[#5C3A21] animate-fade-in-up">
           <div className="bg-gray-50 p-8 text-center border-b border-gray-100">
-            {localStorage.getItem('imac_logo_oficial') ? (
-              <img src={localStorage.getItem('imac_logo_oficial')} alt="IMAC" className="max-h-20 object-contain mx-auto mb-4" />
-            ) : (
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md border border-gray-200">
-                <h1 className="text-3xl font-black text-[#5C3A21]">IMAC</h1>
-              </div>
-            )}
+            <img src={LOGO_IMAC} alt="IMAC" className="max-h-24 object-contain mx-auto mb-4 drop-shadow-sm" />
             <h2 className="text-2xl font-black text-gray-800">Controle de Qualidade</h2>
             {welcomeMode === 'login' && <p className="text-gray-500 mt-2 text-sm flex items-center justify-center gap-1"><Lock size={14}/> Acesso Restrito Corporativo</p>}
             {welcomeMode === 'solicitar' && <p className="text-gray-500 mt-2 text-sm">Solicitação de Relatório de Não Conformidade</p>}
