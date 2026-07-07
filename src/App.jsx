@@ -27,8 +27,7 @@ const app = isConfigured ? initializeApp(firebaseConfig) : null;
 const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
-const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
-
+const LOGO_IMAC = 'https://raw.githubusercontent.com/qualidade-IMAC/rnc-imac/main/logo.png';
 if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
   const style = document.createElement('style');
   style.id = 'imac-global-styles';
