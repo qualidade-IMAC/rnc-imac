@@ -47,6 +47,9 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
     @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; transform: scale(0.98); } }
     .animate-pulse-soft { animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
+    @keyframes ripple { 0% { box-shadow: 0 0 0 0 rgba(244, 180, 26, 0.4); } 100% { box-shadow: 0 0 0 20px rgba(244, 180, 26, 0); } }
+    .animate-ripple { animation: ripple 1.5s infinite ease-out; }
+
     @media print {
       @page { margin: 10mm 10mm 10mm 10mm !important; size: A4; }
       body, html { height: auto !important; overflow: visible !important; background-color: white !important; }
@@ -3094,9 +3097,31 @@ const getFilteredRecords = () => {
 
   if (authLoading || view === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="w-16 h-16 border-4 border-[#F4B41A] border-t-[#5C3A21] rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-600 font-bold animate-pulse">Carregando sistema seguro...</p>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {/* Efeitos de luz no fundo */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#F4B41A]/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#5C3A21]/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+
+        <div className="relative z-10 flex flex-col items-center animate-fade-in-up">
+          {/* Anéis Duplos Animados */}
+          <div className="relative w-24 h-24 flex items-center justify-center mb-8 animate-ripple rounded-full bg-white shadow-sm">
+            <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-[#5C3A21] border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-2 border-4 border-[#F4B41A] border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <Lock size={24} className="text-[#5C3A21] animate-pulse" />
+          </div>
+
+          <h2 className="text-2xl font-black text-[#5C3A21] tracking-tight mb-2">IMAC</h2>
+          <div className="flex items-center gap-1.5">
+            <p className="text-gray-600 font-bold uppercase tracking-wider text-sm">Carregando sistema seguro</p>
+            {/* Pontinhos pulando */}
+            <span className="flex gap-1 items-end h-4">
+              <span className="w-1.5 h-1.5 bg-[#F4B41A] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+              <span className="w-1.5 h-1.5 bg-[#F4B41A] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+              <span className="w-1.5 h-1.5 bg-[#F4B41A] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -3135,10 +3160,27 @@ const getFilteredRecords = () => {
             )}
 
             {checkingDirectory ? (
-              <div className="flex flex-col items-center justify-center py-6 animate-fade-in-up">
-                <div className="w-12 h-12 border-4 border-[#F4B41A] border-t-[#5C3A21] rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-600 font-bold">Sincronizando segurança...</p>
-                <p className="text-gray-400 text-xs mt-2">Verificando banco de dados na nuvem</p>
+              <div className="flex flex-col items-center justify-center py-10 animate-fade-in-up">
+                <div className="relative w-20 h-20 flex items-center justify-center mb-6">
+                  {/* Fundo que pulsa */}
+                  <div className="absolute inset-0 bg-[#F4B41A]/10 rounded-2xl animate-pulse border border-[#F4B41A]/30 transform rotate-3"></div>
+                  <div className="absolute inset-0 bg-[#5C3A21]/5 rounded-2xl animate-pulse transform -rotate-3" style={{animationDelay: '0.5s'}}></div>
+                  
+                  {/* Ícone girando devagar */}
+                  <RefreshCw size={32} className="text-[#5C3A21] animate-spin" style={{ animationDuration: '2.5s' }} />
+                  
+                  {/* Luz indicadora verde */}
+                  <div className="absolute -bottom-1 -right-1 flex h-4 w-4">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+                  </div>
+                </div>
+                
+                <h3 className="text-gray-800 font-black text-lg mb-1 tracking-wide">Sincronizando acesso</h3>
+                <p className="text-gray-500 text-sm font-medium flex items-center justify-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  Verificando banco de dados na nuvem...
+                </p>
               </div>
             ) : isOfflineEmpty ? (
               <div className="flex flex-col items-center justify-center py-6 animate-fade-in-up text-center">
