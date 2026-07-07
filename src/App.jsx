@@ -30,9 +30,6 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'rnc-imac-app';
 const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
 
 if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
-const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
-
-if (typeof document !== 'undefined' && !document.getElementById('imac-global-styles')) {
   const style = document.createElement('style');
   style.id = 'imac-global-styles';
   style.innerHTML = `
