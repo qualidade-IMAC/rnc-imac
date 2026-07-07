@@ -10,7 +10,7 @@ if (typeof __firebase_config !== 'undefined') {
   firebaseConfig = JSON.parse(__firebase_config);
   isConfigured = true;
 } else {
-  firebaseConfig = {
+  firebaseConfig = {const LOGO_IMAC = 'https://qualidade-imac.github.io/rnc-imac/logo.png';
     apiKey: "AIzaSyAomEpViVLeoDdILS88SjjozJNr4BtjjNU",
     authDomain: "rnc-imac-51124.firebaseapp.com",
     projectId: "rnc-imac-51124",
