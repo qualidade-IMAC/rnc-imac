@@ -70,6 +70,10 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
       .print-bg-yellow-light { background-color: rgba(244, 180, 26, 0.15) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     @media screen { .print-only { display: none !important; } }
+    
+    html.dark-theme-active { filter: invert(0.92) hue-rotate(180deg); background-color: #111; min-height: 100vh; }
+    html.dark-theme-active img, html.dark-theme-active canvas { filter: invert(1) hue-rotate(180deg); }
+  `;
   `;
   document.head.appendChild(style);
 }
@@ -172,6 +176,8 @@ const Truck = (p) => <SvgIcon {...p}><path d="M16 3H1v13h15M8 16h7v4H8zM21 16h-2
 const ShoppingBag = (p) => <SvgIcon {...p}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></SvgIcon>;
 const Store = (p) => <SvgIcon {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></SvgIcon>;
 const Eye = (p) => <SvgIcon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
+const Moon = (p) => <SvgIcon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></SvgIcon>;
+const Sun = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></SvgIcon>;
 const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-5M7 10l5 5 5-5M12 15V3"/></SvgIcon>;
 const Filter = (p) => <SvgIcon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></SvgIcon>;
 const RefreshCw = (p) => <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></SvgIcon>;
@@ -2018,6 +2024,16 @@ function App() {
   const [checkingDirectory, setCheckingDirectory] = useState(true);
   const [isDbConfirmedEmpty, setIsDbConfirmedEmpty] = useState(false);
   const [dbSyncError, setDbSyncError] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('imac_dark_mode') === 'true';
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('imac_dark_mode', isDarkMode);
+    if (isDarkMode) document.documentElement.classList.add('dark-theme-active');
+    else document.documentElement.classList.remove('dark-theme-active');
+  }, [isDarkMode]);
   const [appUser, setAppUser] = useState(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -3632,7 +3648,10 @@ const getFilteredRecords = () => {
               <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-2 text-sm border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={16} /><span className="hidden md:inline">Clientes</span></button>
               <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
               <button onClick={() => setIsProfileModalOpen(true)} className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm border border-gray-300" title="Editar Perfil"><User size={16} /><span className="hidden md:inline">Perfil</span></button>
-              <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2 text-sm border border-red-200" title="Sair do Sistema"><LogOut size={16} /></button>
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className="bg-gray-800 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-black transition flex items-center gap-2 text-sm shadow-md" title="Alternar Tema">
+                {isDarkMode ? <Sun size="{16}"/> : <Moon size="{16}"/>} <span className="hidden md:inline">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+              </button>
+              <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2 text-sm border border-red-200" title="Sair do Sistema"><LogOut size="{16}"/></button>
             </div>
           </div>
 
@@ -3942,13 +3961,16 @@ const getFilteredRecords = () => {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-1 items-start">
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black whitespace-nowrap border tracking-wide uppercase ${
-                                  (!reg.status || reg.status === 'Pendente') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                  reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' :
-                                  'bg-red-50 text-red-700 border-red-200'
-                                }`}>
-                                  {reg.status || 'Pendente'}
-                                </span>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
+                                (!reg.status || reg.status === 'Pendente') 
+                                  ? (getPendingDays(reg.dataCriacao) > 3 ? 'bg-red-100 text-red-800 border-red-400 animate-pulse shadow-sm' : 'bg-yellow-50 text-yellow-700 border-yellow-200') 
+                                  : reg.status === 'Liberado' ? 'bg-green-50 text-green-700 border-green-200' 
+                                  : 'bg-red-50 text-red-700 border-red-200'
+                              }`}>
+                                {(!reg.status || reg.status === 'Pendente') && getPendingDays(reg.dataCriacao) > 3 && <AlertCircle size={12}/>}
+                                {reg.status || 'Pendente'}
+                                {(!reg.status || reg.status === 'Pendente') && getPendingDays(reg.dataCriacao) > 3 ? ` (${getPendingDays(reg.dataCriacao)} dias)` : ''}
+                              </span>
                                 {!reg.ocultarEstatistica && (
   <span className={`px-3 py-1 rounded-full text-[9px] font-black whitespace-nowrap border tracking-wide uppercase flex items-center gap-1 ${
     reg.enviado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-100 text-gray-500 border-gray-200'
