@@ -3856,9 +3856,9 @@ const getFilteredRecords = () => {
                       <tr>
                         <th className="px-4 py-3 font-bold">Data</th>
                         <th className="px-4 py-3 font-bold">Tipo</th>
-                        <th className="px-4 py-3 font-bold">Produto</th>
+                        <th className="px-4 py-3 font-bold">Produto / Assunto</th>
                         <th className="px-4 py-3 font-bold">Autor</th>
-                        <th className="px-4 py-3 font-bold">Ocorrência</th>
+                        <th className="px-4 py-3 font-bold">Resumo / Ocorrência</th>
                         <th className="px-4 py-3 font-bold">Status</th>
                         <th className="px-4 py-3 font-bold text-center">Ações</th>
                       </tr>
@@ -3872,9 +3872,19 @@ const getFilteredRecords = () => {
                               {reg.ocultarEstatistica && <span className="block mt-0.5 text-[9px] font-bold text-blue-500 uppercase">Documento</span>}
                             </td>
                             <td className="px-4 py-3"><span className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">{reg.tipoRelatorio === 'Relatório de Não Conformidade - Cliente' ? 'Cliente' : (reg.tipoRelatorio || 'Desconhecido')}</span></td>
-                            <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto || ''}>{reg.produto || ''}</td>
-                            <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>{typeof reg.autorNome === 'string' ? reg.autorNome.split(' ')[0] : 'Desconhecido'}</td>
-                            <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || ''}>{reg.ocorrencia || ''}</td>
+                            <td className="px-4 py-3 font-medium text-gray-800 max-w-[150px] truncate" title={reg.produto || reg.customTituloRelatorio || ''}>
+                              {reg.tipoRelatorio === 'Comunicado / Parecer Livre' 
+                                ? (reg.customTituloRelatorio || 'Comunicado Geral') 
+                                : (reg.produto === 'Não especificado' ? '-' : reg.produto)}
+                            </td>
+                            <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs" title={reg.autorNome || ''}>
+                              {typeof reg.autorNome === 'string' ? reg.autorNome.split(' ')[0] : 'Desconhecido'}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={reg.ocorrencia || 'Sem descrição'}>
+                              {reg.tipoRelatorio === 'Comunicado / Parecer Livre' 
+                                ? 'Documento Textual' 
+                                : (reg.ocorrencia === 'Sem descrição' ? '-' : reg.ocorrencia)}
+                            </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-1 items-start">
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black whitespace-nowrap border tracking-wide uppercase ${
