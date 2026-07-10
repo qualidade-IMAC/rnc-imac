@@ -234,7 +234,13 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     if (html === '<br>' || html === '<div><br></div>') html = '';
     if (typeof onChange === 'function') onChange(html);
   };
-
+const handlePaste = (e) => {
+    e.preventDefault();
+    // Pega apenas o texto puro da área de transferência
+    const text = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+    document.execCommand('insertText', false, text);
+    handleInput();
+  };
   const execCommand = (command, val = null) => {
     try {
       document.execCommand(command, false, val);
@@ -288,6 +294,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           contentEditable
           onInput={handleInput}
           onBlur={handleInput}
+          onPaste={handlePaste}
           className="p-3 min-h-[100px] outline-none cursor-text rich-text-content"
           data-placeholder={placeholder}
         />
@@ -1958,6 +1965,21 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
     </div>
   );
 };
+const ScrollToTop = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    const toggle = () => setIsVisible(window.pageYOffset > 300);
+    window.addEventListener("scroll", toggle);
+    return () => window.removeEventListener("scroll", toggle);
+  }, []);
+  
+  if (!isVisible) return null;
+  return (
+    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 p-4 bg-[#F4B41A] text-[#5C3A21] rounded-full shadow-2xl hover:scale-110 transition-transform z-[999] animate-fade-in-up print:hidden" title="Voltar ao topo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+    </button>
+  );
+};
 function App() {
   const [view, setView] = useState('loading'); 
   const [authLoading, setAuthLoading] = useState(true);
@@ -2089,7 +2111,38 @@ function App() {
   );
 
   const [formData, setFormData] = useState(getEmptyForm());
+// --- LÓGICA DE RASCUNHO AUTOMÁTICO ---
+  useEffect(() => {
+    // Só salva rascunho se for um NOVO relatório (não sobrescreve edições de relatórios antigos)
+    if (view === 'form' && !editingReportId) {
+      const timeout = setTimeout(() => {
+        localStorage.setItem('imac_draft_form', JSON.stringify(formData));
+      }, 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [formData, view, editingReportId]);
 
+  const handleNovoRelatorio = () => {
+    const draft = localStorage.getItem('imac_draft_form');
+    if (draft) {
+      if (window.confirm("📄 Você tem um rascunho salvo!\n\nDeseja continuar de onde parou?\n(Clique em OK para continuar ou CANCELAR para criar um do zero)")) {
+        try {
+          setFormData(JSON.parse(draft));
+          setEditingReportId(null);
+          setView('form');
+          window.scrollTo(0, 0);
+          return;
+        } catch(e) {}
+      } else {
+        localStorage.removeItem('imac_draft_form');
+      }
+    }
+    setFormData(getEmptyForm());
+    setEditingReportId(null);
+    setView('form');
+    window.scrollTo(0, 0);
+  };
+  // -------------------------------------
   useEffect(() => {
     if (!auth) {
       setAuthLoading(false);
@@ -2960,6 +3013,9 @@ const duplicateReport = (registro) => {
     };
 
     let currentId = editingReportId;
+    
+    // Remove o rascunho assim que salvar
+    localStorage.removeItem('imac_draft_form');
 
     if (editingReportId) {
       const updatedAt = new Date().toISOString();
@@ -3569,7 +3625,7 @@ const getFilteredRecords = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('form'); window.scrollTo(0, 0); }} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
+              <button onClick={handleNovoRelatorio} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button> className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
               {isAdmin && (
                 <button onClick={() => setIsUsersModalOpen(true)} className="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-lg font-bold hover:bg-purple-100 hover:text-purple-800 transition flex items-center gap-2 text-sm border border-purple-200" title="Gerenciar Usuários"><Users size={16} /><span className="hidden md:inline">Usuários</span></button>
               )}
@@ -3942,6 +3998,7 @@ const getFilteredRecords = () => {
           <div className="text-center mt-6 text-xs text-gray-400 no-print">
             Desenvolvido por: Cristiamberg
           </div>
+          <ScrollToTop />
         </div>
       </div>
     );
@@ -4338,6 +4395,7 @@ if (view === 'form') {
           <div className="text-center mt-6 text-xs text-gray-400 no-print pb-6">
             Desenvolvido por: Cristiamberg
           </div>
+          <ScrollToTop />
         </div>
       </div>
     );
@@ -4460,6 +4518,7 @@ if (view === 'form') {
           }
         `}</style>
         {/* FIM DO NOVO PAINEL */}
+        <ScrollToTop />
 
         <div id="relatorio-preview-conteudo" className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
           <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
