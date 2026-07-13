@@ -1660,6 +1660,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
   const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
   const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
   const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
+const theme = getReportTheme(tipoStr, registro?.corTema);
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm no-print">
@@ -1684,7 +1685,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
 
         <div className="overflow-y-auto flex-1 bg-gray-200 p-4 sm:p-8">
           <div className="max-w-4xl mx-auto bg-white shadow-md border border-gray-300 rounded-sm text-black text-[14px] leading-relaxed relative flex flex-col">
-            <div className="h-[8px] w-full bg-[#F4B41A]"></div>
+            <div className="h-[8px] w-full" style={{ backgroundColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}></div>
             <div className="px-6 py-8 sm:px-12 sm:py-10">
               
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b-2 border-gray-100 pb-4 mb-6">
@@ -1700,7 +1701,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
 
               {!isLivre && (
                 <div className="mb-6">
-                  <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
+                  <div className="border-l-4 pl-2 mb-3 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                     <p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p>
                   </div>
                   
@@ -1734,7 +1735,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
               {registro.descricao && (
                 <div className="mb-6 w-full overflow-hidden">
                   {!isLivre && (
-                  <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
+                  <div className="border-l-4 pl-2 mb-3 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                     <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao2}</p>
                   </div>
                   )}
@@ -1789,7 +1790,7 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
 
               {(registro.consideracoes || registro.statusParecer) && (
                 <div className="mb-6 w-full overflow-hidden">
-                  <div className="border-l-4 border-[#F4B41A] pl-2 mb-3 bg-[#F4B41A]/10 py-1">
+                  <div className="border-l-4 pl-2 mb-3 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                     <p className="font-bold uppercase text-[#5C3A21] text-[15px]">{tituloSecao3}</p>
                   </div>
 
@@ -2088,7 +2089,7 @@ function App() {
     imagensDescricao: [], 
     imagensConsideracoes: [],
   solicitante: '', urgencia: '',
-    ocultarEstatistica: false,
+    ocultarEstatistica: false, corTema: '',
 });
 
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
@@ -2895,7 +2896,7 @@ const processedUrl = useRef(false);
       imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : [],
       imagensDescricao: Array.isArray(registro.imagensDescricao) ? registro.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
      imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro.imagensConsideracoes : [],
-      ocultarEstatistica: registro.ocultarEstatistica || false,
+      ocultarEstatistica: registro.ocultarEstatistica || false, corTema: registro.corTema || '',
     });
     setEditingReportId(registro.id);
     setView('form');
@@ -3035,7 +3036,7 @@ const duplicateReport = (registro) => {
       imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : [],
       imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [],
       imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [],
-      ocultarEstatistica: formData.ocultarEstatistica || false,
+      ocultarEstatistica: formData.ocultarEstatistica || false, corTema: formData.corTema || '',
     };
 
     let currentId = editingReportId;
@@ -3175,6 +3176,25 @@ const getFilteredRecords = () => {
   };
   const placeholders = getPlaceholders();
 
+const getReportTheme = (tipo, corTemaManual) => {
+  const paleta = {
+    'Amarelo': { main: '#F4B41A', light: 'rgba(244, 180, 26, 0.15)', text: '#5C3A21' },
+    'Azul': { main: '#0054A6', light: 'rgba(0, 84, 166, 0.1)', text: '#FFFFFF' },
+    'Marrom': { main: '#5C3A21', light: 'rgba(92, 58, 33, 0.1)', text: '#FFFFFF' },
+    'Creme': { main: '#E1C28F', light: 'rgba(225, 194, 143, 0.3)', text: '#5C3A21' },
+    'Cinza': { main: '#64748B', light: 'rgba(100, 116, 139, 0.1)', text: '#FFFFFF' }
+  };
+  
+  if (corTemaManual && paleta[corTemaManual]) return paleta[corTemaManual];
+
+  const t = String(tipo || '');
+  if (t.includes('Teste')) return paleta['Azul']; 
+  if (t === 'Relatório de Não Conformidade - Cliente') return paleta['Marrom']; 
+  if (t === 'Ocorrência Interna') return paleta['Creme']; 
+  if (t === 'Comunicado / Parecer Livre') return paleta['Cinza']; 
+  return paleta['Amarelo']; 
+};
+  
   const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
 
   if (authLoading || view === 'loading') {
@@ -4128,7 +4148,18 @@ if (view === 'form') {
               </div>
 
               {/* GRID DIVIDE A TELA EM 2 COLUNAS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-700">Cor do Relatório</label>
+                  <select name="corTema" value={formData.corTema || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none bg-white font-medium shadow-sm">
+                    <option value="">Automática (Pelo Tipo)</option>
+                    <option value="Amarelo">🟡 Amarelo IMAC</option>
+                    <option value="Azul">🔵 Azul IMAC</option>
+                    <option value="Marrom">🟤 Marrom IMAC</option>
+                    <option value="Creme">🌕 Creme IMAC</option>
+                    <option value="Cinza">⚪ Cinza (Neutro)</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-bold mb-1 text-gray-700">Origem da Ocorrência</label>
                   <select name="tipoRelatorio" value={formData.tipoRelatorio || ''} onChange={handleChange} className="w-full border border-gray-300 p-2.5 rounded focus:ring-2 focus:ring-[#F4B41A] outline-none bg-white font-medium shadow-sm">
@@ -4460,7 +4491,7 @@ if (view === 'form') {
     const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
-
+const theme = getReportTheme(tipoStr, formData.corTema);
     return (
       <div className="min-h-screen bg-gray-200 p-4 md:p-8 font-sans print:bg-white print:p-0">
         <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
@@ -4553,7 +4584,7 @@ if (view === 'form') {
         <ScrollToTop />
 
         <div id="relatorio-preview-conteudo" className="max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white shadow-2xl print:shadow-none print:w-full print:h-full print:p-0 print-no-padding text-black text-[15px] leading-relaxed relative flex flex-col">
-          <div className="h-[12px] w-full bg-[#F4B41A] print-bg-yellow"></div>
+          <div className="h-[12px] w-full" style={{ backgroundColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}></div>
           <div className="px-[12mm] py-[10mm] print:px-[8mm] print:py-[10mm] print-no-padding flex-1">
             
             <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4 mb-6 print:mb-4">
@@ -4571,7 +4602,7 @@ if (view === 'form') {
              <div>
                 {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 pl-2 mb-3 print:mb-2" style={{ borderLeftColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE(S):</strong> {(formData.lojasLocais && formData.lojasLocais.length > 0) ? formData.lojasLocais.join(', ') : (formData.lojaLocal || 'Não informado')}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
@@ -4586,7 +4617,7 @@ if (view === 'form') {
 
                 {formData.descricao && (
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao2}</p></div>
+                  <div className="border-l-4 pl-2 mb-3 print:mb-2 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao2}</p></div>
                   
                   <p className="font-bold text-[14px] ml-1 mb-1">DESCRIÇÃO DA NÃO CONFORMIDADE APRESENTADA:</p>
                   <div className="text-justify text-black ml-1 rich-text-content text-[14px] leading-relaxed break-words mb-4" dangerouslySetInnerHTML={{ __html: formData.descricao || '' }} />
@@ -4630,7 +4661,7 @@ if (view === 'form') {
                 )}
 
                 <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid print:pt-4">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2 bg-[#F4B41A]/10 print-bg-yellow-light py-1"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao3}</p></div>
+                  <div className="border-l-4 pl-2 mb-3 print:mb-2 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao3}</p></div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 ml-1 mb-5">
                      <p className="font-bold text-[14px] w-full md:w-auto print:w-auto">STATUS:</p>
@@ -4696,7 +4727,7 @@ if (view === 'form') {
               <>
                 {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-3 print:mb-2"><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 pl-2 mb-3 print:mb-2" style={{ borderLeftColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p><strong>{formData.labelProduto || 'Produto / Material'}:</strong> {formData.produto}</p>
                     <p><strong>{formData.labelOcorrencia || 'Resumo do Problema'}:</strong> {formData.ocorrencia}</p>
@@ -4715,7 +4746,7 @@ if (view === 'form') {
                 {formData.descricao && (
                   <div className="mb-5 print:mb-3 w-full overflow-hidden break-inside-avoid">
                     {!isLivre && (
-                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5">
+                      <div className="border-l-4 pl-2 mb-2 print:mb-1.5" style={{ borderLeftColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                         <p className="font-bold uppercase text-[#5C3A21]">{tituloSecao2}</p>
                       </div>
                     )}
@@ -4735,7 +4766,7 @@ if (view === 'form') {
 
                 {Array.isArray(formData.imagens) && formData.imagens.length > 0 && (
                   <div className="mb-6 mt-6 print:mt-4">
-                    <div className="bg-[#F4B41A] text-black text-center py-1.5 mb-3 print-bg-yellow break-inside-avoid"><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
+                    <div className="text-center py-1.5 mb-3 break-inside-avoid" style={{ backgroundColor: theme.main, color: theme.text, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="text-[15px] font-bold">Seguem registros fotográficos</p></div>
                     <div className="flex flex-wrap gap-4">
                       {formData.imagens.map((img, index) => {
                         const src = typeof img === 'string' ? img : img?.displaySrc;
@@ -4764,7 +4795,7 @@ if (view === 'form') {
                 <div className="print:pt-4">
                   {(formData.consideracoes || (formData.imagensConsideracoes && formData.imagensConsideracoes.length > 0)) && (
                     <div className="mb-6 mt-6 print:mt-0 w-full overflow-hidden break-inside-avoid">
-                      <div className="border-l-4 border-[#F4B41A] print-border-yellow pl-2 mb-2 print:mb-1.5 break-after-avoid"><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
+                      <div className="border-l-4 pl-2 mb-2 print:mb-1.5 break-after-avoid" style={{ borderLeftColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21]">{tituloSecao3}</p></div>
                       {formData.consideracoes && (
                         <div className="text-justify text-black ml-1 rich-text-content break-words" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', wordWrap: 'break-word' }} dangerouslySetInnerHTML={{ __html: formData.consideracoes || '' }} />
                       )}
