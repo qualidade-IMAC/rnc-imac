@@ -2044,8 +2044,22 @@ function App() {
   // Login e Solicitação Pública (Welcome Screen)
   const [welcomeMode, setWelcomeMode] = useState('choice'); // choice, login, solicitar
   const [solicitacoes, setSolicitacoes] = useState([]);
-  const [solicitacaoForm, setSolicitacaoForm] = useState(getEmptySolicitacaoForm());
 
+  const getEmptySolicitacaoForm = () => ({
+    tipoRelatorio: 'Problema com Fornecedor',
+    solicitante: '',
+    urgencia: 'Média',
+    produto: '',
+    lote: '',
+    nf: '',
+    dataRecebimento: '',
+    validade: '',
+    dataFabricacao: '',
+    descricao: '',
+    imagens: []
+  });
+
+  const [solicitacaoForm, setSolicitacaoForm] = useState(getEmptySolicitacaoForm());
   // User Profile
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -2076,24 +2090,6 @@ function App() {
   solicitante: '', urgencia: '',
     ocultarEstatistica: false,
 });
-
-  // ... (outros códigos acima)
-const getEmptySolicitacaoForm = () => ({
-  tipoRelatorio: 'Problema com Fornecedor',
-  solicitante: '',
-  urgencia: 'Média',
-  produto: '',
-  lote: '',
-  nf: '',
-  dataRecebimento: '',
-  validade: '',
-  dataFabricacao: '',
-  descricao: '',
-  imagens: []
-});
-
-const [solicitacaoForm, setSolicitacaoForm] = useState(getEmptySolicitacaoForm());
-// ... (resto do código abaixo)
 
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
     <div className="mt-2">
