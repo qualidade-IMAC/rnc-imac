@@ -74,7 +74,6 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
     html.dark-theme-active { filter: invert(0.92) hue-rotate(180deg); background-color: #111; min-height: 100vh; }
     html.dark-theme-active img, html.dark-theme-active canvas { filter: invert(1) hue-rotate(180deg); }
   `;
-  `;
   document.head.appendChild(style);
 }
 
