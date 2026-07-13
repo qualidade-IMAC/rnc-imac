@@ -2077,19 +2077,23 @@ function App() {
     ocultarEstatistica: false,
 });
 
-  const getEmptySolicitacaoForm = () => ({
-    tipoRelatorio: 'Problema com Fornecedor', 
-    solicitante: '', 
-    urgencia: 'Média', 
-    produto: '', 
-    lote: '', 
-    nf: '', 
-    dataRecebimento: '', 
-    validade: '', 
-    dataFabricacao: '', 
-    descricao: '', 
-    imagens: []
-  });
+  // ... (outros códigos acima)
+const getEmptySolicitacaoForm = () => ({
+  tipoRelatorio: 'Problema com Fornecedor',
+  solicitante: '',
+  urgencia: 'Média',
+  produto: '',
+  lote: '',
+  nf: '',
+  dataRecebimento: '',
+  validade: '',
+  dataFabricacao: '',
+  descricao: '',
+  imagens: []
+});
+
+const [solicitacaoForm, setSolicitacaoForm] = useState(getEmptySolicitacaoForm());
+// ... (resto do código abaixo)
 
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
     <div className="mt-2">
