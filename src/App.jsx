@@ -2044,9 +2044,7 @@ function App() {
   // Login e Solicitação Pública (Welcome Screen)
   const [welcomeMode, setWelcomeMode] = useState('choice'); // choice, login, solicitar
   const [solicitacoes, setSolicitacoes] = useState([]);
-  const [solicitacaoForm, setSolicitacaoForm] = useState({
-    tipoRelatorio: 'Problema com Fornecedor', solicitante: '', urgencia: 'Média', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: []
-  });
+  const [solicitacaoForm, setSolicitacaoForm] = useState(getEmptySolicitacaoForm());
 
   // User Profile
   const [userName, setUserName] = useState('');
@@ -2078,6 +2076,20 @@ function App() {
   solicitante: '', urgencia: '',
     ocultarEstatistica: false,
 });
+
+  const getEmptySolicitacaoForm = () => ({
+    tipoRelatorio: 'Problema com Fornecedor', 
+    solicitante: '', 
+    urgencia: 'Média', 
+    produto: '', 
+    lote: '', 
+    nf: '', 
+    dataRecebimento: '', 
+    validade: '', 
+    dataFabricacao: '', 
+    descricao: '', 
+    imagens: []
+  });
 
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
     <div className="mt-2">
@@ -2622,8 +2634,7 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       }
       
       setAppMessage("✅ Solicitação enviada com sucesso!");
-      setSolicitacaoForm({ tipoRelatorio: 'Problema com Fornecedor', solicitante: '', urgencia: 'Média', produto: '', lote: '', nf: '', dataRecebimento: '', validade: '', dataFabricacao: '', descricao: '', imagens: [] });
-      setWelcomeMode('choice');
+      setSolicitacaoForm(getEmptySolicitacaoForm());
       setTimeout(() => setAppMessage(null), 3000);
     } catch(e) {
       setAppMessage("❌ Erro ao enviar solicitação.");
