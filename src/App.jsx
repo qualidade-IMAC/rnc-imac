@@ -2613,7 +2613,7 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       };
       
       setSolicitacoes(prev => {
-        const list = [newSol, ...prev];
+        const list = [newSol, ...(Array.isArray(prev) ? prev : [])];
         saveToLocalStorage('imac_solicitacoes', list);
         return list;
       });
@@ -3657,14 +3657,14 @@ const getFilteredRecords = () => {
 
           <div className="mb-6"><DashboardFilters onFilterChange={setDashboardFilters} fornecedores={fornecedores} /></div>
 
-          {solicitacoes.filter(s => s.status === 'Pendente').length > 0 && (
+{(Array.isArray(solicitacoes) ? solicitacoes : []).filter(s => s && s.status === 'Pendente').length > 0 && (
             <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm animate-fade-in-up">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={20} className="text-blue-600" />
-                <h2 className="text-lg font-bold text-blue-800">Solicitações Recebidas ({solicitacoes.filter(s => s.status === 'Pendente').length})</h2>
+                <h2 className="text-lg font-bold text-blue-800">Solicitações Recebidas ({(Array.isArray(solicitacoes) ? solicitacoes : []).filter(s => s && s.status === 'Pendente').length})</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {solicitacoes.filter(s => s.status === 'Pendente').map(sol => (
+                {(Array.isArray(solicitacoes) ? solicitacoes : []).filter(s => s && s.status === 'Pendente').map(sol => (
                   <div key={sol.id} className="bg-white p-3 rounded-lg border border-blue-200 shadow-sm flex flex-col gap-2 relative overflow-hidden">
   {/* Faixa de Urgência colorida na lateral */}
   {sol.urgencia === 'Alta' && <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>}
@@ -3692,7 +3692,7 @@ const getFilteredRecords = () => {
                        setView('form');
                        window.scrollTo(0, 0);
                        if(db && isConfigured) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', sol.id), { status: 'Atendido' }).catch(()=>{});
-                       setSolicitacoes(prev => { const n = prev.map(s => s.id === sol.id ? {...s, status: 'Atendido'} : s); saveToLocalStorage('imac_solicitacoes', n); return n;});
+                       setSolicitacoes(prev => { const n = (Array.isArray(prev) ? prev : []).map(s => s.id === sol.id ? {...s, status: 'Atendido'} : s); saveToLocalStorage('imac_solicitacoes', n); return n;});
                     }} className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1"><Plus size={14}/> Criar Relatório</button>
                   </div>
                 ))}
