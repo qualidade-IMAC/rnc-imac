@@ -1607,6 +1607,25 @@ const HistoricoModal = ({ isOpen, onClose, solicitante, urgencia }) => {
   );
 };
 
+const getReportTheme = (tipo, corTemaManual) => {
+  const paleta = {
+    'Amarelo': { main: '#F4B41A', light: 'rgba(244, 180, 26, 0.15)', text: '#5C3A21' },
+    'Azul': { main: '#0054A6', light: 'rgba(0, 84, 166, 0.1)', text: '#FFFFFF' },
+    'Marrom': { main: '#5C3A21', light: 'rgba(92, 58, 33, 0.1)', text: '#FFFFFF' },
+    'Creme': { main: '#E1C28F', light: 'rgba(225, 194, 143, 0.3)', text: '#5C3A21' },
+    'Cinza': { main: '#64748B', light: 'rgba(100, 116, 139, 0.1)', text: '#FFFFFF' }
+  };
+  
+  if (corTemaManual && paleta[corTemaManual]) return paleta[corTemaManual];
+
+  const t = String(tipo || '');
+  if (t.includes('Teste')) return paleta['Azul']; 
+  if (t === 'Relatório de Não Conformidade - Cliente') return paleta['Marrom']; 
+  if (t === 'Ocorrência Interna') return paleta['Creme']; 
+  if (t === 'Comunicado / Parecer Livre') return paleta['Cinza']; 
+  return paleta['Amarelo']; 
+};
+
 const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto, onSolicitarCorrecao }) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
@@ -3175,25 +3194,6 @@ const getFilteredRecords = () => {
     return p[tipoRelAtual] || p['Problema com Fornecedor'];
   };
   const placeholders = getPlaceholders();
-
-const getReportTheme = (tipo, corTemaManual) => {
-  const paleta = {
-    'Amarelo': { main: '#F4B41A', light: 'rgba(244, 180, 26, 0.15)', text: '#5C3A21' },
-    'Azul': { main: '#0054A6', light: 'rgba(0, 84, 166, 0.1)', text: '#FFFFFF' },
-    'Marrom': { main: '#5C3A21', light: 'rgba(92, 58, 33, 0.1)', text: '#FFFFFF' },
-    'Creme': { main: '#E1C28F', light: 'rgba(225, 194, 143, 0.3)', text: '#5C3A21' },
-    'Cinza': { main: '#64748B', light: 'rgba(100, 116, 139, 0.1)', text: '#FFFFFF' }
-  };
-  
-  if (corTemaManual && paleta[corTemaManual]) return paleta[corTemaManual];
-
-  const t = String(tipo || '');
-  if (t.includes('Teste')) return paleta['Azul']; 
-  if (t === 'Relatório de Não Conformidade - Cliente') return paleta['Marrom']; 
-  if (t === 'Ocorrência Interna') return paleta['Creme']; 
-  if (t === 'Comunicado / Parecer Livre') return paleta['Cinza']; 
-  return paleta['Amarelo']; 
-};
   
   const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
 
