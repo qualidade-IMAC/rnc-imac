@@ -3756,7 +3756,7 @@ const getFilteredRecords = () => {
                   {isDarkMode ? <Sun size={16} /> : <Moon size={16} />} <span className="hidden md:inline">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
                 </button>
                 <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2 text-sm border border-red-200" title="Sair do Sistema"><LogOut size={16} /></button>
-              </div>
+              </div>>
           </div>
 
           <div className="mb-6"><DashboardFilters onFilterChange={setDashboardFilters} fornecedores={fornecedores} /></div>
