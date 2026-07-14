@@ -1458,6 +1458,54 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
     </div>
   );
 };
+// Componente de Dropdown Customizado (Agora está fora, então não "buga" mais)
+const CustomDropdown = ({ value, onChange, options }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value) || options[0];
+
+  return (
+    <div className="relative w-full" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full bg-white border ${isOpen ? 'border-[#F4B41A] ring-2 ring-[#F4B41A]/30' : 'border-gray-200'} hover:border-[#F4B41A] rounded-xl pl-4 pr-10 py-2.5 text-[13px] font-bold text-gray-700 text-left outline-none transition-all shadow-sm truncate flex items-center justify-between`}
+      >
+        <span className="truncate">{selectedOption ? selectedOption.label : ''}</span>
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1.5 animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
+          {options.map((opt, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => { onChange(opt.value); setIsOpen(false); }}
+              className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors flex items-center justify-between ${value === opt.value ? 'bg-[#F4B41A]/10 text-[#5C3A21] font-black' : 'text-gray-600 hover:bg-gray-50 font-medium hover:text-gray-900'}`}
+            >
+              <span className="truncate pr-2">{opt.label}</span>
+              {value === opt.value && <Check size={14} className="text-[#5C3A21] shrink-0" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   const [filters, setFilters] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1490,22 +1538,53 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
     }
   };
 
-  // --- NOVO: Componente Customizado para o Dropdown ---
-  const CustomDropdown = ({ value, onChange, options }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const ref = useRef(null);
+  const optPeriodo = [
+    { value: 'mes_atual', label: 'Mês Atual' },
+    { value: 'mes_anterior', label: 'Mês Anterior' },
+    { value: 'trimestre', label: 'Último Trimestre' },
+    { value: 'ano', label: 'Este Ano' },
+    { value: 'todos', label: 'Todo Período' }
+  ];
 
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (ref.current && !ref.current.contains(event.target)) setIsOpen(false);
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+  const optStatus = [
+    { value: '', label: 'Todos os Status' },
+    { value: 'Pendente', label: '⏳ Aguardando Avaliação' },
+    { value: 'Liberado', label: '✅ Liberados' },
+    { value: 'Não Liberado', label: '❌ Pendentes de Correção' }
+  ];
 
-    const selectedOption = options.find(o => o.value === value) || options[0];
+  const optFornecedor = [
+    { value: '', label: 'Todos Fornecedores' },
+    ...(fornecedores || []).filter(f => typeof f === 'string').map(f => ({ value: f, label: f }))
+  ];
 
-    return (
+  const optTipo = [
+    { value: '', label: 'Todos os Tipos' },
+    { value: 'Problema com Fornecedor', label: 'Problema com Fornecedor' },
+    { value: 'Insumo ou Embalagem', label: 'Insumo ou Embalagem' },
+    { value: 'Ocorrência Interna', label: 'Ocorrência Interna' },
+    { value: 'Relatório de Não Conformidade - Cliente', label: 'Não Conformidade - Cliente' },
+    { value: 'Teste de Produto', label: 'Teste de Produto' },
+    { value: 'Teste de Equipamento', label: 'Teste de Equipamento' },
+    { value: 'Comunicado / Parecer Livre', label: 'Comunicado / Parecer Livre' }
+  ];
+
+  return (
+    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-col md:flex-row gap-4 items-center animate-fade-in-up">
+      <div className="flex items-center gap-2 w-full md:w-auto shrink-0 pl-1">
+        <Filter size={20} className="text-[#5C3A21]" />
+        <span className="font-black text-sm text-[#5C3A21] uppercase tracking-wider md:hidden lg:block">Filtros</span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 w-full">
+        <CustomDropdown value={filters.periodo} onChange={(val) => handleChange('periodo', val)} options={optPeriodo} />
+        <CustomDropdown value={filters.status} onChange={(val) => handleChange('status', val)} options={optStatus} />
+        <CustomDropdown value={filters.fornecedor} onChange={(val) => handleChange('fornecedor', val)} options={optFornecedor} />
+        <CustomDropdown value={filters.tipo} onChange={(val) => handleChange('tipo', val)} options={optTipo} />
+      </div>
+    </div>
+  );
+};
       <div className="relative w-full" ref={ref}>
         <button
           type="button"
