@@ -1490,31 +1490,56 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
     }
   };
 
-return (
-    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-wrap gap-3 items-center">
-      <Filter size={20} className="text-[#5C3A21] ml-1" />
+  const selectClass = "w-full appearance-none bg-white border border-gray-200 hover:border-[#F4B41A] rounded-xl pl-4 pr-10 py-2.5 text-[13px] font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/30 focus:border-[#F4B41A] outline-none transition-all cursor-pointer shadow-sm truncate hover:shadow-md";
 
-      <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
-        <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
-        <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
-      </select>
+  const ChevronIcon = () => (
+    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+  );
 
-      <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
-        <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
-      </select>
+  return (
+    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-col md:flex-row gap-4 items-center animate-fade-in-up">
+      <div className="flex items-center gap-2 w-full md:w-auto shrink-0 pl-1">
+        <Filter size={20} className="text-[#5C3A21]" />
+        <span className="font-black text-sm text-[#5C3A21] uppercase tracking-wider md:hidden lg:block">Filtros</span>
+      </div>
 
-      <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
-        <option value="">Todos Fornecedores</option>
-        {(fornecedores || []).filter(f => typeof f === 'string').map((f, i) => <option key={i} value={f}>{f}</option>)}
-      </select>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 w-full">
+        <div className="relative w-full group">
+          <select value={filters.periodo} onChange={(e) => handleChange('periodo', e.target.value)} className={selectClass}>
+            <option value="mes_atual">Mês Atual</option><option value="mes_anterior">Mês Anterior</option>
+            <option value="trimestre">Último Trimestre</option><option value="ano">Este Ano</option><option value="todos">Todo Período</option>
+          </select>
+          <ChevronIcon />
+        </div>
 
-      <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className="bg-gray-50/50 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#F4B41A]/50 focus:border-[#F4B41A] outline-none transition-all cursor-pointer">
-        <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
-        <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
-        <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
-        <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
-        <option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
-      </select>
+        <div className="relative w-full group">
+          <select value={filters.status} onChange={(e) => handleChange('status', e.target.value)} className={selectClass}>
+            <option value="">Todos os Status</option><option value="Pendente">Aguardando Avaliação</option><option value="Liberado">Liberados (✅)</option><option value="Não Liberado">Pendentes (❌)</option>
+          </select>
+          <ChevronIcon />
+        </div>
+
+        <div className="relative w-full group">
+          <select value={filters.fornecedor} onChange={(e) => handleChange('fornecedor', e.target.value)} className={selectClass}>
+            <option value="">Todos Fornecedores</option>
+            {(fornecedores || []).filter(f => typeof f === 'string').map((f, i) => <option key={i} value={f}>{f}</option>)}
+          </select>
+          <ChevronIcon />
+        </div>
+
+        <div className="relative w-full group">
+          <select value={filters.tipo} onChange={(e) => handleChange('tipo', e.target.value)} className={selectClass}>
+            <option value="">Todos os Tipos</option><option value="Problema com Fornecedor">Problema com Fornecedor</option>
+            <option value="Insumo ou Embalagem">Insumo ou Embalagem</option><option value="Ocorrência Interna">Ocorrência Interna</option>
+            <option value="Relatório de Não Conformidade - Cliente">Não Conformidade - Cliente</option>
+            <option value="Teste de Produto">Teste de Produto</option><option value="Teste de Equipamento">Teste de Equipamento</option>
+            <option value="Comunicado / Parecer Livre">Comunicado / Parecer Livre</option>
+          </select>
+          <ChevronIcon />
+        </div>
+      </div>
     </div>
   );
 };
