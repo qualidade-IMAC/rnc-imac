@@ -1411,6 +1411,9 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
     { value: 'sim', label: '🗄️ Arquivado' }
   ];
 
+  // Estilo igual ao do novo dropdown para o input de data
+  const dateInputClass = "w-full bg-white border border-gray-200 hover:border-[#F4B41A] rounded-xl px-4 py-2.5 text-[13px] font-bold text-gray-700 outline-none transition-all shadow-sm";
+
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
@@ -1433,7 +1436,7 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
             {enviado && (
               <div className="flex-1 animate-fade-in-up">
                 <label className="block text-sm font-bold text-gray-700 mb-2">Data do Envio</label>
-                <input type="date" value={dataEnvio} onChange={(e) => setDataEnvio(e.target.value)} className="w-full border border-gray-300 p-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-white shadow-sm" />
+                <input type="date" value={dataEnvio} onChange={(e) => setDataEnvio(e.target.value)} className={dateInputClass} />
               </div>
             )}
           </div>
