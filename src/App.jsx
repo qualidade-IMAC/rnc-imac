@@ -1489,7 +1489,7 @@ const CustomDropdown = ({ value, onChange, options }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1.5 animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
+          <div className="absolute z-[9999] w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1.5 animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
           {options.map((opt, i) => (
             <button
               key={i}
@@ -1571,7 +1571,7 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
   ];
 
   return (
-    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-col md:flex-row gap-4 items-center animate-fade-in-up">
+    <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-col md:flex-row gap-4 items-center animate-fade-in-up relative z-40">
       <div className="flex items-center gap-2 w-full md:w-auto shrink-0 pl-1">
         <Filter size={20} className="text-[#5C3A21]" />
         <span className="font-black text-sm text-[#5C3A21] uppercase tracking-wider md:hidden lg:block">Filtros</span>
