@@ -77,6 +77,34 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
   document.head.appendChild(style);
 }
 
+// Configuração PWA (Transforma em App Instalável)
+if (typeof document !== 'undefined' && !document.getElementById('imac-pwa-manifest')) {
+  const manifest = {
+    name: "IMAC Qualidade",
+    short_name: "IMAC RNC",
+    description: "Controle de Qualidade",
+    start_url: window.location.pathname,
+    display: "standalone",
+    background_color: "#ffffff",
+    theme_color: "#F4B41A",
+    icons: [{ src: LOGO_IMAC, sizes: "192x192", type: "image/png" }, { src: LOGO_IMAC, sizes: "512x512", type: "image/png" }]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const link = document.createElement('link');
+  link.id = 'imac-pwa-manifest';
+  link.rel = 'manifest';
+  link.href = URL.createObjectURL(blob);
+  document.head.appendChild(link);
+  const metaTheme = document.createElement('meta');
+  metaTheme.name = 'theme-color';
+  metaTheme.content = '#F4B41A';
+  document.head.appendChild(metaTheme);
+  const metaApple = document.createElement('meta');
+  metaApple.name = 'apple-mobile-web-app-capable';
+  metaApple.content = 'yes';
+  document.head.appendChild(metaApple);
+}
+
 const saveToLocalStorage = (key, data) => {
   setTimeout(() => {
     try { 
@@ -1431,8 +1459,36 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
   );
 };
 const DashboardFilters = ({ onFilterChange, fornecedores }) => {
-  const [filters, setFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
-  const handleChange = (key, value) => { const newFilters = { ...filters, [key]: value }; setFilters(newFilters); onFilterChange(newFilters); };
+  const [filters, setFilters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        periodo: params.get('periodo') || 'mes_atual',
+        fornecedor: params.get('fornecedor') || '',
+        tipo: params.get('tipo') || '',
+        status: params.get('status') || ''
+      };
+    }
+    return { periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' };
+  });
+
+  useEffect(() => {
+    onFilterChange(filters);
+  }, []); // Avisa o sistema na primeira vez que abre
+
+  const handleChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (value) params.set(key, value);
+      else params.delete(key);
+      const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+      window.history.pushState({}, '', newUrl); // Atualiza o link sem recarregar a tela
+    }
+  };
 
 return (
     <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-wrap gap-3 items-center">
