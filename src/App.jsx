@@ -132,6 +132,23 @@ const shareViaEmail = (registro) => {
   window.open(`mailto:?subject=${subject}&body=${text}`, '_blank');
 };
 
+const shareViaGmail = (registro) => {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  
+  const id = String(registro?.id || '').substring(0, 8);
+  const title = registro?.customTituloRelatorio || registro?.tipoRelatorio || 'Relatório de Ocorrência';
+  const prod = registro?.produto || 'Não informado';
+  const baseUrl = window.location.href.split('?')[0];
+  const linkAvaliacao = `${baseUrl}?rnc=${registro?.id}`;
+
+  const subject = encodeURIComponent(`Relatório RNC - ${prod} - ID: ${id}`);
+  const body = encodeURIComponent(`${greeting}!\n\nSegue o link para acesso ao ${title} referente ao produto ${prod}.\n\nAcesse o relatório completo e atualizado no sistema através do link abaixo:\n${linkAvaliacao}\n\nAtenciosamente,`);
+
+  // Abre o Gmail direto na tela de composição com os dados preenchidos
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+};
+
 const getPendingDays = (dateString) => {
   if (!dateString) return 0;
   const diffTime = Math.abs(new Date() - new Date(dateString));
@@ -4498,7 +4515,9 @@ const theme = getReportTheme(tipoStr, formData.corTema);
           <button onClick={() => { setView('form'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition shadow"><Edit3 size={18} /> Voltar para Edição</button>
           <div className="flex flex-wrap gap-3">
 <button onClick={() => shareViaWhatsApp({ ...formData, id: editingReportId }, '558599910301')} className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded font-bold shadow hover:bg-green-600 transition"><MessageCircle size={18} /> Coordenadora</button>
-            <button onClick={() => shareViaWhatsApp({ ...formData, id: editingReportId }, '558591364639')} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded font-bold shadow hover:bg-emerald-700 transition"><MessageCircle size={18} /> Gerente</button>            <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
+            <button onClick={() => shareViaWhatsApp({ ...formData, id: editingReportId }, '558591364639')} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded font-bold shadow hover:bg-emerald-700 transition"><MessageCircle size={18} /> Gerente</button>
+            <button onClick={() => shareViaGmail({ ...formData, id: editingReportId })} className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded font-bold shadow hover:bg-red-600 transition"><Mail size={18} /> Enviar via Gmail</button>
+            <button onClick={() => { setFormData(getEmptyForm()); setEditingReportId(null); setView('dashboard'); window.scrollTo(0, 0); }} className="flex items-center gap-2 px-5 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 font-bold shadow transition"><ClipboardList size={18} /> Painel de Registros</button>
             <button onClick={handlePrintAndSave} className="flex items-center gap-2 px-6 py-2 bg-[#5C3A21] text-[#F4B41A] rounded hover:bg-[#4a2e1a] font-black shadow-md transition"><Printer size={18} /> Imprimir / PDF</button>
           </div>
         </div>
