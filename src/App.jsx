@@ -1394,6 +1394,23 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
   const [enviado, setEnviado] = useState(registro?.enviado || false);
   const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
   const [arquivado, setArquivado] = useState(registro?.arquivado || false);
+
+  const optStatus = [
+    { value: 'Pendente', label: '⏳ Aguardando / Pendente' },
+    { value: 'Liberado', label: '✅ Liberado (Aprovado)' },
+    { value: 'Não Liberado', label: '❌ Não Liberado (Com Pendências)' }
+  ];
+
+  const optEnvio = [
+    { value: 'nao', label: '📥 Não Enviado' },
+    { value: 'sim', label: '📤 Enviado' }
+  ];
+
+  const optArquivamento = [
+    { value: 'nao', label: '📁 Ativo' },
+    { value: 'sim', label: '🗄️ Arquivado' }
+  ];
+
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
@@ -1404,36 +1421,26 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
           {canApprove && (
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Situação do Relatório</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
-                <option value="Pendente">⏳ Aguardando / Pendente</option>
-                <option value="Liberado">✅ Liberado (Aprovado)</option>
-                <option value="Não Liberado">❌ Não Liberado (Com Pendências)</option>
-              </select>
+              <CustomDropdown value={status} onChange={setStatus} options={optStatus} />
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-start">
             <div className="flex-1">
               <label className="block text-sm font-bold text-gray-700 mb-2">Status de Envio</label>
-              <select value={enviado ? 'sim' : 'nao'} onChange={(e) => setEnviado(e.target.value === 'sim')} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
-                <option value="nao">📥 Não Enviado</option>
-                <option value="sim">📤 Enviado</option>
-              </select>
+              <CustomDropdown value={enviado ? 'sim' : 'nao'} onChange={(v) => setEnviado(v === 'sim')} options={optEnvio} />
             </div>
             {enviado && (
               <div className="flex-1 animate-fade-in-up">
                 <label className="block text-sm font-bold text-gray-700 mb-2">Data do Envio</label>
-                <input type="date" value={dataEnvio} onChange={(e) => setDataEnvio(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm" />
+                <input type="date" value={dataEnvio} onChange={(e) => setDataEnvio(e.target.value)} className="w-full border border-gray-300 p-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-700 bg-white shadow-sm" />
               </div>
             )}
           </div>
           
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Arquivamento</label>
-            <select value={arquivado ? 'sim' : 'nao'} onChange={(e) => setArquivado(e.target.value === 'sim')} className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none font-bold text-gray-700 bg-gray-50 shadow-sm">
-              <option value="nao">📁 Ativo</option>
-              <option value="sim">🗄️ Arquivado (Não enviado)</option>
-            </select>
+            <CustomDropdown value={arquivado ? 'sim' : 'nao'} onChange={(v) => setArquivado(v === 'sim')} options={optArquivamento} />
           </div>
           
           {canApprove && status === 'Não Liberado' && (
