@@ -3743,20 +3743,20 @@ const getFilteredRecords = () => {
                 <p className="text-gray-500 font-medium">Olá, <span className="text-[#5C3A21] font-bold">{userName}</span> ({userRole})</p>
               </div>
             </div>
-<div className="flex flex-wrap gap-2">
-                <button onClick={handleNovoRelatorio} className="bg-[#5C3A21] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-2"><Plus size={18} /> Novo Relatório</button>
+<div className="flex flex-wrap justify-end items-center gap-1 sm:gap-1.5 w-full md:w-auto">
+                <button onClick={handleNovoRelatorio} className="bg-[#5C3A21] text-white px-3 py-1.5 rounded-lg font-bold hover:bg-[#4a2e1a] transition flex items-center gap-1.5 text-[13px]"><Plus size={16} /> Novo Relatório</button>
                 {isAdmin && (
-                  <button onClick={() => setIsUsersModalOpen(true)} className="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-lg font-bold hover:bg-purple-100 hover:text-purple-800 transition flex items-center gap-2 text-sm border border-purple-200" title="Gerenciar Usuários"><Users size={16} /><span className="hidden md:inline">Usuários</span></button>
+                  <button onClick={() => setIsUsersModalOpen(true)} className="bg-purple-50 text-purple-700 px-2 py-1.5 rounded-lg font-bold hover:bg-purple-100 hover:text-purple-800 transition flex items-center gap-1 text-[13px] border border-purple-200" title="Gerenciar Usuários"><Users size={14} /><span className="hidden lg:inline">Usuários</span></button>
                 )}
-                <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-2 text-sm border border-blue-200" title="Gerenciar Fornecedores"><Truck size={16} /><span className="hidden md:inline">Fornecedores</span></button>
-                <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-4 py-2.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-2 text-sm border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={16} /><span className="hidden md:inline">Clientes</span></button>
-                <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center gap-2 text-sm" title="Exportar para Excel"><Download size={16} /></button>
-                <button onClick={() => setIsProfileModalOpen(true)} className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm border border-gray-300" title="Editar Perfil"><User size={16} /><span className="hidden md:inline">Perfil</span></button>
-                <button onClick={() => setIsDarkMode(!isDarkMode)} className="bg-gray-800 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-black transition flex items-center gap-2 text-sm shadow-md" title="Alternar Tema">
-                  {isDarkMode ? <Sun size={16} /> : <Moon size={16} />} <span className="hidden md:inline">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+                <button onClick={() => setFornecedoresModalOpen(true)} className="bg-blue-50 text-blue-700 px-2 py-1.5 rounded-lg font-bold hover:bg-blue-100 hover:text-blue-800 transition flex items-center gap-1 text-[13px] border border-blue-200" title="Gerenciar Fornecedores"><Truck size={14} /><span className="hidden xl:inline">Fornecedores</span></button>
+                <button onClick={() => setClientesModalOpen(true)} className="bg-indigo-50 text-indigo-700 px-2 py-1.5 rounded-lg font-bold hover:bg-indigo-100 hover:text-indigo-800 transition flex items-center gap-1 text-[13px] border border-indigo-200" title="Gerenciar Clientes"><ShoppingBag size={14} /><span className="hidden xl:inline">Clientes</span></button>
+                <button onClick={exportToCSV} className="bg-green-600 text-white px-2.5 py-1.5 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center" title="Exportar para Excel"><Download size={14} /></button>
+                <button onClick={() => setIsProfileModalOpen(true)} className="bg-gray-100 text-gray-700 px-2 py-1.5 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-1 text-[13px] border border-gray-300" title="Editar Perfil"><User size={14} /><span className="hidden lg:inline">Perfil</span></button>
+                <button onClick={() => setIsDarkMode(!isDarkMode)} className="bg-gray-800 text-white px-2 py-1.5 rounded-lg font-bold hover:bg-black transition flex items-center gap-1 text-[13px] shadow-md" title="Alternar Tema">
+                  {isDarkMode ? <Sun size={14} /> : <Moon size={14} />} <span className="hidden lg:inline">{isDarkMode ? 'Claro' : 'Escuro'}</span>
                 </button>
-                <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2 text-sm border border-red-200" title="Sair do Sistema"><LogOut size={16} /></button>
-              </div>>
+                <button onClick={handleLogout} className="bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg font-bold hover:bg-red-100 hover:text-red-700 transition flex items-center justify-center border border-red-200" title="Sair do Sistema"><LogOut size={14} /></button>
+              </div>
           </div>
 
           <div className="mb-6"><DashboardFilters onFilterChange={setDashboardFilters} fornecedores={fornecedores} /></div>
