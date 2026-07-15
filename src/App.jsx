@@ -262,7 +262,13 @@ const compressImage = (file, isLogo = false) => {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+        
+        // Verifica se a imagem original é um PNG para manter o fundo transparente
+        if (file.type === 'image/png') {
+          resolve(canvas.toDataURL('image/png')); 
+        } else {
+          resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+        }
       };
     };
     reader.onerror = error => reject(error);
