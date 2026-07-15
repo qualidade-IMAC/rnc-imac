@@ -1927,12 +1927,13 @@ return (
                 ></div>
               </div>
             </div>
-);
-})
-}
-</div> <
-/div>
-);
+</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 const TimelineChart = ({
   data,
@@ -2048,8 +2049,8 @@ const PieChartComponent = ({
             </div>
           ))}
         </div>
-      </div> <
-    /div>
+      </div>
+    </div>
   );
 };
 const HistoricoModal = ({
