@@ -1,11 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
-
+import React, {
+  useState,
+  useEffect,
+  useRef
+} from 'react';
+import {
+  initializeApp
+} from 'firebase/app';
+import {
+  getAuth,
+  signInAnonymously,
+  signInWithCustomToken,
+  onAuthStateChanged
+} from 'firebase/auth';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  updateDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  setDoc,
+  getDocs,
+  getDoc
+} from 'firebase/firestore';
 let firebaseConfig;
 let isConfigured = false;
-
 if (typeof __firebase_config !== 'undefined') {
   firebaseConfig = JSON.parse(__firebase_config);
   isConfigured = true;
@@ -22,7 +42,6 @@ if (typeof __firebase_config !== 'undefined') {
     isConfigured = true;
   }
 }
-
 const app = isConfigured ? initializeApp(firebaseConfig) : null;
 const auth = isConfigured ? getAuth(app) : null;
 const db = isConfigured ? getFirestore(app) : null;
@@ -76,7 +95,6 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-global-sty
   `;
   document.head.appendChild(style);
 }
-
 // Configuração PWA (Transforma em App Instalável)
 if (typeof document !== 'undefined' && !document.getElementById('imac-pwa-manifest')) {
   const manifest = {
@@ -87,9 +105,19 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-pwa-manife
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#F4B41A",
-    icons: [{ src: LOGO_IMAC, sizes: "192x192", type: "image/png" }, { src: LOGO_IMAC, sizes: "512x512", type: "image/png" }]
+    icons: [{
+      src: LOGO_IMAC,
+      sizes: "192x192",
+      type: "image/png"
+    }, {
+      src: LOGO_IMAC,
+      sizes: "512x512",
+      type: "image/png"
+    }]
   };
-  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(manifest)], {
+    type: 'application/json'
+  });
   const link = document.createElement('link');
   link.id = 'imac-pwa-manifest';
   link.rel = 'manifest';
@@ -104,25 +132,30 @@ if (typeof document !== 'undefined' && !document.getElementById('imac-pwa-manife
   metaApple.content = 'yes';
   document.head.appendChild(metaApple);
 }
-
 const saveToLocalStorage = (key, data) => {
   setTimeout(() => {
-    try { 
+    try {
       let dataToSave = data;
       // Se for a chave de registros, removemos as imagens em base64 do cache local
       // Isso evita que o navegador congele ao processar dezenas de megabytes na inicialização
       if (key === 'imac_registros' && Array.isArray(data)) {
         dataToSave = data.map(r => ({
-          ...r, 
-          imagens: [], imagensDescricao: [], imagensConsideracoes: [], 
-          imagensInvestigacao: [], imagensAcaoCorretiva: [], imagensConclusao: [], logo: null
+          ...r,
+          imagens: [],
+          imagensDescricao: [],
+          imagensConsideracoes: [],
+          imagensInvestigacao: [],
+          imagensAcaoCorretiva: [],
+          imagensConclusao: [],
+          logo: null
         }));
       }
-      localStorage.setItem(key, JSON.stringify(dataToSave)); 
-    } catch (error) { console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`); }
+      localStorage.setItem(key, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.warn(`[Aviso] Armazenamento local cheio para a chave: ${key}.`);
+    }
   }, 10);
 };
-
 const safeDate = (dateString) => {
   if (!dateString) return '';
   try {
@@ -134,111 +167,154 @@ const safeDate = (dateString) => {
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('pt-BR');
-  } catch (error) { return ''; }
+  } catch (error) {
+    return '';
+  }
 };
-
 const getShareText = (registro) => {
-  const id = String(registro?.id || '').substring(0, 8);
+  const id = String(registro?.id || '')
+    .substring(0, 8);
   const title = registro?.tipoRelatorio || 'Ocorrência';
   const prod = registro?.produto || 'Não informado';
   const prob = registro?.ocorrencia || 'Sem descrição';
   const baseUrl = window.location.href.split('?')[0];
   const linkAvaliacao = `${baseUrl}?rnc=${registro?.id}`;
-  
   return `*Aviso de Relatório RNC*\n\n*ID:* ${id}\n*Tipo:* ${title}\n*Produto:* ${prod}\n*Problema:* ${prob}\n\n*Acesse o relatório diretamente no sistema para avaliar:* \n${linkAvaliacao}`;
 };
-
 const shareViaWhatsApp = (registro, phone = '') => {
   const text = encodeURIComponent(getShareText(registro));
   const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
   window.open(url, '_blank');
 };
-
 const shareViaEmail = (registro) => {
-  const text = encodeURIComponent(getShareText(registro).replace(/\*/g, ''));
-  const subject = encodeURIComponent(`Relatório RNC Pendente - ${String(registro?.id || '').substring(0,8)}`);
+  const text = encodeURIComponent(getShareText(registro)
+    .replace(/\*/g, ''));
+  const subject = encodeURIComponent(
+    `Relatório RNC Pendente - ${String(registro?.id || '').substring(0,8)}`);
   window.open(`mailto:?subject=${subject}&body=${text}`, '_blank');
 };
-
 const shareViaGmail = (registro) => {
-  const hour = new Date().getHours();
+  const hour = new Date()
+    .getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  
-  const id = String(registro?.id || '').substring(0, 8);
+  const id = String(registro?.id || '')
+    .substring(0, 8);
   const title = registro?.customTituloRelatorio || registro?.tipoRelatorio || 'Relatório de Ocorrência';
   const prod = registro?.produto || 'Não informado';
   const baseUrl = window.location.href.split('?')[0];
   const linkAvaliacao = `${baseUrl}?rnc=${registro?.id}`;
-
   const subject = encodeURIComponent(`Relatório RNC - ${prod} - ID: ${id}`);
-  const body = encodeURIComponent(`${greeting}!\n\nSegue o link para acesso ao ${title} referente ao produto ${prod}.\n\nAcesse o relatório completo e atualizado no sistema através do link abaixo:\n${linkAvaliacao}\n\nAtenciosamente,`);
-
+  const body = encodeURIComponent(
+    `${greeting}!\n\nSegue o link para acesso ao ${title} referente ao produto ${prod}.\n\nAcesse o relatório completo e atualizado no sistema através do link abaixo:\n${linkAvaliacao}\n\nAtenciosamente,`
+    );
   // Abre o Gmail direto na tela de composição com os dados preenchidos
   window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
 };
-
 const getPendingDays = (dateString) => {
   if (!dateString) return 0;
   const diffTime = Math.abs(new Date() - new Date(dateString));
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 };
-
-const SvgIcon = ({ children, size = 24, className = "", strokeWidth = 2, title }) => (
+const SvgIcon = ({
+  children,
+  size = 24,
+  className = "",
+  strokeWidth = 2,
+  title
+}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     {title && <title>{title}</title>}
     {children}
   </svg>
 );
-
-const Printer = (p) => <SvgIcon {...p}><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" /></SvgIcon>;
-const Edit3 = (p) => <SvgIcon {...p}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></SvgIcon>;
-const Copy = (p) => <SvgIcon {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></SvgIcon>;
-const ImagePlus = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v4M21 9h-6M18 6v6M3 16l5-5c.928-.893 2.072-.893 3 0l5 5M14 14l1-1c.928-.893 2.072-.893 3 0l3 3" /></SvgIcon>;
-const Trash2 = (p) => <SvgIcon {...p}><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></SvgIcon>;
-const FileText = (p) => <SvgIcon {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></SvgIcon>;
-const Users = (p) => <SvgIcon {...p}><path d="M17 21v-2a4 4 0 00-4-4H5c-1.1 0-2 .9-2 2v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></SvgIcon>;
-const ClipboardList = (p) => <SvgIcon {...p}><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M15 2H9a1 1 0 00-1 1v2a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1zM12 11h4M12 16h4M8 11h.01M8 16h.01" /></SvgIcon>;
-const Upload = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h4M17 8l-5-5-5 5M12 3v12" /></SvgIcon>;
+const Printer = (p) =>
+  <SvgIcon {...p}><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" /></SvgIcon>;
+const Edit3 = (p) =>
+  <SvgIcon {...p}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></SvgIcon>;
+const Copy = (p) =>
+  <SvgIcon {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></SvgIcon>;
+const ImagePlus = (p) =>
+  <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v4M21 9h-6M18 6v6M3 16l5-5c.928-.893 2.072-.893 3 0l5 5M14 14l1-1c.928-.893 2.072-.893 3 0l3 3" /></SvgIcon>;
+const Trash2 = (p) =>
+  <SvgIcon {...p}><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></SvgIcon>;
+const FileText = (p) =>
+  <SvgIcon {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></SvgIcon>;
+const Users = (p) =>
+  <SvgIcon {...p}><path d="M17 21v-2a4 4 0 00-4-4H5c-1.1 0-2 .9-2 2v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></SvgIcon>;
+const ClipboardList = (p) =>
+  <SvgIcon {...p}><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M15 2H9a1 1 0 00-1 1v2a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1zM12 11h4M12 16h4M8 11h.01M8 16h.01" /></SvgIcon>;
+const Upload = (p) =>
+  <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h4M17 8l-5-5-5 5M12 3v12" /></SvgIcon>;
 const Plus = (p) => <SvgIcon {...p}><path d="M12 5v14M5 12h14" /></SvgIcon>;
 const Minus = (p) => <SvgIcon {...p}><line x1="5" y1="12" x2="19" y2="12" /></SvgIcon>;
-const UserX = (p) => <SvgIcon {...p}><path d="M16 21v-2a4 4 0 00-4-4H5c-1.1 0-2 .9-2 2v2M8 7a4 4 0 100 8 4 4 0 000-8zM18 8l4 4M22 8l-4 4" /></SvgIcon>;
+const UserX = (p) =>
+  <SvgIcon {...p}><path d="M16 21v-2a4 4 0 00-4-4H5c-1.1 0-2 .9-2 2v2M8 7a4 4 0 100 8 4 4 0 000-8zM18 8l4 4M22 8l-4 4" /></SvgIcon>;
 const ArrowUpRight = (p) => <SvgIcon {...p}><path d="M7 17L17 7M7 7h10v10" /></SvgIcon>;
 const Circle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10" /></SvgIcon>;
 const Undo = (p) => <SvgIcon {...p}><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" /></SvgIcon>;
-const Send = (p) => <SvgIcon {...p}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></SvgIcon>;
-const Archive = (p) => <SvgIcon {...p}><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></SvgIcon>;
+const Send = (p) =>
+  <SvgIcon {...p}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></SvgIcon>;
+const Archive = (p) =>
+  <SvgIcon {...p}><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></SvgIcon>;
 const Check = (p) => <SvgIcon {...p}><path d="M20 6L9 17l-5-5" /></SvgIcon>;
 const X = (p) => <SvgIcon {...p}><path d="M18 6L6 18M6 6l12 12" /></SvgIcon>;
-const PenTool = (p) => <SvgIcon {...p}><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.586 7.586M11 11l2 2" /></SvgIcon>;
-const Move = (p) => <SvgIcon {...p}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M9 19l3 3-3 3M19 9l3 3-3 3M2 12h20M12 2v20" /></SvgIcon>;
-const TypeIcon = (p) => <SvgIcon {...p}><polyline points="4 7 4 4 20 4 20 7" /><line x1="9" x2="15" y1="20" y2="20" /><line x1="12" x2="12" y1="4" y2="20" /></SvgIcon>;
-const BarChart2 = (p) => <SvgIcon {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></SvgIcon>;
-const BoldIcon = (p) => <SvgIcon {...p} strokeWidth={3}><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></SvgIcon>;
-const ItalicIcon = (p) => <SvgIcon {...p}><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></SvgIcon>;
-const UnderlineIcon = (p) => <SvgIcon {...p}><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></SvgIcon>;
-const Truck = (p) => <SvgIcon {...p}><path d="M16 3H1v13h15M8 16h7v4H8zM21 16h-2v4H5"/><circle cx="6.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></SvgIcon>;
-const ShoppingBag = (p) => <SvgIcon {...p}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></SvgIcon>;
-const Store = (p) => <SvgIcon {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></SvgIcon>;
-const Eye = (p) => <SvgIcon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
-const Moon = (p) => <SvgIcon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></SvgIcon>;
-const Sun = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></SvgIcon>;
-const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-5M7 10l5 5 5-5M12 15V3"/></SvgIcon>;
-const Filter = (p) => <SvgIcon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></SvgIcon>;
-const RefreshCw = (p) => <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></SvgIcon>;
-const Scissors = (p) => <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></SvgIcon>;
-const AlertCircle = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
-const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
+const PenTool = (p) =>
+  <SvgIcon {...p}><path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.586 7.586M11 11l2 2" /></SvgIcon>;
+const Move = (p) =>
+  <SvgIcon {...p}><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M9 19l3 3-3 3M19 9l3 3-3 3M2 12h20M12 2v20" /></SvgIcon>;
+const TypeIcon = (p) =>
+  <SvgIcon {...p}><polyline points="4 7 4 4 20 4 20 7" /><line x1="9" x2="15" y1="20" y2="20" /><line x1="12" x2="12" y1="4" y2="20" /></SvgIcon>;
+const BarChart2 = (p) =>
+  <SvgIcon {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></SvgIcon>;
+const BoldIcon = (p) =>
+  <SvgIcon {...p} strokeWidth={3}><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></SvgIcon>;
+const ItalicIcon = (p) =>
+  <SvgIcon {...p}><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></SvgIcon>;
+const UnderlineIcon = (p) =>
+  <SvgIcon {...p}><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></SvgIcon>;
+const Truck = (p) =>
+  <SvgIcon {...p}><path d="M16 3H1v13h15M8 16h7v4H8zM21 16h-2v4H5"/><circle cx="6.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></SvgIcon>;
+const ShoppingBag = (p) =>
+  <SvgIcon {...p}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></SvgIcon>;
+const Store = (p) =>
+  <SvgIcon {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></SvgIcon>;
+const Eye = (p) =>
+  <SvgIcon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
+const Moon = (p) =>
+  <SvgIcon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></SvgIcon>;
+const Sun = (p) =>
+  <SvgIcon {...p}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></SvgIcon>;
+const Download = (p) =>
+  <SvgIcon {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-5M7 10l5 5 5-5M12 15V3"/></SvgIcon>;
+const Filter = (p) =>
+  <SvgIcon {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></SvgIcon>;
+const RefreshCw = (p) =>
+  <SvgIcon {...p}><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></SvgIcon>;
+const Scissors = (p) =>
+  <SvgIcon {...p}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></SvgIcon>;
+const AlertCircle = (p) =>
+  <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></SvgIcon>;
+const CheckCircle = (p) =>
+  <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></SvgIcon>;
 const Palette = (p) => <SvgIcon {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></SvgIcon>;
-const LogOut = (p) => <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
+const LogOut = (p) =>
+  <SvgIcon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></SvgIcon>;
 const ChevronLeft = (p) => <SvgIcon {...p}><polyline points="15 18 9 12 15 6" /></SvgIcon>;
 const ChevronRight = (p) => <SvgIcon {...p}><polyline points="9 18 15 12 9 6" /></SvgIcon>;
-const MessageCircle = (p) => <SvgIcon {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></SvgIcon>;
-const Mail = (p) => <SvgIcon {...p}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></SvgIcon>;
-const Clock = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></SvgIcon>;
-const Lock = (p) => <SvgIcon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></SvgIcon>;
-const User = (p) => <SvgIcon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></SvgIcon>;
-const Key = (p) => <SvgIcon {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></SvgIcon>;
-const Settings = (p) => <SvgIcon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.5a2 2 0 0 1-1 1.72l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0-.73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
+const MessageCircle = (p) =>
+  <SvgIcon {...p}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></SvgIcon>;
+const Mail = (p) =>
+  <SvgIcon {...p}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></SvgIcon>;
+const Clock = (p) =>
+  <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></SvgIcon>;
+const Lock = (p) =>
+  <SvgIcon {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></SvgIcon>;
+const User = (p) =>
+  <SvgIcon {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></SvgIcon>;
+const Key = (p) =>
+  <SvgIcon {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></SvgIcon>;
+const Settings = (p) =>
+  <SvgIcon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.5a2 2 0 0 1-1 1.72l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0-.73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></SvgIcon>;
 const compressImage = (file, isLogo = false) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -252,45 +328,50 @@ const compressImage = (file, isLogo = false) => {
         const MAX_HEIGHT = isLogo ? 400 : 800;
         let width = img.width;
         let height = img.height;
-
         if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
         } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
         }
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        
         // Verifica se a imagem original é um PNG para manter o fundo transparente
         if (file.type === 'image/png') {
-          resolve(canvas.toDataURL('image/png')); 
+          resolve(canvas.toDataURL('image/png'));
         } else {
-          resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
         }
       };
     };
     reader.onerror = error => reject(error);
   });
 };
-
-const RichTextEditor = ({ value, onChange, placeholder }) => {
+const RichTextEditor = ({
+  value,
+  onChange,
+  placeholder
+}) => {
   const editorRef = useRef(null);
-
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== (value || '')) {
       editorRef.current.innerHTML = value || '';
     }
   }, [value]);
-
   const handleInput = () => {
     if (!editorRef.current) return;
     let html = editorRef.current.innerHTML;
     if (html === '<br>' || html === '<div><br></div>') html = '';
     if (typeof onChange === 'function') onChange(html);
   };
-const handlePaste = (e) => {
+  const handlePaste = (e) => {
     e.preventDefault();
     // Pega apenas o texto puro da área de transferência
     const text = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
@@ -300,13 +381,12 @@ const handlePaste = (e) => {
   const execCommand = (command, val = null) => {
     try {
       document.execCommand(command, false, val);
-      if(editorRef.current) editorRef.current.focus();
+      if (editorRef.current) editorRef.current.focus();
       handleInput();
     } catch (e) {
       console.error(e);
     }
   };
-
   return (
     <div className="w-full relative">
       <div className="w-full border border-gray-300 rounded focus-within:ring-2 focus-within:ring-[#F4B41A] shadow-sm bg-white overflow-hidden flex flex-col">
@@ -358,41 +438,50 @@ const handlePaste = (e) => {
     </div>
   );
 };
-
-const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) => {
+const ImageAnnotator = ({
+  baseImageSrc,
+  initialShapes = [],
+  onSave,
+  onCancel
+}) => {
   const canvasRef = useRef(null);
-  const [tool, setTool] = useState('arrow'); 
+  const [tool, setTool] = useState('arrow');
   const [color, setColor] = useState('#FF0000');
-  const [textSize, setTextSize] = useState(28); 
+  const [textSize, setTextSize] = useState(28);
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
   const [textInput, setTextInput] = useState(null);
-  const [forceRender, setForceRender] = useState(0); 
+  const [forceRender, setForceRender] = useState(0);
   const [cropRect, setCropRect] = useState(null);
-  const [cropRatio, setCropRatio] = useState(null); 
-  
+  const [cropRatio, setCropRatio] = useState(null);
   const shapesRef = useRef(Array.isArray(initialShapes) ? JSON.parse(JSON.stringify(initialShapes)) : []);
   const imageRef = useRef(null);
   const isDrawing = useRef(false);
   const draggedShapeIndex = useRef(null);
-  
-  const startPos = useRef({ x: 0, y: 0 });
-  const currentPos = useRef({ x: 0, y: 0 });
-  const lastMousePos = useRef({ x: 0, y: 0 });
-
+  const startPos = useRef({
+    x: 0,
+    y: 0
+  });
+  const currentPos = useRef({
+    x: 0,
+    y: 0
+  });
+  const lastMousePos = useRef({
+    x: 0,
+    y: 0
+  });
   useEffect(() => {
     if (!baseImageSrc) return;
     const img = new Image();
     img.src = baseImageSrc;
     img.onload = () => {
       imageRef.current = img;
-      if(canvasRef.current) {
+      if (canvasRef.current) {
         canvasRef.current.width = img.width;
         canvasRef.current.height = img.height;
         redraw(null);
       }
     };
   }, [baseImageSrc]);
-
   useEffect(() => {
     if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
       const shape = shapesRef.current[selectedShapeIndex];
@@ -400,7 +489,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
       if (shape.type === 'text') setTextSize(shape.size || 28);
     }
   }, [selectedShapeIndex]);
-
   const changeColor = (newColor) => {
     setColor(newColor);
     if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]) {
@@ -408,53 +496,65 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
       redraw();
     }
   };
-
   const changeTextSize = (delta) => {
     setTextSize(s => {
       const newSize = Math.max(12, Math.min(72, s + delta));
-      if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]?.type === 'text' && canvasRef.current) {
+      if (selectedShapeIndex !== null && shapesRef.current[selectedShapeIndex]?.type === 'text' &&
+        canvasRef.current) {
         shapesRef.current[selectedShapeIndex].size = newSize;
         const ctx = canvasRef.current.getContext('2d');
         ctx.font = `bold ${newSize}px sans-serif`;
-        shapesRef.current[selectedShapeIndex].width = ctx.measureText(shapesRef.current[selectedShapeIndex].text || '').width;
+        shapesRef.current[selectedShapeIndex].width = ctx.measureText(shapesRef.current[
+            selectedShapeIndex].text || '')
+          .width;
         redraw();
       }
       return newSize;
     });
   };
-
   const getShapeCenter = (shape) => {
-    if (shape.type === 'circle') return { x: shape.x1 || 0, y: shape.y1 || 0 };
-    if (shape.type === 'arrow') return { x: ((shape.x1 || 0) + (shape.x2 || 0))/2, y: ((shape.y1 || 0) + (shape.y2 || 0))/2 };
+    if (shape.type === 'circle') return {
+      x: shape.x1 || 0,
+      y: shape.y1 || 0
+    };
+    if (shape.type === 'arrow') return {
+      x: ((shape.x1 || 0) + (shape.x2 || 0)) / 2,
+      y: ((shape.y1 || 0) + (shape.y2 || 0)) / 2
+    };
     if (shape.type === 'text') {
-      const w = shape.width || ((shape.text || '').length * ((shape.size || 28) * 0.6));
-      return { x: (shape.x || 0) + w/2, y: shape.y || 0 };
+      const w = shape.width || ((shape.text || '')
+        .length * ((shape.size || 28) * 0.6));
+      return {
+        x: (shape.x || 0) + w / 2,
+        y: shape.y || 0
+      };
     }
-    return { x: 0, y: 0 };
+    return {
+      x: 0,
+      y: 0
+    };
   };
-
   const drawArrow = (ctx, fromx, fromy, tox, toy, color) => {
-    const headlen = 25; 
+    const headlen = 25;
     const dx = tox - fromx;
     const dy = toy - fromy;
     const angle = Math.atan2(dy, dx);
-    
     ctx.beginPath();
     ctx.moveTo(fromx, fromy);
     ctx.lineTo(tox, toy);
     ctx.strokeStyle = color;
     ctx.lineWidth = 6;
     ctx.stroke();
-    
     ctx.beginPath();
     ctx.moveTo(tox, toy);
-    ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
-    ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI /
+      6));
+    ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI /
+      6));
     ctx.lineTo(tox, toy);
     ctx.fillStyle = color;
     ctx.fill();
   };
-
   const drawCircle = (ctx, x1, y1, x2, y2, color) => {
     const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     ctx.beginPath();
@@ -463,7 +563,6 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     ctx.lineWidth = 6;
     ctx.stroke();
   };
-
   const drawText = (ctx, text, x, y, color, size) => {
     ctx.font = `bold ${size}px sans-serif`;
     ctx.textBaseline = "middle";
@@ -474,32 +573,40 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     ctx.fillStyle = color;
     ctx.fillText(text || '', x, y);
   };
-
   const drawSelectionBox = (ctx, shape) => {
     let minX, minY, maxX, maxY;
     const pad = 15;
-    
     if (shape.type === 'circle') {
-      const r = Math.sqrt(Math.pow((shape.x2 || 0) - (shape.x1 || 0), 2) + Math.pow((shape.y2 || 0) - (shape.y1 || 0), 2));
-      minX = shape.x1 - r; maxX = shape.x1 + r; minY = shape.y1 - r; maxY = shape.y1 + r;
+      const r = Math.sqrt(Math.pow((shape.x2 || 0) - (shape.x1 || 0), 2) + Math.pow((shape.y2 || 0) - (
+        shape.y1 || 0), 2));
+      minX = shape.x1 - r;
+      maxX = shape.x1 + r;
+      minY = shape.y1 - r;
+      maxY = shape.y1 + r;
     } else if (shape.type === 'arrow') {
-      minX = Math.min(shape.x1 || 0, shape.x2 || 0); maxX = Math.max(shape.x1 || 0, shape.x2 || 0);
-      minY = Math.min(shape.y1 || 0, shape.y2 || 0); maxY = Math.max(shape.y1 || 0, shape.y2 || 0);
+      minX = Math.min(shape.x1 || 0, shape.x2 || 0);
+      maxX = Math.max(shape.x1 || 0, shape.x2 || 0);
+      minY = Math.min(shape.y1 || 0, shape.y2 || 0);
+      maxY = Math.max(shape.y1 || 0, shape.y2 || 0);
     } else if (shape.type === 'text') {
-      const w = shape.width || ((shape.text || '').length * ((shape.size || 28) * 0.6));
-      minX = shape.x || 0; maxX = (shape.x || 0) + w; minY = (shape.y || 0) - ((shape.size || 28) / 2); maxY = (shape.y || 0) + ((shape.size || 28) / 2);
+      const w = shape.width || ((shape.text || '')
+        .length * ((shape.size || 28) * 0.6));
+      minX = shape.x || 0;
+      maxX = (shape.x || 0) + w;
+      minY = (shape.y || 0) - ((shape.size || 28) / 2);
+      maxY = (shape.y || 0) + ((shape.size || 28) / 2);
     } else return;
-    
     ctx.beginPath();
-    ctx.setLineDash([8, 8]); ctx.strokeStyle = '#00BFFF'; ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
+    ctx.strokeStyle = '#00BFFF';
+    ctx.lineWidth = 3;
     ctx.rect(minX - pad, minY - pad, (maxX - minX) + pad * 2, (maxY - minY) + pad * 2);
-    ctx.stroke(); ctx.setLineDash([]); 
+    ctx.stroke();
+    ctx.setLineDash([]);
   };
-
   const drawCropOverlay = (ctx, start, current, ratio = null) => {
     let w = current.x - start.x;
     let h = current.y - start.y;
-
     if (ratio) {
       const absW = Math.abs(w);
       const absH = Math.abs(h);
@@ -509,168 +616,194 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
         w = (Math.sign(w) || 1) * (absH * ratio);
       }
     }
-
     const minX = Math.min(start.x, start.x + w);
     const minY = Math.min(start.y, start.y + h);
     const finalW = Math.abs(w);
     const finalH = Math.abs(h);
-
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, canvasRef.current.width, minY);
     ctx.fillRect(0, minY, minX, finalH);
     ctx.fillRect(minX + finalW, minY, canvasRef.current.width - (minX + finalW), finalH);
     ctx.fillRect(0, minY + finalH, canvasRef.current.width, canvasRef.current.height - (minY + finalH));
-
     ctx.setLineDash([6, 6]);
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 2;
     ctx.strokeRect(minX, minY, finalW, finalH);
     ctx.setLineDash([]);
   };
-
   const redraw = (overrideSelectedIndex) => {
     if (!canvasRef.current || !imageRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     ctx.drawImage(imageRef.current, 0, 0);
-    
     const activeIndex = overrideSelectedIndex !== undefined ? overrideSelectedIndex : selectedShapeIndex;
-
     shapesRef.current.forEach((shape, index) => {
-      ctx.save(); 
+      ctx.save();
       const center = getShapeCenter(shape);
       const angle = shape.rotation || 0;
-      
       if (angle !== 0) {
         ctx.translate(center.x, center.y);
         ctx.rotate(angle);
         ctx.translate(-center.x, -center.y);
       }
-      
       if (shape.type === 'arrow') drawArrow(ctx, shape.x1, shape.y1, shape.x2, shape.y2, shape.color);
-      else if (shape.type === 'circle') drawCircle(ctx, shape.x1, shape.y1, shape.x2, shape.y2, shape.color);
-      else if (shape.type === 'text') drawText(ctx, shape.text, shape.x, shape.y, shape.color, shape.size);
-      
+      else if (shape.type === 'circle') drawCircle(ctx, shape.x1, shape.y1, shape.x2, shape.y2, shape
+        .color);
+      else if (shape.type === 'text') drawText(ctx, shape.text, shape.x, shape.y, shape.color, shape
+        .size);
       if (index === activeIndex) {
         drawSelectionBox(ctx, shape);
       }
       ctx.restore();
     });
-    
     if (isDrawing.current && tool !== 'move' && tool !== 'text' && tool !== 'crop') {
-      if (tool === 'arrow') drawArrow(ctx, startPos.current.x, startPos.current.y, currentPos.current.x, currentPos.current.y, color);
-      else if (tool === 'circle') drawCircle(ctx, startPos.current.x, startPos.current.y, currentPos.current.x, currentPos.current.y, color);
+      if (tool === 'arrow') drawArrow(ctx, startPos.current.x, startPos.current.y, currentPos.current.x,
+        currentPos.current.y, color);
+      else if (tool === 'circle') drawCircle(ctx, startPos.current.x, startPos.current.y, currentPos
+        .current.x, currentPos.current.y, color);
     }
-
     if (tool === 'crop' && isDrawing.current) {
       drawCropOverlay(ctx, startPos.current, currentPos.current, cropRatio);
     } else if (cropRect) {
-      drawCropOverlay(ctx, {x: cropRect.x, y: cropRect.y}, {x: cropRect.x + cropRect.w, y: cropRect.y + cropRect.h}, null);
+      drawCropOverlay(ctx, {
+        x: cropRect.x,
+        y: cropRect.y
+      }, {
+        x: cropRect.x + cropRect.w,
+        y: cropRect.y + cropRect.h
+      }, null);
     }
   };
-
   const getPointerPos = (e) => {
-    if(!canvasRef.current) return {x:0, y:0};
+    if (!canvasRef.current) return {
+      x: 0,
+      y: 0
+    };
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
     const scaleY = canvasRef.current.height / rect.height;
-    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
   };
-
   const isPointInShape = (px, py, shape) => {
     const center = getShapeCenter(shape);
     const angle = shape.rotation || 0;
-    
-    let rpx = px, rpy = py;
+    let rpx = px,
+      rpy = py;
     if (angle !== 0) {
-      const dx = px - center.x, dy = py - center.y;
-      const cos = Math.cos(-angle), sin = Math.sin(-angle);
-      rpx = dx * cos - dy * sin + center.x; rpy = dx * sin + dy * cos + center.y;
+      const dx = px - center.x,
+        dy = py - center.y;
+      const cos = Math.cos(-angle),
+        sin = Math.sin(-angle);
+      rpx = dx * cos - dy * sin + center.x;
+      rpy = dx * sin + dy * cos + center.y;
     }
-
-    const pad = 25; 
+    const pad = 25;
     if (shape.type === 'circle') {
-      const r = Math.sqrt(Math.pow((shape.x2||0) - (shape.x1||0), 2) + Math.pow((shape.y2||0) - (shape.y1||0), 2));
-      return Math.sqrt(Math.pow(rpx - (shape.x1||0), 2) + Math.pow(rpy - (shape.y1||0), 2)) <= r + pad;
+      const r = Math.sqrt(Math.pow((shape.x2 || 0) - (shape.x1 || 0), 2) + Math.pow((shape.y2 || 0) - (
+        shape.y1 || 0), 2));
+      return Math.sqrt(Math.pow(rpx - (shape.x1 || 0), 2) + Math.pow(rpy - (shape.y1 || 0), 2)) <= r +
+      pad;
     } else if (shape.type === 'arrow') {
-      const minX = Math.min(shape.x1||0, shape.x2||0) - pad, maxX = Math.max(shape.x1||0, shape.x2||0) + pad;
-      const minY = Math.min(shape.y1||0, shape.y2||0) - pad, maxY = Math.max(shape.y1||0, shape.y2||0) + pad;
+      const minX = Math.min(shape.x1 || 0, shape.x2 || 0) - pad,
+        maxX = Math.max(shape.x1 || 0, shape.x2 || 0) + pad;
+      const minY = Math.min(shape.y1 || 0, shape.y2 || 0) - pad,
+        maxY = Math.max(shape.y1 || 0, shape.y2 || 0) + pad;
       if (rpx >= minX && rpx <= maxX && rpy >= minY && rpy <= maxY) {
-        const l2 = Math.pow((shape.x2||0) - (shape.x1||0), 2) + Math.pow((shape.y2||0) - (shape.y1||0), 2);
+        const l2 = Math.pow((shape.x2 || 0) - (shape.x1 || 0), 2) + Math.pow((shape.y2 || 0) - (shape
+          .y1 || 0), 2);
         if (l2 === 0) return false;
-        let t = Math.max(0, Math.min(1, ((rpx - (shape.x1||0)) * ((shape.x2||0) - (shape.x1||0)) + (rpy - (shape.y1||0)) * ((shape.y2||0) - (shape.y1||0))) / l2));
-        const projX = (shape.x1||0) + t * ((shape.x2||0) - (shape.x1||0)), projY = (shape.y1||0) + t * ((shape.y2||0) - (shape.y1||0));
+        let t = Math.max(0, Math.min(1, ((rpx - (shape.x1 || 0)) * ((shape.x2 || 0) - (shape.x1 || 0)) + (
+          rpy - (shape.y1 || 0)) * ((shape.y2 || 0) - (shape.y1 || 0))) / l2));
+        const projX = (shape.x1 || 0) + t * ((shape.x2 || 0) - (shape.x1 || 0)),
+          projY = (shape.y1 || 0) + t * ((shape.y2 || 0) - (shape.y1 || 0));
         return Math.sqrt(Math.pow(rpx - projX, 2) + Math.pow(rpy - projY, 2)) <= pad;
       }
     } else if (shape.type === 'text') {
-      const w = shape.width || ((shape.text||'').length * ((shape.size||28) * 0.6));
-      return rpx >= (shape.x||0) - pad && rpx <= (shape.x||0) + w + pad && rpy >= (shape.y||0) - ((shape.size||28) / 2) - pad && rpy <= (shape.y||0) + ((shape.size||28) / 2) + pad;
+      const w = shape.width || ((shape.text || '')
+        .length * ((shape.size || 28) * 0.6));
+      return rpx >= (shape.x || 0) - pad && rpx <= (shape.x || 0) + w + pad && rpy >= (shape.y || 0) - ((
+        shape.size || 28) / 2) - pad && rpy <= (shape.y || 0) + ((shape.size || 28) / 2) + pad;
     }
     return false;
   };
-
   const handlePointerDown = (e) => {
     if (textInput) return;
     e.preventDefault();
     const pos = getPointerPos(e);
-    startPos.current = pos; currentPos.current = pos; lastMousePos.current = pos;
-
+    startPos.current = pos;
+    currentPos.current = pos;
+    lastMousePos.current = pos;
     if (tool === 'text') {
-      setTextInput({ canvasX: pos.x, canvasY: pos.y, screenX: e.clientX, screenY: e.clientY });
-      setSelectedShapeIndex(null); redraw(null);
+      setTextInput({
+        canvasX: pos.x,
+        canvasY: pos.y,
+        screenX: e.clientX,
+        screenY: e.clientY
+      });
+      setSelectedShapeIndex(null);
+      redraw(null);
       return;
     }
-
     if (tool === 'crop') {
       isDrawing.current = true;
       setCropRect(null);
       redraw(null);
       return;
     }
-
     if (tool === 'move') {
       let foundIndex = null;
       for (let i = shapesRef.current.length - 1; i >= 0; i--) {
-        if (isPointInShape(pos.x, pos.y, shapesRef.current[i])) { foundIndex = i; break; }
+        if (isPointInShape(pos.x, pos.y, shapesRef.current[i])) {
+          foundIndex = i;
+          break;
+        }
       }
-      setSelectedShapeIndex(foundIndex); draggedShapeIndex.current = foundIndex; redraw(foundIndex);
+      setSelectedShapeIndex(foundIndex);
+      draggedShapeIndex.current = foundIndex;
+      redraw(foundIndex);
     } else {
-      isDrawing.current = true; setSelectedShapeIndex(null); redraw(null);
+      isDrawing.current = true;
+      setSelectedShapeIndex(null);
+      redraw(null);
     }
   };
-
   const handlePointerMove = (e) => {
-    if (textInput) return; 
+    if (textInput) return;
     e.preventDefault();
     const pos = getPointerPos(e);
     currentPos.current = pos;
-
     if (tool === 'crop' && isDrawing.current) {
       redraw(null);
       return;
     }
-
     if (tool === 'move' && draggedShapeIndex.current !== null) {
       const shape = shapesRef.current[draggedShapeIndex.current];
-      const dx = pos.x - lastMousePos.current.x, dy = pos.y - lastMousePos.current.y;
-      
-      if (shape.type === 'text') { shape.x += dx; shape.y += dy; } 
-      else { shape.x1 += dx; shape.y1 += dy; shape.x2 += dx; shape.y2 += dy; }
-      
-      lastMousePos.current = pos; redraw();
+      const dx = pos.x - lastMousePos.current.x,
+        dy = pos.y - lastMousePos.current.y;
+      if (shape.type === 'text') {
+        shape.x += dx;
+        shape.y += dy;
+      } else {
+        shape.x1 += dx;
+        shape.y1 += dy;
+        shape.x2 += dx;
+        shape.y2 += dy;
+      }
+      lastMousePos.current = pos;
+      redraw();
     } else if (isDrawing.current) {
       redraw();
     }
   };
-
   const handlePointerUp = () => {
     if (textInput) return;
-
     if (tool === 'crop' && isDrawing.current) {
       isDrawing.current = false;
       let w = currentPos.current.x - startPos.current.x;
       let h = currentPos.current.y - startPos.current.y;
-      
       if (cropRatio) {
         const absW = Math.abs(w);
         const absH = Math.abs(h);
@@ -680,45 +813,50 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
           w = (Math.sign(w) || 1) * (absH * cropRatio);
         }
       }
-
       const finalW = Math.abs(w);
       const finalH = Math.abs(h);
-
       if (finalW > 20 && finalH > 20) {
         setCropRect({
           x: Math.min(startPos.current.x, startPos.current.x + w),
           y: Math.min(startPos.current.y, startPos.current.y + h),
-          w: finalW, h: finalH
+          w: finalW,
+          h: finalH
         });
       }
       redraw(null);
       return;
     }
-
     if (tool === 'move') {
       draggedShapeIndex.current = null;
     } else if (isDrawing.current) {
       isDrawing.current = false;
-      const dist = Math.sqrt(Math.pow(currentPos.current.x - startPos.current.x, 2) + Math.pow(currentPos.current.y - startPos.current.y, 2));
+      const dist = Math.sqrt(Math.pow(currentPos.current.x - startPos.current.x, 2) + Math.pow(currentPos
+        .current.y - startPos.current.y, 2));
       if (dist > 10) {
         shapesRef.current.push({
-          type: tool, x1: startPos.current.x, y1: startPos.current.y, x2: currentPos.current.x, y2: currentPos.current.y, color: color, rotation: 0, size: textSize
+          type: tool,
+          x1: startPos.current.x,
+          y1: startPos.current.y,
+          x2: currentPos.current.x,
+          y2: currentPos.current.y,
+          color: color,
+          rotation: 0,
+          size: textSize
         });
       }
       redraw();
     }
   };
-
   const handleWheel = (e) => {
     if (selectedShapeIndex !== null) {
       const shape = shapesRef.current[selectedShapeIndex];
-      const delta = e.deltaY > 0 ? 5 : -5; 
-      const currentDeg = (shape.rotation || 0) * (180/Math.PI);
+      const delta = e.deltaY > 0 ? 5 : -5;
+      const currentDeg = (shape.rotation || 0) * (180 / Math.PI);
       shape.rotation = (currentDeg + delta) * (Math.PI / 180);
-      setForceRender(prev => prev + 1); redraw();
+      setForceRender(prev => prev + 1);
+      redraw();
     }
   };
-
   const confirmText = () => {
     const inputEl = document.getElementById('floating-text-input');
     if (!inputEl) return;
@@ -726,36 +864,53 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     if (val && val.trim() !== '' && canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
       ctx.font = `bold ${textSize}px sans-serif`;
-      shapesRef.current.push({ 
-        type: 'text', text: val.trim(), x: textInput.canvasX, y: textInput.canvasY, color: color, size: textSize, width: ctx.measureText(val.trim()).width, rotation: 0
+      shapesRef.current.push({
+        type: 'text',
+        text: val.trim(),
+        x: textInput.canvasX,
+        y: textInput.canvasY,
+        color: color,
+        size: textSize,
+        width: ctx.measureText(val.trim())
+          .width,
+        rotation: 0
       });
       redraw(null);
     }
     setTextInput(null);
   };
-
   const applyCrop = () => {
     if (!cropRect || !imageRef.current || !canvasRef.current) return;
     const canvas = document.createElement('canvas');
     canvas.width = cropRect.w;
     canvas.height = cropRect.h;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageRef.current, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
-
+    ctx.drawImage(imageRef.current, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w,
+      cropRect.h);
     const newImageSrc = canvas.toDataURL('image/jpeg', 0.6);
     const img = new Image();
     img.src = newImageSrc;
     img.onload = () => {
-      imageRef.current = img; 
-      if(canvasRef.current) {
+      imageRef.current = img;
+      if (canvasRef.current) {
         canvasRef.current.width = img.width;
         canvasRef.current.height = img.height;
       }
       shapesRef.current = shapesRef.current.map(s => {
         if (s.type === 'circle' || s.type === 'arrow') {
-          return { ...s, x1: s.x1 - cropRect.x, y1: s.y1 - cropRect.y, x2: s.x2 - cropRect.x, y2: s.y2 - cropRect.y };
+          return {
+            ...s,
+            x1: s.x1 - cropRect.x,
+            y1: s.y1 - cropRect.y,
+            x2: s.x2 - cropRect.x,
+            y2: s.y2 - cropRect.y
+          };
         } else if (s.type === 'text') {
-          return { ...s, x: s.x - cropRect.x, y: s.y - cropRect.y };
+          return {
+            ...s,
+            x: s.x - cropRect.x,
+            y: s.y - cropRect.y
+          };
         }
         return s;
       });
@@ -764,27 +919,35 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
       redraw(null);
     };
   };
-
-  const handleUndo = () => { shapesRef.current.pop(); setSelectedShapeIndex(null); redraw(null); };
-  const handleDeleteSelected = () => {
-    if (selectedShapeIndex !== null) { shapesRef.current.splice(selectedShapeIndex, 1); setSelectedShapeIndex(null); redraw(null); }
+  const handleUndo = () => {
+    shapesRef.current.pop();
+    setSelectedShapeIndex(null);
+    redraw(null);
   };
-
+  const handleDeleteSelected = () => {
+    if (selectedShapeIndex !== null) {
+      shapesRef.current.splice(selectedShapeIndex, 1);
+      setSelectedShapeIndex(null);
+      redraw(null);
+    }
+  };
   const handleSave = () => {
-    setSelectedShapeIndex(null); setTextInput(null); setCropRect(null); redraw(null);
-    setTimeout(() => { 
+    setSelectedShapeIndex(null);
+    setTextInput(null);
+    setCropRect(null);
+    redraw(null);
+    setTimeout(() => {
       if (canvasRef.current && imageRef.current) {
-        onSave(canvasRef.current.toDataURL('image/jpeg', 0.6), imageRef.current.src, shapesRef.current); 
+        onSave(canvasRef.current.toDataURL('image/jpeg', 0.6), imageRef.current.src, shapesRef
+          .current);
       }
     }, 50);
   };
-
   const handleRatioChange = (ratio) => {
     setCropRatio(ratio);
-    setCropRect(null); 
+    setCropRect(null);
     redraw(null);
   };
-
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-gray-900 p-4 rounded-xl shadow-2xl flex flex-col h-full max-h-[90vh] relative">
@@ -880,17 +1043,33 @@ const ImageAnnotator = ({ baseImageSrc, initialShapes = [], onSave, onCancel }) 
     </div>
   );
 };
-
-const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) => {
+const FornecedorSelect = ({
+  value,
+  onChange,
+  fornecedores,
+  onAddFornecedor
+}) => {
   const [isAdding, setIsAdding] = useState(false);
   const [novoFornecedor, setNovoFornecedor] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-
-  const fornecedoresFiltrados = (fornecedores || []).filter(f => f && typeof f === 'string' && f.toLowerCase().includes((searchTerm || '').toLowerCase()));
-
-  const handleSelect = (fornecedor) => { onChange(fornecedor); setIsAdding(false); setSearchTerm(''); };
-  const handleAddNew = () => { if (novoFornecedor.trim()) { onAddFornecedor(novoFornecedor.trim()); onChange(novoFornecedor.trim()); setNovoFornecedor(''); setIsAdding(false); setSearchTerm(''); } };
-
+  const fornecedoresFiltrados = (fornecedores || [])
+    .filter(f => f && typeof f === 'string' && f.toLowerCase()
+      .includes((searchTerm || '')
+        .toLowerCase()));
+  const handleSelect = (fornecedor) => {
+    onChange(fornecedor);
+    setIsAdding(false);
+    setSearchTerm('');
+  };
+  const handleAddNew = () => {
+    if (novoFornecedor.trim()) {
+      onAddFornecedor(novoFornecedor.trim());
+      onChange(novoFornecedor.trim());
+      setNovoFornecedor('');
+      setIsAdding(false);
+      setSearchTerm('');
+    }
+  };
   return (
     <div className="relative">
       {!isAdding ? (
@@ -929,32 +1108,35 @@ const FornecedorSelect = ({ value, onChange, fornecedores, onAddFornecedor }) =>
     </div>
   );
 };
-
-const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
+const ClienteSelect = ({
+  value,
+  onChange,
+  clientes,
+  onAddCliente
+}) => {
   const [isAdding, setIsAdding] = useState(false);
   const [novoCliente, setNovoCliente] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-
   const selectedList = Array.isArray(value) ? value : (value ? [value] : []);
-  const clientesFiltrados = (clientes || []).filter(c => c && typeof c === 'string' && c.toLowerCase().includes((searchTerm || '').toLowerCase()));
-
-  const handleSelect = (cliente) => { 
+  const clientesFiltrados = (clientes || [])
+    .filter(c => c && typeof c === 'string' && c.toLowerCase()
+      .includes((searchTerm || '')
+        .toLowerCase()));
+  const handleSelect = (cliente) => {
     onChange(cliente); // No formulário nós interceptamos para adicionar à lista
-    setIsAdding(false); 
-    setSearchTerm(''); 
+    setIsAdding(false);
+    setSearchTerm('');
   };
-  
-  const handleAddNew = () => { 
-    if (novoCliente.trim()) { 
-        const n = novoCliente.trim();
-        onAddCliente(n); 
-        onChange(n); 
-        setNovoCliente(''); 
-        setIsAdding(false); 
-        setSearchTerm(''); 
-    } 
+  const handleAddNew = () => {
+    if (novoCliente.trim()) {
+      const n = novoCliente.trim();
+      onAddCliente(n);
+      onChange(n);
+      setNovoCliente('');
+      setIsAdding(false);
+      setSearchTerm('');
+    }
   };
-
   return (
     <div className="relative">
       {!isAdding ? (
@@ -988,20 +1170,23 @@ const ClienteSelect = ({ value, onChange, clientes, onAddCliente }) => {
     </div>
   );
 };
-
-const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEdit, onRemove }) => {
+const GerenciarFornecedoresModal = ({
+  isOpen,
+  onClose,
+  fornecedores,
+  onAdd,
+  onEdit,
+  onRemove
+}) => {
   const [editingName, setEditingName] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [newFornecedor, setNewFornecedor] = useState('');
   const [fornecedorToDelete, setFornecedorToDelete] = useState(null);
-
   if (!isOpen) return null;
-
   const handleSaveEdit = (oldName) => {
     onEdit(oldName, editValue);
     setEditingName(null);
   };
-
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up flex flex-col max-h-[85vh] relative">
@@ -1059,20 +1244,23 @@ const GerenciarFornecedoresModal = ({ isOpen, onClose, fornecedores, onAdd, onEd
     </div>
   );
 };
-
-const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRemove }) => {
+const GerenciarClientesModal = ({
+  isOpen,
+  onClose,
+  clientes,
+  onAdd,
+  onEdit,
+  onRemove
+}) => {
   const [editingName, setEditingName] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [newCliente, setNewCliente] = useState('');
   const [clienteToDelete, setClienteToDelete] = useState(null);
-
   if (!isOpen) return null;
-
   const handleSaveEdit = (oldName) => {
     onEdit(oldName, editValue);
     setEditingName(null);
   };
-
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up flex flex-col max-h-[85vh] relative">
@@ -1130,29 +1318,34 @@ const GerenciarClientesModal = ({ isOpen, onClose, clientes, onAdd, onEdit, onRe
     </div>
   );
 };
-
-const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, onAddUser, onRemoveUser, onResetPassword, onUpdatePermissions }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [nome, setNome] = useState('');
-  const [cargo, setCargo] = useState('');
-  const [isNewAdmin, setIsNewAdmin] = useState(false);
-  const [isCanApprove, setIsCanApprove] = useState(false);
-  const [isManager, setIsManager] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [modalMessage, setModalMessage] = useState('');
-  const [userToRemove, setUserToRemove] = useState(null);
-  const [userToReset, setUserToReset] = useState(null);
-  const [newResetPassword, setNewResetPassword] = useState('');
-
-  // === NOVOS ESTADOS PARA EDIÇÃO ===
-  const [userToEdit, setUserToEdit] = useState(null);
-  const [editIsAdmin, setEditIsAdmin] = useState(false);
-  const [editCanApprove, setEditCanApprove] = useState(false);
-  const [editIsManager, setEditIsManager] = useState(false);
-
-  if (!isOpen) return null;
+const GerenciarUsuariosModal = ({
+  isOpen,
+  onClose,
+  usersDirectory,
+  currentUid,
+  onAddUser,
+  onRemoveUser,
+  onResetPassword,
+  onUpdatePermissions
+}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [nome, setNome] = useState('');
+  const [cargo, setCargo] = useState('');
+  const [isNewAdmin, setIsNewAdmin] = useState(false);
+  const [isCanApprove, setIsCanApprove] = useState(false);
+  const [isManager, setIsManager] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [userToRemove, setUserToRemove] = useState(null);
+  const [userToReset, setUserToReset] = useState(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
+  // === NOVOS ESTADOS PARA EDIÇÃO ===
+  const [userToEdit, setUserToEdit] = useState(null);
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
+  const [editCanApprove, setEditCanApprove] = useState(false);
+  const [editIsManager, setEditIsManager] = useState(false);
+  if (!isOpen) return null;
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password.length < 6) {
@@ -1164,23 +1357,28 @@ const GerenciarUsuariosModal = ({ isOpen, onClose, usersDirectory, currentUid, o
     const success = await onAddUser(email, password, nome, cargo, isNewAdmin, isCanApprove, isManager);
     setIsSubmitting(false);
     if (success) {
-      setEmail(''); setPassword(''); setNome(''); setCargo(''); setIsNewAdmin(false); setIsCanApprove(false); setIsManager(false);
+      setEmail('');
+      setPassword('');
+      setNome('');
+      setCargo('');
+      setIsNewAdmin(false);
+      setIsCanApprove(false);
+      setIsManager(false);
     }
   };
-
   const handleConfirmReset = () => {
-      if(newResetPassword.length < 6) {
-          setModalMessage('A nova senha deve ter 6 caracteres no mínimo.');
-          setTimeout(() => setModalMessage(''), 3000);
-          return;
-      }
-      onResetPassword(userToReset.id, newResetPassword);
-      setUserToReset(null);
-      setNewResetPassword('');
-      setModalMessage('Senha atualizada com sucesso!');
+    if (newResetPassword.length < 6) {
+      setModalMessage('A nova senha deve ter 6 caracteres no mínimo.');
       setTimeout(() => setModalMessage(''), 3000);
+      return;
+    }
+    onResetPassword(userToReset.id, newResetPassword);
+    setUserToReset(null);
+    setNewResetPassword('');
+    setModalMessage('Senha atualizada com sucesso!');
+    setTimeout(() => setModalMessage(''), 3000);
   };
-const handleConfirmEditPermissions = () => {
+  const handleConfirmEditPermissions = () => {
     onUpdatePermissions(userToEdit.id, editIsAdmin, editCanApprove, editIsManager);
     setUserToEdit(null);
     setModalMessage('Permissões atualizadas com sucesso!');
@@ -1347,27 +1545,28 @@ const handleConfirmEditPermissions = () => {
     </div>
   );
 };
-
-const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave }) => {
+const EditProfileModal = ({
+  isOpen,
+  onClose,
+  initialName,
+  initialRole,
+  onSave
+}) => {
   const [name, setName] = useState(initialName || '');
   const [role, setRole] = useState(initialRole || '');
-
   useEffect(() => {
     if (isOpen) {
       setName(initialName || '');
       setRole(initialRole || '');
     }
   }, [isOpen, initialName, initialRole]);
-
   if (!isOpen) return null;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (name.trim() && role.trim()) {
       onSave(name.trim(), role.trim());
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full animate-fade-in-up">
@@ -1393,33 +1592,57 @@ const EditProfileModal = ({ isOpen, onClose, initialName, initialRole, onSave })
     </div>
   );
 };
-
-const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) => {
+const StatusModal = ({
+  registro,
+  onClose,
+  onSave,
+  avaliadorAtual,
+  canApprove
+}) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
-  const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
+  const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date()
+    .toISOString()
+    .split('T')[0]);
   const [arquivado, setArquivado] = useState(registro?.arquivado || false);
-
   const optStatus = [
-    { value: 'Pendente', label: '⏳ Aguardando / Pendente' },
-    { value: 'Liberado', label: '✅ Liberado (Aprovado)' },
-    { value: 'Não Liberado', label: '❌ Não Liberado (Com Pendências)' }
+    {
+      value: 'Pendente',
+      label: '⏳ Aguardando / Pendente'
+    },
+    {
+      value: 'Liberado',
+      label: '✅ Liberado (Aprovado)'
+    },
+    {
+      value: 'Não Liberado',
+      label: '❌ Não Liberado (Com Pendências)'
+    }
   ];
-
   const optEnvio = [
-    { value: 'nao', label: '📥 Não Enviado' },
-    { value: 'sim', label: '📤 Enviado' }
+    {
+      value: 'nao',
+      label: '📥 Não Enviado'
+    },
+    {
+      value: 'sim',
+      label: '📤 Enviado'
+    }
   ];
-
   const optArquivamento = [
-    { value: 'nao', label: '📁 Ativo' },
-    { value: 'sim', label: '🗄️ Arquivado' }
+    {
+      value: 'nao',
+      label: '📁 Ativo'
+    },
+    {
+      value: 'sim',
+      label: '🗄️ Arquivado'
+    }
   ];
-
   // Estilo igual ao do novo dropdown para o input de data
-  const dateInputClass = "w-full bg-white border border-gray-200 hover:border-[#F4B41A] rounded-xl px-4 py-2.5 text-[13px] font-bold text-gray-700 outline-none transition-all shadow-sm";
-
+  const dateInputClass =
+    "w-full bg-white border border-gray-200 hover:border-[#F4B41A] rounded-xl px-4 py-2.5 text-[13px] font-bold text-gray-700 outline-none transition-all shadow-sm";
   return (
     <div className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full border-t-4 border-purple-500 animate-fade-in-up">
@@ -1475,10 +1698,13 @@ const StatusModal = ({ registro, onClose, onSave, avaliadorAtual, canApprove }) 
   );
 };
 // Componente de Dropdown Customizado
-const CustomDropdown = ({ value, onChange, options }) => {
+const CustomDropdown = ({
+  value,
+  onChange,
+  options
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (ref.current && !ref.current.contains(event.target)) setIsOpen(false);
@@ -1486,9 +1712,7 @@ const CustomDropdown = ({ value, onChange, options }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   const selectedOption = options.find(o => o.value === value) || options[0];
-
   return (
     <div className="relative w-full" ref={ref}>
       <button
@@ -1522,8 +1746,10 @@ const CustomDropdown = ({ value, onChange, options }) => {
     </div>
   );
 };
-
-const DashboardFilters = ({ onFilterChange, fornecedores }) => {
+const DashboardFilters = ({
+  onFilterChange,
+  fornecedores
+}) => {
   const [filters, setFilters] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -1534,18 +1760,23 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
         status: params.get('status') || ''
       };
     }
-    return { periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' };
+    return {
+      periodo: 'mes_atual',
+      fornecedor: '',
+      tipo: '',
+      status: ''
+    };
   });
-
   useEffect(() => {
     onFilterChange(filters);
   }, []);
-
   const handleChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
+    const newFilters = {
+      ...filters,
+      [key]: value
+    };
     setFilters(newFilters);
     onFilterChange(newFilters);
-
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (value) params.set(key, value);
@@ -1554,38 +1785,92 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
       window.history.pushState({}, '', newUrl);
     }
   };
-
   const optPeriodo = [
-    { value: 'mes_atual', label: 'Mês Atual' },
-    { value: 'mes_anterior', label: 'Mês Anterior' },
-    { value: 'trimestre', label: 'Último Trimestre' },
-    { value: 'ano', label: 'Este Ano' },
-    { value: 'todos', label: 'Todo Período' }
+    {
+      value: 'mes_atual',
+      label: 'Mês Atual'
+    },
+    {
+      value: 'mes_anterior',
+      label: 'Mês Anterior'
+    },
+    {
+      value: 'trimestre',
+      label: 'Último Trimestre'
+    },
+    {
+      value: 'ano',
+      label: 'Este Ano'
+    },
+    {
+      value: 'todos',
+      label: 'Todo Período'
+    }
   ];
-
   const optStatus = [
-    { value: '', label: 'Todos os Status' },
-    { value: 'Pendente', label: '⏳ Aguardando Avaliação' },
-    { value: 'Liberado', label: '✅ Liberados' },
-    { value: 'Não Liberado', label: '❌ Pendentes de Correção' }
+    {
+      value: '',
+      label: 'Todos os Status'
+    },
+    {
+      value: 'Pendente',
+      label: '⏳ Aguardando Avaliação'
+    },
+    {
+      value: 'Liberado',
+      label: '✅ Liberados'
+    },
+    {
+      value: 'Não Liberado',
+      label: '❌ Pendentes de Correção'
+    }
   ];
-
   const optFornecedor = [
-    { value: '', label: 'Todos Fornecedores' },
-    ...(fornecedores || []).filter(f => typeof f === 'string').map(f => ({ value: f, label: f }))
+    {
+      value: '',
+      label: 'Todos Fornecedores'
+    },
+    ...(fornecedores || [])
+    .filter(f => typeof f === 'string')
+    .map(f => ({
+      value: f,
+      label: f
+    }))
   ];
-
   const optTipo = [
-    { value: '', label: 'Todos os Tipos' },
-    { value: 'Problema com Fornecedor', label: 'Problema com Fornecedor' },
-    { value: 'Insumo ou Embalagem', label: 'Insumo ou Embalagem' },
-    { value: 'Ocorrência Interna', label: 'Ocorrência Interna' },
-    { value: 'Relatório de Não Conformidade - Cliente', label: 'Não Conformidade - Cliente' },
-    { value: 'Teste de Produto', label: 'Teste de Produto' },
-    { value: 'Teste de Equipamento', label: 'Teste de Equipamento' },
-    { value: 'Comunicado / Parecer Livre', label: 'Comunicado / Parecer Livre' }
+    {
+      value: '',
+      label: 'Todos os Tipos'
+    },
+    {
+      value: 'Problema com Fornecedor',
+      label: 'Problema com Fornecedor'
+    },
+    {
+      value: 'Insumo ou Embalagem',
+      label: 'Insumo ou Embalagem'
+    },
+    {
+      value: 'Ocorrência Interna',
+      label: 'Ocorrência Interna'
+    },
+    {
+      value: 'Relatório de Não Conformidade - Cliente',
+      label: 'Não Conformidade - Cliente'
+    },
+    {
+      value: 'Teste de Produto',
+      label: 'Teste de Produto'
+    },
+    {
+      value: 'Teste de Equipamento',
+      label: 'Teste de Equipamento'
+    },
+    {
+      value: 'Comunicado / Parecer Livre',
+      label: 'Comunicado / Parecer Livre'
+    }
   ];
-
   return (
     <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-gray-200/60 flex flex-col md:flex-row gap-4 items-center animate-fade-in-up relative z-40">
       <div className="flex items-center gap-2 w-full md:w-auto shrink-0 pl-1">
@@ -1602,12 +1887,16 @@ const DashboardFilters = ({ onFilterChange, fornecedores }) => {
     </div>
   );
 };
-const BarChart = ({ data, title, isTypes = false }) => {
-  if (!data || data.length === 0) return null;
-  const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
-
-  return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 h-full">
+const BarChart = ({
+data,
+title,
+isTypes = false
+}) => {
+if (!data || data.length === 0) return null;
+const maxValue = Math.max(...(data || [])
+.map(d => d.value || 0), 1);
+return (
+<div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 h-full">
       <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
       <div className="space-y-3.5">
         {(data || []).map((item, index) => {
@@ -1638,17 +1927,23 @@ const BarChart = ({ data, title, isTypes = false }) => {
                 ></div>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+);
+})
+}
+</div> <
+/div>
+);
 };
-const TimelineChart = ({ data, title, color = '#F4B41A', onSelectDate, selectedDate }) => {
+const TimelineChart = ({
+  data,
+  title,
+  color = '#F4B41A',
+  onSelectDate,
+  selectedDate
+}) => {
   if (!data || data.length === 0) return null;
   const maxValue = Math.max(...data.map(d => d.value || 0), 1);
   const midValue = Math.ceil(maxValue / 2);
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[320px]">
       <h3 className="text-sm font-bold text-gray-700 mb-6 flex justify-between">
@@ -1700,24 +1995,38 @@ const TimelineChart = ({ data, title, color = '#F4B41A', onSelectDate, selectedD
     </div>
   );
 };
-const PieChartComponent = ({ data, title }) => {
+const PieChartComponent = ({
+  data,
+  title
+}) => {
   if (!data || data.length === 0) return null;
-  const total = (data || []).reduce((sum, item) => sum + (item.value || 0), 0);
+  const total = (data || [])
+    .reduce((sum, item) => sum + (item.value || 0), 0);
   if (total === 0) return null;
-  
   const colors = ['#F4B41A', '#ED7D31', '#5C3A21', '#22C55E', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
   let currentAngle = 0;
-  const slices = (data || []).map((item, index) => {
-    const percentage = ((item.value || 0) / total) * 100;
-    const angle = (percentage / 100) * 360;
-    const startAngle = currentAngle; currentAngle += angle;
-    const startRad = ((startAngle - 90) * Math.PI) / 180, endRad = ((startAngle + angle - 90) * Math.PI) / 180;
-    const cx = 50, cy = 50, r = 40;
-    const x1 = cx + r * Math.cos(startRad), y1 = cy + r * Math.sin(startRad);
-    const x2 = cx + r * Math.cos(endRad), y2 = cy + r * Math.sin(endRad);
-    return { ...item, percentage, color: item.color || colors[index % colors.length], path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${angle > 180 ? 1 : 0} 1 ${x2} ${y2} Z` };
-  });
-
+  const slices = (data || [])
+    .map((item, index) => {
+      const percentage = ((item.value || 0) / total) * 100;
+      const angle = (percentage / 100) * 360;
+      const startAngle = currentAngle;
+      currentAngle += angle;
+      const startRad = ((startAngle - 90) * Math.PI) / 180,
+        endRad = ((startAngle + angle - 90) * Math.PI) / 180;
+      const cx = 50,
+        cy = 50,
+        r = 40;
+      const x1 = cx + r * Math.cos(startRad),
+        y1 = cy + r * Math.sin(startRad);
+      const x2 = cx + r * Math.cos(endRad),
+        y2 = cy + r * Math.sin(endRad);
+      return {
+        ...item,
+        percentage,
+        color: item.color || colors[index % colors.length],
+        path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${angle > 180 ? 1 : 0} 1 ${x2} ${y2} Z`
+      };
+    });
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
       <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
@@ -1739,12 +2048,16 @@ const PieChartComponent = ({ data, title }) => {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </div> <
+    /div>
   );
 };
-
-const HistoricoModal = ({ isOpen, onClose, solicitante, urgencia }) => {
+const HistoricoModal = ({
+  isOpen,
+  onClose,
+  solicitante,
+  urgencia
+}) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/70 z-[300] flex items-center justify-center p-4 backdrop-blur-sm no-print">
@@ -1762,38 +2075,63 @@ const HistoricoModal = ({ isOpen, onClose, solicitante, urgencia }) => {
     </div>
   );
 };
-
 const getReportTheme = (tipo, corTemaManual) => {
   const paleta = {
-    'Amarelo': { main: '#F4B41A', light: 'rgba(244, 180, 26, 0.15)', text: '#5C3A21' },
-    'Azul': { main: '#0054A6', light: 'rgba(0, 84, 166, 0.1)', text: '#FFFFFF' },
-    'Marrom': { main: '#5C3A21', light: 'rgba(92, 58, 33, 0.1)', text: '#FFFFFF' },
-    'Creme': { main: '#E1C28F', light: 'rgba(225, 194, 143, 0.3)', text: '#5C3A21' },
-    'Cinza': { main: '#64748B', light: 'rgba(100, 116, 139, 0.1)', text: '#FFFFFF' }
+    'Amarelo': {
+      main: '#F4B41A',
+      light: 'rgba(244, 180, 26, 0.15)',
+      text: '#5C3A21'
+    },
+    'Azul': {
+      main: '#0054A6',
+      light: 'rgba(0, 84, 166, 0.1)',
+      text: '#FFFFFF'
+    },
+    'Marrom': {
+      main: '#5C3A21',
+      light: 'rgba(92, 58, 33, 0.1)',
+      text: '#FFFFFF'
+    },
+    'Creme': {
+      main: '#E1C28F',
+      light: 'rgba(225, 194, 143, 0.3)',
+      text: '#5C3A21'
+    },
+    'Cinza': {
+      main: '#64748B',
+      light: 'rgba(100, 116, 139, 0.1)',
+      text: '#FFFFFF'
+    }
   };
-  
   if (corTemaManual && paleta[corTemaManual]) return paleta[corTemaManual];
-
   const t = String(tipo || '');
-  if (t.includes('Teste')) return paleta['Azul']; 
-  if (t === 'Relatório de Não Conformidade - Cliente') return paleta['Marrom']; 
-  if (t === 'Ocorrência Interna') return paleta['Creme']; 
-  if (t === 'Comunicado / Parecer Livre') return paleta['Cinza']; 
-  return paleta['Amarelo']; 
+  if (t.includes('Teste')) return paleta['Azul'];
+  if (t === 'Relatório de Não Conformidade - Cliente') return paleta['Marrom'];
+  if (t === 'Ocorrência Interna') return paleta['Creme'];
+  if (t === 'Comunicado / Parecer Livre') return paleta['Cinza'];
+  return paleta['Amarelo'];
 };
-
-const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avaliadorAtual, isManager, userName, onDarVisto, onSolicitarCorrecao }) => {
+const RelatorioViewModal = ({
+  registro,
+  onClose,
+  onSaveStatus,
+  canApprove,
+  avaliadorAtual,
+  isManager,
+  userName,
+  onDarVisto,
+  onSolicitarCorrecao
+}) => {
   const [status, setStatus] = useState(registro?.status || 'Pendente');
   const [obs, setObs] = useState(registro?.observacoesStatus || '');
   const [enviado, setEnviado] = useState(registro?.enviado || false);
-  const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date().toISOString().split('T')[0]);
+  const [dataEnvio, setDataEnvio] = useState(registro?.dataEnvio || new Date()
+    .toISOString()
+    .split('T')[0]);
   const [arquivado, setArquivado] = useState(registro?.arquivado || false);
   const [showHistorico, setShowHistorico] = useState(false);
-  
   const [obsGerencia, setObsGerencia] = useState('');
-
   if (!registro) return null;
-
   const safeDate = (dateString) => {
     if (!dateString) return '';
     try {
@@ -1804,39 +2142,37 @@ const RelatorioViewModal = ({ registro, onClose, onSaveStatus, canApprove, avali
       const d = new Date(dateString);
       if (isNaN(d.getTime())) return '';
       return d.toLocaleDateString('pt-BR');
-    } catch (error) { return ''; }
+    } catch (error) {
+      return '';
+    }
   };
-
   const currentAssinaturas = Array.isArray(registro?.assinaturas) ? registro.assinaturas : [];
   const jaAssinou = currentAssinaturas.some(a => a.nome === userName);
-
   let tituloRelatorio = registro.customTituloRelatorio || "RELATÓRIO DE OCORRÊNCIA PRODUTO";
-  let tituloSecao1 = registro.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
-  let tituloSecao2 = registro.customTitulo2 || "2. DESCRIÇÃO DA OCORRÊNCIA"; 
+  let tituloSecao1 = registro.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE";
+  let tituloSecao2 = registro.customTitulo2 || "2. DESCRIÇÃO DA OCORRÊNCIA";
   let tituloSecao3 = registro.customTitulo3 || "3. PARECER TÉCNICO";
-  
   const tipoStr = String(registro.tipoRelatorio || '');
-  
-  if (tipoStr === 'Relatório de Não Conformidade - Cliente') { 
-    if (!registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; 
-    if (!registro.customTitulo1) tituloSecao1 = "DADOS DA OCORRÊNCIA"; 
+  if (tipoStr === 'Relatório de Não Conformidade - Cliente') {
+    if (!registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
+    if (!registro.customTitulo1) tituloSecao1 = "DADOS DA OCORRÊNCIA";
   }
-  if (tipoStr === 'Insumo ou Embalagem' && !registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
-  if (tipoStr === 'Ocorrência Interna' && !registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
-  if (tipoStr.includes('Teste')) { 
-    if (!registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE TESTES"; 
-    if (!registro.customTitulo1) tituloSecao1 = "1. DADOS DO ESTUDO"; 
-    if (!registro.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; 
-    if (!registro.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
+  if (tipoStr === 'Insumo ou Embalagem' && !registro.customTituloRelatorio) tituloRelatorio =
+    "RELATÓRIO DE OCORRÊNCIA INSUMO";
+  if (tipoStr === 'Ocorrência Interna' && !registro.customTituloRelatorio) tituloRelatorio =
+    "RELATÓRIO INTERNO DE OCORRÊNCIA";
+  if (tipoStr.includes('Teste')) {
+    if (!registro.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE TESTES";
+    if (!registro.customTitulo1) tituloSecao1 = "1. DADOS DO ESTUDO";
+    if (!registro.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS";
+    if (!registro.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES";
   }
   const isLivre = tipoStr === 'Comunicado / Parecer Livre';
   if (isLivre && !registro.customTituloRelatorio) tituloRelatorio = "COMUNICADO OFICIAL";
-
   const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
   const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
   const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
-const theme = getReportTheme(tipoStr, registro?.corTema);
-
+  const theme = getReportTheme(tipoStr, registro?.corTema);
   return (
     <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm no-print">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl animate-fade-in-up flex flex-col h-[95vh] overflow-hidden">
@@ -2153,7 +2489,6 @@ const ScrollToTop = () => {
     window.addEventListener("scroll", toggle);
     return () => window.removeEventListener("scroll", toggle);
   }, []);
-  
   if (!isVisible) return null;
   return (
     <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 p-4 bg-[#F4B41A] text-[#5C3A21] rounded-full shadow-2xl hover:scale-110 transition-transform z-[999] animate-fade-in-up print:hidden" title="Voltar ao topo">
@@ -2161,8 +2496,9 @@ const ScrollToTop = () => {
     </button>
   );
 };
+
 function App() {
-  const [view, setView] = useState('loading'); 
+  const [view, setView] = useState('loading');
   const [authLoading, setAuthLoading] = useState(true);
   const [printConfig, setPrintConfig] = useState({
     lineHeight: 1.5,
@@ -2174,9 +2510,9 @@ function App() {
   const [selectedAnalysisType, setSelectedAnalysisType] = useState('Problema com Fornecedor');
   const [selectedDate, setSelectedDate] = useState(null); // Guarda o dia clicado no gráfico
   const [dashboardMode, setDashboardMode] = useState('graficos');
-  const [editingImageIndex, setEditingImageIndex] = useState(null); 
-  const [registros, setRegistros] = useState([]); 
-  const [registroToDelete, setRegistroToDelete] = useState(null); 
+  const [editingImageIndex, setEditingImageIndex] = useState(null);
+  const [registros, setRegistros] = useState([]);
+  const [registroToDelete, setRegistroToDelete] = useState(null);
   const [registroToView, setRegistroToView] = useState(null);
   const [historicoToView, setHistoricoToView] = useState(null);
   const [evaluatingRegistro, setEvaluatingRegistro] = useState(null);
@@ -2186,13 +2522,17 @@ function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isHistoricoModalOpen, setIsHistoricoModalOpen] = useState(false);
-  const [dbError, setDbError] = useState(false); 
+  const [dbError, setDbError] = useState(false);
   const [fornecedores, setFornecedores] = useState([]);
   const [clientes, setClientes] = useState([]);
-  
   const [appMessage, setAppMessage] = useState(null);
   const [user, setUser] = useState(null);
-  const [dashboardFilters, setDashboardFilters] = useState({ periodo: 'mes_atual', fornecedor: '', tipo: '', status: '' });
+  const [dashboardFilters, setDashboardFilters] = useState({
+    periodo: 'mes_atual',
+    fornecedor: '',
+    tipo: '',
+    status: ''
+  });
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(20);
   // Users Directory & Custom App Auth
   const [usersDirectory, setUsersDirectory] = useState([]);
@@ -2203,7 +2543,6 @@ function App() {
     if (typeof window !== 'undefined') return localStorage.getItem('imac_dark_mode') === 'true';
     return false;
   });
-
   useEffect(() => {
     localStorage.setItem('imac_dark_mode', isDarkMode);
     if (isDarkMode) document.documentElement.classList.add('dark-theme-active');
@@ -2216,11 +2555,9 @@ function App() {
   const [loginCargo, setLoginCargo] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [canApprove, setCanApprove] = useState(false);
-  
   // Login e Solicitação Pública (Welcome Screen)
   const [welcomeMode, setWelcomeMode] = useState('choice'); // choice, login, solicitar
   const [solicitacoes, setSolicitacoes] = useState([]);
-
   const getEmptySolicitacaoForm = () => ({
     tipoRelatorio: 'Problema com Fornecedor',
     solicitante: '',
@@ -2234,39 +2571,78 @@ function App() {
     descricao: '',
     imagens: []
   });
-
   const [solicitacaoForm, setSolicitacaoForm] = useState(getEmptySolicitacaoForm());
   // User Profile
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
   const [authError, setAuthError] = useState('');
-
   const defaultAssinaturas = [
-    { nome: 'Ellen Costa', cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados' },
-    { nome: 'Nathália Viana de Carvalho', cargo: 'Nutricionista - CRN 13435\nControle de Qualidade\nIMAC Congelados' },
-    { nome: 'Cristiamberg Coimbra', cargo: 'Estagiário de Qualidade\nControle de Qualidade\nIMAC Congelados' }
+    {
+      nome: 'Ellen Costa',
+      cargo: 'Supervisora de Qualidade\nControle de Qualidade\nIMAC Congelados'
+    },
+    {
+      nome: 'Nathália Viana de Carvalho',
+      cargo: 'Nutricionista - CRN 13435\nControle de Qualidade\nIMAC Congelados'
+    },
+    {
+      nome: 'Cristiamberg Coimbra',
+      cargo: 'Estagiário de Qualidade\nControle de Qualidade\nIMAC Congelados'
+    }
   ];
-
   const getEmptyForm = () => ({
-    customTituloRelatorio: '', customTitulo1: '', customTitulo2: '', customTitulo3: '',
-    labelProduto: '', labelOcorrencia: '', labelDataOcorrencia: '', labelLote: '', labelQuantidade: '', labelValidade: '', labelDataRecebimento: '', labelNf: '', labelHorario: '',
+    customTituloRelatorio: '',
+    customTitulo1: '',
+    customTitulo2: '',
+    customTitulo3: '',
+    labelProduto: '',
+    labelOcorrencia: '',
+    labelDataOcorrencia: '',
+    labelLote: '',
+    labelQuantidade: '',
+    labelValidade: '',
+    labelDataRecebimento: '',
+    labelNf: '',
+    labelHorario: '',
     logo: LOGO_IMAC,
     tipoRelatorio: 'Problema com Fornecedor',
-    dataRelatorio: new Date().toLocaleDateString('pt-BR'),
-    dataOcorrencia: '', produto: '', ocorrencia: '', lote: '', quantidade: '', validade: '',
-    dataRecebimento: '', nf: '', horarioEmbalamento: '', descricao: '', consideracoes: '',
-    lojasLocais: [], dataFabricacao: '', supervisor: '', sabor: '', odor: '', cor: '', temperatura: '', statusParecer: '', acaoCorretiva: '', conclusaoParecer: '',
+    dataRelatorio: new Date()
+      .toLocaleDateString('pt-BR'),
+    dataOcorrencia: '',
+    produto: '',
+    ocorrencia: '',
+    lote: '',
+    quantidade: '',
+    validade: '',
+    dataRecebimento: '',
+    nf: '',
+    horarioEmbalamento: '',
+    descricao: '',
+    consideracoes: '',
+    lojasLocais: [],
+    dataFabricacao: '',
+    supervisor: '',
+    sabor: '',
+    odor: '',
+    cor: '',
+    temperatura: '',
+    statusParecer: '',
+    acaoCorretiva: '',
+    conclusaoParecer: '',
     localData: `Aquiraz, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.`,
-    imagens: [], fornecedor: '', assinaturas: [...defaultAssinaturas],
+    imagens: [],
+    fornecedor: '',
+    assinaturas: [...defaultAssinaturas],
     imagensInvestigacao: [],
-  imagensAcaoCorretiva: [],
- imagensConclusao: [],
-    imagensDescricao: [], 
+    imagensAcaoCorretiva: [],
+    imagensConclusao: [],
+    imagensDescricao: [],
     imagensConsideracoes: [],
-  solicitante: '', urgencia: '',
-    ocultarEstatistica: false, corTema: '',
-});
-
+    solicitante: '',
+    urgencia: '',
+    ocultarEstatistica: false,
+    corTema: '',
+  });
   const renderMiniImageUploader = (fieldLabel, fieldName) => (
     <div className="mt-2">
       <label className="cursor-pointer inline-flex items-center gap-2 text-xs font-bold text-[#5C3A21] bg-[#F4B41A]/20 border border-[#F4B41A]/50 hover:bg-[#F4B41A]/40 px-3 py-1.5 rounded transition">
@@ -2312,9 +2688,8 @@ function App() {
       )}
     </div>
   );
-
   const [formData, setFormData] = useState(getEmptyForm());
-// --- LÓGICA DE RASCUNHO AUTOMÁTICO ---
+  // --- LÓGICA DE RASCUNHO AUTOMÁTICO ---
   useEffect(() => {
     // Só salva rascunho se for um NOVO relatório (não sobrescreve edições de relatórios antigos)
     if (view === 'form' && !editingReportId) {
@@ -2324,18 +2699,19 @@ function App() {
       return () => clearTimeout(timeout);
     }
   }, [formData, view, editingReportId]);
-
   const handleNovoRelatorio = () => {
     const draft = localStorage.getItem('imac_draft_form');
     if (draft) {
-      if (window.confirm("📄 Você tem um rascunho salvo!\n\nDeseja continuar de onde parou?\n(Clique em OK para continuar ou CANCELAR para criar um do zero)")) {
+      if (window.confirm(
+          "📄 Você tem um rascunho salvo!\n\nDeseja continuar de onde parou?\n(Clique em OK para continuar ou CANCELAR para criar um do zero)"
+          )) {
         try {
           setFormData(JSON.parse(draft));
           setEditingReportId(null);
           setView('form');
           window.scrollTo(0, 0);
           return;
-        } catch(e) {}
+        } catch (e) {}
       } else {
         localStorage.removeItem('imac_draft_form');
       }
@@ -2351,26 +2727,23 @@ function App() {
       setAuthLoading(false);
       return;
     }
-    
     const initAuth = async () => {
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
-          await signInAnonymously(auth); 
+          await signInAnonymously(auth);
         }
-      } catch (error) { 
+      } catch (error) {
         console.error("Auth Init Error:", error);
-        setAuthLoading(false); 
+        setAuthLoading(false);
       }
     };
     initAuth();
-    
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
     });
-
     const sessionUserStr = localStorage.getItem('imac_app_session_user');
     if (sessionUserStr) {
       try {
@@ -2387,62 +2760,60 @@ function App() {
     } else {
       setView('welcome');
     }
-
     const savedDir = localStorage.getItem('imac_users_directory');
     if (savedDir) {
-      try { setUsersDirectory(JSON.parse(savedDir)); } catch(e) {}
+      try {
+        setUsersDirectory(JSON.parse(savedDir));
+      } catch (e) {}
     }
-    
     return () => unsubscribe();
   }, []);
-
   useEffect(() => {
     if (!isConfigured) {
       setCheckingDirectory(false);
       return;
     }
-
     const timeout = setTimeout(() => {
       setCheckingDirectory(false);
       setDbSyncError(true);
-    }, 12000); 
-
+    }, 12000);
     if (!db || !user) return;
-    
-    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), 
+    const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data',
+        'users_directory'),
       (snapshot) => {
         clearTimeout(timeout);
-        const cloudData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
+        const cloudData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         if (cloudData.length === 0) {
           setIsDbConfirmedEmpty(true);
         } else {
           setIsDbConfirmedEmpty(false);
         }
         setDbSyncError(false);
-
         setUsersDirectory(prev => {
           const cloudIds = new Set(cloudData.map(u => u.id));
-          const localOnly = (prev || []).filter(u => !cloudIds.has(u.id) && u._isUnsynced);
+          const localOnly = (prev || [])
+            .filter(u => !cloudIds.has(u.id) && u._isUnsynced);
           const merged = [...cloudData, ...localOnly];
           localStorage.setItem('imac_users_directory', JSON.stringify(merged));
-
           const sessionUserStr = localStorage.getItem('imac_app_session_user');
           if (sessionUserStr && cloudData.length > 0) {
-             try {
-               const currentUser = JSON.parse(sessionUserStr);
-               const stillExists = merged.find(u => u.id === currentUser.id);
-               if (!stillExists) {
-                  localStorage.removeItem('imac_app_session_user');
-                  window.location.reload(); 
-               } else {
-                  localStorage.setItem('imac_app_session_user', JSON.stringify(stillExists));
-               }
-             } catch(e){}
+            try {
+              const currentUser = JSON.parse(sessionUserStr);
+              const stillExists = merged.find(u => u.id === currentUser.id);
+              if (!stillExists) {
+                localStorage.removeItem('imac_app_session_user');
+                window.location.reload();
+              } else {
+                localStorage.setItem('imac_app_session_user', JSON.stringify(stillExists));
+              }
+            } catch (e) {}
           }
           return merged;
         });
-        setCheckingDirectory(false); 
+        setCheckingDirectory(false);
       },
       (error) => {
         clearTimeout(timeout);
@@ -2450,13 +2821,11 @@ function App() {
         setDbSyncError(true);
       }
     );
-
     return () => {
       clearTimeout(timeout);
       if (unsubscribeUsers) unsubscribeUsers();
     };
   }, [db, isConfigured, user]);
-
   const loginUser = (userObj) => {
     localStorage.setItem('imac_app_session_user', JSON.stringify(userObj));
     setAppUser(userObj);
@@ -2466,19 +2835,16 @@ function App() {
     setCanApprove(userObj.canApprove === true || userObj.isAdmin === true);
     setView('dashboard');
   };
-
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
     const foundUser = usersDirectory.find(u => u.email === loginEmail && u.password === loginPassword);
-    
     if (foundUser) {
       loginUser(foundUser);
     } else {
       setAuthError("E-mail ou senha incorretos. Verifique suas credenciais.");
     }
   };
-
   const handleBootstrapAdmin = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -2497,32 +2863,30 @@ function App() {
         isAdmin: true,
         canApprove: true,
         isManager: true,
-        dataCriacao: new Date().toISOString(),
+        dataCriacao: new Date()
+          .toISOString(),
         _isUnsynced: true
       };
-      
       const newDirectory = [...usersDirectory, newUser];
       setUsersDirectory(newDirectory);
       localStorage.setItem('imac_users_directory', JSON.stringify(newDirectory));
-      
       if (db && isConfigured) {
-        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser).catch(()=>{});
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser)
+          .catch(() => {});
       }
-      
       loginUser(newUser);
     } catch (error) {
       setAuthError("Erro ao configurar a conta mestre: " + error.message);
     }
   };
-
-  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin, newCanApprove, newIsManager) => {
+  const handleCreateNewUser = async (newEmail, newPassword, newNome, newCargo, newIsAdmin, newCanApprove,
+    newIsManager) => {
     try {
       const existingUser = usersDirectory.find(u => u.email === newEmail);
       if (existingUser) {
         setAppMessage("❌ E-mail já está em uso.");
         return false;
       }
-      
       const newId = "user_" + Date.now();
       const newUser = {
         id: newId,
@@ -2533,20 +2897,19 @@ function App() {
         isAdmin: newIsAdmin,
         canApprove: newCanApprove,
         isManager: newIsManager || false,
-        dataCriacao: new Date().toISOString(),
+        dataCriacao: new Date()
+          .toISOString(),
         _isUnsynced: true
       };
-
       setUsersDirectory(prev => {
         const newList = [...prev, newUser];
         localStorage.setItem('imac_users_directory', JSON.stringify(newList));
         return newList;
       });
-
       if (db && isConfigured) {
-        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser).catch(()=>{});
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', newId), newUser)
+          .catch(() => {});
       }
-
       setAppMessage("✅ Usuário criado com sucesso!");
       return true;
     } catch (error) {
@@ -2554,20 +2917,25 @@ function App() {
       return false;
     }
   };
-const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsManager) => {
+  const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsManager) => {
     try {
       setUsersDirectory(prev => {
-        const newList = prev.map(u => u.id === uid ? { ...u, isAdmin: newIsAdmin, canApprove: newCanApprove, isManager: newIsManager } : u);
+        const newList = prev.map(u => u.id === uid ? {
+          ...u,
+          isAdmin: newIsAdmin,
+          canApprove: newCanApprove,
+          isManager: newIsManager
+        } : u);
         localStorage.setItem('imac_users_directory', JSON.stringify(newList));
         return newList;
       });
-
       if (db && isConfigured) {
-        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid), { 
-          isAdmin: newIsAdmin, 
-          canApprove: newCanApprove, 
-          isManager: newIsManager 
-        }).catch(()=>{});
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid), {
+            isAdmin: newIsAdmin,
+            canApprove: newCanApprove,
+            isManager: newIsManager
+          })
+          .catch(() => {});
       }
     } catch (e) {
       setAppMessage("❌ Erro ao atualizar permissões.");
@@ -2576,17 +2944,21 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
   const handleResetPassword = async (uid, newPass) => {
     try {
       setUsersDirectory(prev => {
-        const newList = prev.map(u => u.id === uid ? { ...u, password: newPass } : u);
+        const newList = prev.map(u => u.id === uid ? {
+          ...u,
+          password: newPass
+        } : u);
         localStorage.setItem('imac_users_directory', JSON.stringify(newList));
         return newList;
       });
-
       if (db && isConfigured) {
-        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid), { password: newPass }).catch(()=>{});
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uid), {
+            password: newPass
+          })
+          .catch(() => {});
       }
     } catch (e) {}
   };
-
   const handleRemoveUser = async (uidToRemove) => {
     try {
       setUsersDirectory(prev => {
@@ -2594,16 +2966,15 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
         localStorage.setItem('imac_users_directory', JSON.stringify(newList));
         return newList;
       });
-
       if (db && isConfigured) {
-        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uidToRemove)).catch(()=>{});
+        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', uidToRemove))
+          .catch(() => {});
       }
       setAppMessage("✅ Usuário revogado do sistema.");
     } catch (e) {
       setAppMessage("❌ Erro ao remover acesso do usuário.");
     }
   };
-
   const handleLogout = async () => {
     setAppUser(null);
     setUserName('');
@@ -2615,26 +2986,27 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     localStorage.removeItem('imac_app_session_user');
     setView('welcome');
   };
-
   const handleUpdateProfile = async (newName, newRole) => {
     setUserName(newName);
     setUserRole(newRole);
-
     if (appUser) {
-      const updatedUser = { ...appUser, nome: newName, cargo: newRole };
+      const updatedUser = {
+        ...appUser,
+        nome: newName,
+        cargo: newRole
+      };
       loginUser(updatedUser);
-
       setUsersDirectory(prev => {
         const newList = prev.map(u => u.id === appUser.id ? updatedUser : u);
         localStorage.setItem('imac_users_directory', JSON.stringify(newList));
         return newList;
       });
-
       if (db && isConfigured) {
         updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users_directory', appUser.id), {
-          nome: newName,
-          cargo: newRole
-        }).then(() => setAppMessage("✅ Perfil atualizado com sucesso!"))
+            nome: newName,
+            cargo: newRole
+          })
+          .then(() => setAppMessage("✅ Perfil atualizado com sucesso!"))
           .catch(() => setAppMessage("💾 Perfil salvo localmente."));
       } else {
         setAppMessage("💾 Perfil salvo localmente.");
@@ -2643,7 +3015,6 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     setIsProfileModalOpen(false);
     setTimeout(() => setAppMessage(null), 3000);
   };
-
   useEffect(() => {
     const savedFornecedores = localStorage.getItem('imac_fornecedores');
     if (!savedFornecedores) {
@@ -2656,7 +3027,6 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
         if (Array.isArray(parsed)) setFornecedores(parsed);
       } catch (e) {}
     }
-
     const savedClientes = localStorage.getItem('imac_clientes');
     if (!savedClientes) {
       const defaultClientes = ['Loja Matriz', 'Filial Centro', 'Distribuidora ABC', 'Mercado São Luiz'];
@@ -2669,151 +3039,200 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       } catch (e) {}
     }
   }, []);
-
   useEffect(() => {
     if (!db || !isConfigured || !user) return;
-    
-    const unsubscribeFornecedores = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data().nome);
-      if (data.length > 0) { 
-        setFornecedores(data); 
-        saveToLocalStorage('imac_fornecedores', data); 
+    const unsubscribeFornecedores = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data',
+      'fornecedores'), (snapshot) => {
+      const data = snapshot.docs.map(doc => doc.data()
+        .nome);
+      if (data.length > 0) {
+        setFornecedores(data);
+        saveToLocalStorage('imac_fornecedores', data);
       }
     }, (error) => {});
-
-    const unsubscribeClientes = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data().nome);
-      if (data.length > 0) { 
-        setClientes(data); 
-        saveToLocalStorage('imac_clientes', data); 
+    const unsubscribeClientes = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data',
+      'clientes'), (snapshot) => {
+      const data = snapshot.docs.map(doc => doc.data()
+        .nome);
+      if (data.length > 0) {
+        setClientes(data);
+        saveToLocalStorage('imac_clientes', data);
       }
     }, (error) => {});
-
     return () => {
       unsubscribeFornecedores();
       unsubscribeClientes();
     };
   }, [db, isConfigured, user]);
-
   const addFornecedor = async (nome) => {
     const nomeLimpo = nome.trim();
-    if (!(fornecedores || []).includes(nomeLimpo)) {
-      setFornecedores(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_fornecedores', newList); return newList; });
+    if (!(fornecedores || [])
+      .includes(nomeLimpo)) {
+      setFornecedores(prev => {
+        const newList = [...(prev || []), nomeLimpo];
+        saveToLocalStorage('imac_fornecedores', newList);
+        return newList;
+      });
       if (db && isConfigured) {
-        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
+        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), {
+            nome: nomeLimpo,
+            dataCriacao: new Date()
+              .toISOString()
+          })
+          .catch(() => {});
       }
     }
   };
-
   const editFornecedorObj = async (oldName, newName) => {
-    if(!newName.trim() || oldName === newName) return;
+    if (!newName.trim() || oldName === newName) return;
     const cleanNew = newName.trim();
-    const newList = (fornecedores || []).map(f => f === oldName ? cleanNew : f);
+    const newList = (fornecedores || [])
+      .map(f => f === oldName ? cleanNew : f);
     setFornecedores(newList);
     saveToLocalStorage('imac_fornecedores', newList);
-
     if (db && isConfigured) {
-        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
-            const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
-            if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
-            else addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), { nome: cleanNew, dataCriacao: new Date().toISOString() }).catch(()=>{});
-        }).catch(()=>{});
+      getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'))
+        .then(qDocs => {
+          const docToEdit = qDocs.docs.find(d => d.data()
+            .nome === oldName);
+          if (docToEdit) updateDoc(docToEdit.ref, {
+              nome: cleanNew
+            })
+            .catch(() => {});
+          else addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'), {
+              nome: cleanNew,
+              dataCriacao: new Date()
+                .toISOString()
+            })
+            .catch(() => {});
+        })
+        .catch(() => {});
     }
   };
-
   const removeFornecedorObj = async (nomeToRemove) => {
-    const newList = (fornecedores || []).filter(f => f !== nomeToRemove);
+    const newList = (fornecedores || [])
+      .filter(f => f !== nomeToRemove);
     setFornecedores(newList);
     saveToLocalStorage('imac_fornecedores', newList);
-
     if (db && isConfigured) {
-        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores')).then(qDocs => {
-            const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
-            if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
-        }).catch(()=>{});
+      getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fornecedores'))
+        .then(qDocs => {
+          const docToDel = qDocs.docs.find(d => d.data()
+            .nome === nomeToRemove);
+          if (docToDel) deleteDoc(docToDel.ref)
+            .catch(() => {});
+        })
+        .catch(() => {});
     }
   };
-
   const addCliente = async (nome) => {
     const nomeLimpo = nome.trim();
-    if (!(clientes || []).includes(nomeLimpo)) {
-      setClientes(prev => { const newList = [...(prev || []), nomeLimpo]; saveToLocalStorage('imac_clientes', newList); return newList; });
+    if (!(clientes || [])
+      .includes(nomeLimpo)) {
+      setClientes(prev => {
+        const newList = [...(prev || []), nomeLimpo];
+        saveToLocalStorage('imac_clientes', newList);
+        return newList;
+      });
       if (db && isConfigured) {
-        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), { nome: nomeLimpo, dataCriacao: new Date().toISOString() }).catch(()=>{});
+        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), {
+            nome: nomeLimpo,
+            dataCriacao: new Date()
+              .toISOString()
+          })
+          .catch(() => {});
       }
     }
   };
-
   const editClienteObj = async (oldName, newName) => {
-    if(!newName.trim() || oldName === newName) return;
+    if (!newName.trim() || oldName === newName) return;
     const cleanNew = newName.trim();
-    const newList = (clientes || []).map(c => c === oldName ? cleanNew : c);
+    const newList = (clientes || [])
+      .map(c => c === oldName ? cleanNew : c);
     setClientes(newList);
     saveToLocalStorage('imac_clientes', newList);
-
     if (db && isConfigured) {
-        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
-            const docToEdit = qDocs.docs.find(d => d.data().nome === oldName);
-            if (docToEdit) updateDoc(docToEdit.ref, { nome: cleanNew }).catch(()=>{});
-            else addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), { nome: cleanNew, dataCriacao: new Date().toISOString() }).catch(()=>{});
-        }).catch(()=>{});
+      getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'))
+        .then(qDocs => {
+          const docToEdit = qDocs.docs.find(d => d.data()
+            .nome === oldName);
+          if (docToEdit) updateDoc(docToEdit.ref, {
+              nome: cleanNew
+            })
+            .catch(() => {});
+          else addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'), {
+              nome: cleanNew,
+              dataCriacao: new Date()
+                .toISOString()
+            })
+            .catch(() => {});
+        })
+        .catch(() => {});
     }
   };
-
   const removeClienteObj = async (nomeToRemove) => {
-    const newList = (clientes || []).filter(c => c !== nomeToRemove);
+    const newList = (clientes || [])
+      .filter(c => c !== nomeToRemove);
     setClientes(newList);
     saveToLocalStorage('imac_clientes', newList);
-
     if (db && isConfigured) {
-        getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes')).then(qDocs => {
-            const docToDel = qDocs.docs.find(d => d.data().nome === nomeToRemove);
-            if (docToDel) deleteDoc(docToDel.ref).catch(()=>{});
-        }).catch(()=>{});
+      getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'clientes'))
+        .then(qDocs => {
+          const docToDel = qDocs.docs.find(d => d.data()
+            .nome === nomeToRemove);
+          if (docToDel) deleteDoc(docToDel.ref)
+            .catch(() => {});
+        })
+        .catch(() => {});
     }
   };
-
   useEffect(() => {
     const savedSolicitacoes = localStorage.getItem('imac_solicitacoes');
     if (savedSolicitacoes) {
-        try { setSolicitacoes(JSON.parse(savedSolicitacoes)); } catch (e) {}
+      try {
+        setSolicitacoes(JSON.parse(savedSolicitacoes));
+      } catch (e) {}
     }
-    
-    if (!db || !isConfigured || !user) return; 
-    
-    const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (snapshot) => {
-        const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        setSolicitacoes(prev => {
-          const existingIds = new Set(cloudData.map(s => String(s.id)));
-          const localOnly = (prev || []).filter(s => s && s.id && !existingIds.has(String(s.id)) && s._isUnsynced);
-          const merged = [...cloudData, ...localOnly];
-          merged.sort((a,b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
-          saveToLocalStorage('imac_solicitacoes', merged);
-          return merged;
-        });
+    if (!db || !isConfigured || !user) return;
+    const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (
+      snapshot) => {
+      const cloudData = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      }));
+      setSolicitacoes(prev => {
+        const existingIds = new Set(cloudData.map(s => String(s.id)));
+        const localOnly = (prev || [])
+          .filter(s => s && s.id && !existingIds.has(String(s.id)) && s._isUnsynced);
+        const merged = [...cloudData, ...localOnly];
+        merged.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
+        saveToLocalStorage('imac_solicitacoes', merged);
+        return merged;
+      });
     }, (error) => {});
     return () => unsub();
   }, [db, isConfigured, user]);
-
- const submitSolicitacao = async (e) => {
+  const submitSolicitacao = async (e) => {
     e.preventDefault();
     try {
-      const newSol = { 
-        ...solicitacaoForm, 
-        id: 'sol_' + Date.now(), 
-        dataCriacao: new Date().toISOString(),
+      const newSol = {
+        ...solicitacaoForm,
+        id: 'sol_' + Date.now(),
+        dataCriacao: new Date()
+          .toISOString(),
         status: 'Pendente',
         _isUnsynced: true
       };
-      
       setSolicitacoes(prev => {
         const list = [newSol, ...(Array.isArray(prev) ? prev : [])];
         saveToLocalStorage('imac_solicitacoes', list);
         return list;
       });
-
       if (db && isConfigured) {
-        const { _isUnsynced, ...solToSync } = newSol;
+        const {
+          _isUnsynced,
+          ...solToSync
+        } = newSol;
         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', newSol.id), solToSync)
           .then(() => {
             setAppMessage("✅ Solicitação enviada com sucesso para a fila!");
@@ -2825,14 +3244,12 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       } else {
         setAppMessage("✅ Solicitação salva localmente!");
       }
-      
       setSolicitacaoForm(getEmptySolicitacaoForm());
       setTimeout(() => setAppMessage(null), 3500);
-    } catch(e) {
+    } catch (e) {
       setAppMessage("❌ Falha ao tentar processar a solicitação.");
     }
   };
-
   useEffect(() => {
     const savedLocal = localStorage.getItem('imac_registros');
     if (savedLocal) {
@@ -2844,14 +3261,17 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
         }
       } catch (e) {}
     }
-    
-    if (!db || !isConfigured || !user) return; 
-    
-    const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (snapshot) => {
-      const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    if (!db || !isConfigured || !user) return;
+    const unsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'registros'), (
+      snapshot) => {
+      const cloudData = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      }));
       setRegistros(prev => {
         const existingIds = new Set(cloudData.map(r => String(r.id)));
-        const localOnly = (prev || []).filter(r => r && r.id && !existingIds.has(String(r.id)) && r._isUnsynced);
+        const localOnly = (prev || [])
+          .filter(r => r && r.id && !existingIds.has(String(r.id)) && r._isUnsynced);
         const merged = [...cloudData, ...localOnly];
         merged.sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
         saveToLocalStorage('imac_registros', merged);
@@ -2863,21 +3283,26 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     });
     return () => unsubscribe();
   }, [db, isConfigured, user]);
-
-  const handleChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
-const processedUrl = useRef(false);
+  const handleChange = (e) => {
+    const {
+      name,
+      value
+    } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  const processedUrl = useRef(false);
   useEffect(() => {
     if (processedUrl.current) return;
-    
     const urlParams = new URLSearchParams(window.location.search);
     const reportIdToOpen = urlParams.get('rnc');
-    
     // Se não tem link de compartilhamento, marca como processado e segue a vida
     if (!reportIdToOpen) {
       processedUrl.current = true;
       return;
     }
-
     // Só tenta abrir se a pessoa já passou da tela de login (está no painel)
     if (view === 'dashboard') {
       const buscarRelatorioDireto = async () => {
@@ -2886,15 +3311,16 @@ const processedUrl = useRef(false);
           if (db && isConfigured) {
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'registros', reportIdToOpen);
             const docSnap = await getDoc(docRef);
-
             if (docSnap.exists()) {
-              setRegistroToView({ id: docSnap.id, ...docSnap.data() });
+              setRegistroToView({
+                id: docSnap.id,
+                ...docSnap.data()
+              });
               processedUrl.current = true; // Marca que já abriu
               window.history.replaceState(null, '', window.location.pathname); // Limpa a URL
               return; // Para a execução aqui, sucesso!
             }
           }
-
           // 2. FALLBACK: Se falhar a internet rápida, tenta achar no cache local da pessoa
           if (registros && registros.length > 0) {
             const report = registros.find(r => String(r.id) === reportIdToOpen);
@@ -2913,43 +3339,49 @@ const processedUrl = useRef(false);
           processedUrl.current = true; // Previne loops de travamento
         }
       };
-
       buscarRelatorioDireto();
     }
   }, [view, registros, db, isConfigured]); // Atualizado para vigiar quando entra no 'dashboard'
   const handleImageUpload = async (e, isLogo = false) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-
     if (isLogo) {
       try {
         const compressedLogo = await compressImage(files[0], true);
-        setFormData(prev => ({ ...prev, logo: compressedLogo }));
-        try { localStorage.setItem('imac_logo_oficial', compressedLogo); } catch(e){}
+        setFormData(prev => ({
+          ...prev,
+          logo: compressedLogo
+        }));
+        try {
+          localStorage.setItem('imac_logo_oficial', compressedLogo);
+        } catch (e) {}
       } catch (error) {}
       return;
     }
-
     try {
       const compressedImages = await Promise.all(files.map(file => compressImage(file, false)));
       const newImageObjects = compressedImages.map(base64 => ({
         isObject: true,
         id: Date.now() + Math.random(),
-        baseSrc: base64, 
+        baseSrc: base64,
         displaySrc: base64,
-        shapes: [] 
+        shapes: []
       }));
-      setFormData(prev => ({ ...prev, imagens: [...(prev.imagens || []), ...newImageObjects] }));
+      setFormData(prev => ({
+        ...prev,
+        imagens: [...(prev.imagens || []), ...newImageObjects]
+      }));
     } catch (error) {}
   };
-
-  const removeImage = (indexToRemove) => setFormData((prev) => ({ ...prev, imagens: (prev.imagens || []).filter((_, index) => index !== indexToRemove) }));
-
+  const removeImage = (indexToRemove) => setFormData((prev) => ({
+    ...prev,
+    imagens: (prev.imagens || [])
+      .filter((_, index) => index !== indexToRemove)
+  }));
   const handleDragStart = (e, index, field) => {
     e.dataTransfer.setData('sourceIndex', index);
     e.dataTransfer.setData('sourceField', field);
   };
-
   const handleDrop = (e, targetIndex, field) => {
     e.preventDefault();
     const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex'), 10);
@@ -2959,25 +3391,38 @@ const processedUrl = useRef(false);
       const newList = [...(prev[field] || [])];
       const [draggedItem] = newList.splice(sourceIndex, 1);
       newList.splice(targetIndex, 0, draggedItem);
-      return { ...prev, [field]: newList };
+      return {
+        ...prev,
+        [field]: newList
+      };
     });
   };
-
   const handleDragOver = (e) => e.preventDefault();
-
   const changeImageSize = (index, field, newSize) => {
     setFormData(prev => {
       const newList = [...(prev[field] || [])];
       const item = newList[index];
       if (typeof item === 'string') {
-        newList[index] = { isObject: true, id: Date.now(), baseSrc: item, displaySrc: item, shapes: [], tamanho: newSize };
+        newList[index] = {
+          isObject: true,
+          id: Date.now(),
+          baseSrc: item,
+          displaySrc: item,
+          shapes: [],
+          tamanho: newSize
+        };
       } else {
-        newList[index] = { ...item, tamanho: newSize };
+        newList[index] = {
+          ...item,
+          tamanho: newSize
+        };
       }
-      return { ...prev, [field]: newList };
+      return {
+        ...prev,
+        [field]: newList
+      };
     });
   };
-  
   const moveImage = (index, step) => {
     setFormData(prev => {
       const novasImagens = [...(prev.imagens || [])];
@@ -2987,57 +3432,98 @@ const processedUrl = useRef(false);
         novasImagens[newIndex] = novasImagens[index];
         novasImagens[index] = temp;
       }
-      return { ...prev, imagens: novasImagens };
+      return {
+        ...prev,
+        imagens: novasImagens
+      };
     });
   };
-
   const updateImageCaption = (indexToUpdate, legenda) => {
     setFormData(prev => {
       const novasImagens = [...(prev.imagens || [])];
       const item = novasImagens[indexToUpdate];
-
       if (typeof item === 'string') {
-        novasImagens[indexToUpdate] = { isObject: true, id: Date.now(), baseSrc: item, displaySrc: item, shapes: [], legenda: legenda };
+        novasImagens[indexToUpdate] = {
+          isObject: true,
+          id: Date.now(),
+          baseSrc: item,
+          displaySrc: item,
+          shapes: [],
+          legenda: legenda
+        };
       } else if (item) {
-        novasImagens[indexToUpdate] = { ...item, legenda: legenda };
+        novasImagens[indexToUpdate] = {
+          ...item,
+          legenda: legenda
+        };
       }
-      return { ...prev, imagens: novasImagens };
+      return {
+        ...prev,
+        imagens: novasImagens
+      };
     });
   };
-
   const updateAnnotatedImage = (flattenedSrc, newBaseSrc, newShapes) => {
-    setFormData(prev => { 
+    setFormData(prev => {
       const isObj = editingImageIndex && typeof editingImageIndex === 'object';
       const field = isObj ? editingImageIndex.field : 'imagens';
       const index = isObj ? editingImageIndex.index : editingImageIndex;
-
       const novasImagens = [...(prev[field] || [])];
       const item = novasImagens[index];
-      
       if (typeof item === 'string') {
-        novasImagens[index] = { isObject: true, id: Date.now(), baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+        novasImagens[index] = {
+          isObject: true,
+          id: Date.now(),
+          baseSrc: newBaseSrc,
+          displaySrc: flattenedSrc,
+          shapes: newShapes
+        };
       } else if (item) {
-        novasImagens[index] = { ...item, baseSrc: newBaseSrc, displaySrc: flattenedSrc, shapes: newShapes };
+        novasImagens[index] = {
+          ...item,
+          baseSrc: newBaseSrc,
+          displaySrc: flattenedSrc,
+          shapes: newShapes
+        };
       }
-      return { ...prev, [field]: novasImagens }; 
+      return {
+        ...prev,
+        [field]: novasImagens
+      };
     });
-    setEditingImageIndex(null); 
+    setEditingImageIndex(null);
   };
-  
-  const removeLogo = () => { setFormData(prev => ({ ...prev, logo: null })); localStorage.removeItem('imac_logo_oficial'); };
-  
+  const removeLogo = () => {
+    setFormData(prev => ({
+      ...prev,
+      logo: null
+    }));
+    localStorage.removeItem('imac_logo_oficial');
+  };
   const handleAssinaturaChange = (index, field, value) => {
-    const novasAssinaturas = [...(formData.assinaturas || [])]; 
-    if(novasAssinaturas[index]) {
+    const novasAssinaturas = [...(formData.assinaturas || [])];
+    if (novasAssinaturas[index]) {
       novasAssinaturas[index][field] = value;
-      setFormData(prev => ({ ...prev, assinaturas: novasAssinaturas }));
+      setFormData(prev => ({
+        ...prev,
+        assinaturas: novasAssinaturas
+      }));
     }
   };
-  const addAssinatura = () => setFormData(prev => ({ ...prev, assinaturas: [...(prev.assinaturas || []), { nome: '', cargo: '' }] }));
-  const removeAssinatura = (indexToRemove) => setFormData(prev => ({ ...prev, assinaturas: (prev.assinaturas || []).filter((_, index) => index !== indexToRemove) }));
-
+  const addAssinatura = () => setFormData(prev => ({
+    ...prev,
+    assinaturas: [...(prev.assinaturas || []), {
+      nome: '',
+      cargo: ''
+    }]
+  }));
+  const removeAssinatura = (indexToRemove) => setFormData(prev => ({
+    ...prev,
+    assinaturas: (prev.assinaturas || [])
+      .filter((_, index) => index !== indexToRemove)
+  }));
   const startEditingReport = (registro) => {
-    if(!registro) return;
+    if (!registro) return;
     setFormData({
       logo: registro.logo || localStorage.getItem('imac_logo_oficial') || null,
       customTituloRelatorio: registro.customTituloRelatorio || '',
@@ -3078,23 +3564,32 @@ const processedUrl = useRef(false);
       urgencia: registro.urgencia || '',
       descricao: registro.descricao || '',
       consideracoes: registro.consideracoes || '',
-      localData: registro.localData || (registro.dataCriacao ? `Aquiraz, ${safeDate(registro.dataCriacao)}.` : ''),
+      localData: registro.localData || (registro.dataCriacao ?
+        `Aquiraz, ${safeDate(registro.dataCriacao)}.` : ''),
       imagens: Array.isArray(registro.imagens) ? registro.imagens : [],
       fornecedor: registro.fornecedor || '',
       assinaturas: Array.isArray(registro.assinaturas) ? registro.assinaturas : [...defaultAssinaturas],
-      imagensInvestigacao: Array.isArray(registro.imagensInvestigacao) ? registro.imagensInvestigacao : [],
-      imagensAcaoCorretiva: Array.isArray(registro.imagensAcaoCorretiva) ? registro.imagensAcaoCorretiva : [],
+      imagensInvestigacao: Array.isArray(registro.imagensInvestigacao) ? registro.imagensInvestigacao :
+        [],
+      imagensAcaoCorretiva: Array.isArray(registro.imagensAcaoCorretiva) ? registro
+        .imagensAcaoCorretiva : [],
       imagensConclusao: Array.isArray(registro.imagensConclusao) ? registro.imagensConclusao : [],
-      imagensDescricao: Array.isArray(registro.imagensDescricao) ? registro.imagensDescricao : [], // <--- ADICIONAR ESTA LINHA
-     imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro.imagensConsideracoes : [],
-      ocultarEstatistica: registro.ocultarEstatistica || false, corTema: registro.corTema || '',
+      imagensDescricao: Array.isArray(registro.imagensDescricao) ? registro.imagensDescricao :
+    [], // <--- ADICIONAR ESTA LINHA
+      imagensConsideracoes: Array.isArray(registro.imagensConsideracoes) ? registro
+        .imagensConsideracoes : [],
+      ocultarEstatistica: registro.ocultarEstatistica || false,
+      corTema: registro.corTema || '',
     });
     setEditingReportId(registro.id);
     setView('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
-const duplicateReport = (registro) => {
-    if(!registro) return;
+  const duplicateReport = (registro) => {
+    if (!registro) return;
     // Puxa os dados para o formulário
     startEditingReport(registro);
     // Limpa o ID de edição para que o sistema salve como um NOVO relatório
@@ -3107,7 +3602,6 @@ const duplicateReport = (registro) => {
     setFormData(getEmptyForm());
     setView('dashboard');
   };
-
   // Ctrl+S para salvar o formulario
   useEffect(() => {
     if (view !== 'form') return;
@@ -3120,7 +3614,6 @@ const duplicateReport = (registro) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, formData, editingReportId]);
-
   // Aviso ao tentar sair com formulario preenchido
   useEffect(() => {
     if (view !== 'form') return;
@@ -3131,62 +3624,73 @@ const duplicateReport = (registro) => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [view]);
-
   const handleDarVisto = (reg) => {
     if (!appUser?.isManager) return;
     const currentAssinaturas = Array.isArray(reg.assinaturas) ? reg.assinaturas : [];
     const jaAssinou = currentAssinaturas.some(a => a.nome === userName);
     if (jaAssinou) {
-       setAppMessage("⚠️ Você já assinou este relatório.");
-       setTimeout(() => setAppMessage(null), 3000);
-       return;
+      setAppMessage("⚠️ Você já assinou este relatório.");
+      setTimeout(() => setAppMessage(null), 3000);
+      return;
     }
-
-    const newAssinaturas = [...currentAssinaturas, { nome: userName, cargo: 'Gerente Industrial\nResponsável Técnica\nIMAC Congelados' }];
-    const payload = { assinaturas: newAssinaturas, dataModificacao: new Date().toISOString() };
-    
+    const newAssinaturas = [...currentAssinaturas, {
+      nome: userName,
+      cargo: 'Gerente Industrial\nResponsável Técnica\nIMAC Congelados'
+    }];
+    const payload = {
+      assinaturas: newAssinaturas,
+      dataModificacao: new Date()
+        .toISOString()
+    };
     setRegistros(prev => {
-      const updatedList = (prev || []).map(r => r && r.id === reg.id ? { ...r, ...payload } : r);
+      const updatedList = (prev || [])
+        .map(r => r && r.id === reg.id ? {
+          ...r,
+          ...payload
+        } : r);
       saveToLocalStorage('imac_registros', updatedList);
       return updatedList;
     });
-    
     if (db && isConfigured) {
       updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(reg.id)), payload)
         .then(() => setAppMessage("✅ Visto adicionado com sucesso!"))
         .catch(() => setAppMessage("💾 Visto adicionado localmente"));
-    } else { setAppMessage("💾 Visto adicionado localmente"); }
+    } else {
+      setAppMessage("💾 Visto adicionado localmente");
+    }
     setTimeout(() => setAppMessage(null), 3000);
   };
-
   const handleUpdateStatus = (id, newStatus, newObs, newEnviado, newDataEnvio, newArquivado) => {
-    const payload = { 
-      status: newStatus, 
-      observacoesStatus: newObs, 
+    const payload = {
+      status: newStatus,
+      observacoesStatus: newObs,
       enviado: newEnviado,
       dataEnvio: newDataEnvio || '',
       arquivado: newArquivado || false,
-      dataModificacao: new Date().toISOString(),
+      dataModificacao: new Date()
+        .toISOString(),
       avaliadorNome: userName
     };
-    
     setRegistros(prev => {
-      const updatedList = (prev || []).map(r => r && r.id === id ? { ...r, ...payload } : r);
+      const updatedList = (prev || [])
+        .map(r => r && r.id === id ? {
+          ...r,
+          ...payload
+        } : r);
       saveToLocalStorage('imac_registros', updatedList);
       return updatedList;
     });
-    
     if (db && isConfigured) {
       const safePayload = JSON.parse(JSON.stringify(payload));
       updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)), safePayload)
         .then(() => setAppMessage("✅ Avaliação salva com sucesso e sincronizada!"))
         .catch(() => setAppMessage("💾 Avaliação salva localmente (offline)"));
-    } else { setAppMessage("💾 Avaliação salva localmente"); }
-    
+    } else {
+      setAppMessage("💾 Avaliação salva localmente");
+    }
     setEvaluatingRegistro(null);
     setTimeout(() => setAppMessage(null), 3000);
   };
-
   const handleSaveReport = (action = 'save_and_preview') => {
     const registroData = {
       tipoRelatorio: String(formData.tipoRelatorio || 'Problema com Fornecedor'),
@@ -3207,168 +3711,273 @@ const duplicateReport = (registro) => {
       produto: formData.produto || 'Não especificado',
       ocorrencia: formData.ocorrencia || 'Sem descrição',
       fornecedor: formData.fornecedor || '',
-      lote: formData.lote || '', quantidade: formData.quantidade || '', validade: formData.validade || '',
-      dataRecebimento: formData.dataRecebimento || '', nf: formData.nf || '', horarioEmbalamento: formData.horarioEmbalamento || '',
-      dataOcorrencia: formData.dataOcorrencia || '', descricao: formData.descricao || '', consideracoes: formData.consideracoes || '',
-      lojasLocais: formData.lojasLocais || [], dataFabricacao: formData.dataFabricacao || '', supervisor: formData.supervisor || '',
-      sabor: formData.sabor || '', odor: formData.odor || '', cor: formData.cor || '', temperatura: formData.temperatura || '',
-      statusParecer: formData.statusParecer || '', acaoCorretiva: formData.acaoCorretiva || '', conclusaoParecer: formData.conclusaoParecer || '',
+      lote: formData.lote || '',
+      quantidade: formData.quantidade || '',
+      validade: formData.validade || '',
+      dataRecebimento: formData.dataRecebimento || '',
+      nf: formData.nf || '',
+      horarioEmbalamento: formData.horarioEmbalamento || '',
+      dataOcorrencia: formData.dataOcorrencia || '',
+      descricao: formData.descricao || '',
+      consideracoes: formData.consideracoes || '',
+      lojasLocais: formData.lojasLocais || [],
+      dataFabricacao: formData.dataFabricacao || '',
+      supervisor: formData.supervisor || '',
+      sabor: formData.sabor || '',
+      odor: formData.odor || '',
+      cor: formData.cor || '',
+      temperatura: formData.temperatura || '',
+      statusParecer: formData.statusParecer || '',
+      acaoCorretiva: formData.acaoCorretiva || '',
+      conclusaoParecer: formData.conclusaoParecer || '',
       solicitante: formData.solicitante || '',
       urgencia: formData.urgencia || '',
-      imagens: Array.isArray(formData.imagens) ? formData.imagens : [], 
+      imagens: Array.isArray(formData.imagens) ? formData.imagens : [],
       assinaturas: Array.isArray(formData.assinaturas) ? formData.assinaturas : [],
-      logo: formData.logo || null, localData: formData.localData || '',
+      logo: formData.logo || null,
+      localData: formData.localData || '',
       userId: appUser?.id || 'anonimo',
       autorNome: userName || 'Desconhecido',
       autorCargo: userRole || '',
       enviado: false,
-      imagensInvestigacao: Array.isArray(formData.imagensInvestigacao) ? formData.imagensInvestigacao : [],
-      imagensAcaoCorretiva: Array.isArray(formData.imagensAcaoCorretiva) ? formData.imagensAcaoCorretiva : [],
+      imagensInvestigacao: Array.isArray(formData.imagensInvestigacao) ? formData.imagensInvestigacao :
+      [],
+      imagensAcaoCorretiva: Array.isArray(formData.imagensAcaoCorretiva) ? formData.imagensAcaoCorretiva :
+        [],
       imagensConclusao: Array.isArray(formData.imagensConclusao) ? formData.imagensConclusao : [],
       imagensDescricao: Array.isArray(formData.imagensDescricao) ? formData.imagensDescricao : [],
-      imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes : [],
-      ocultarEstatistica: formData.ocultarEstatistica || false, corTema: formData.corTema || '',
+      imagensConsideracoes: Array.isArray(formData.imagensConsideracoes) ? formData.imagensConsideracoes :
+        [],
+      ocultarEstatistica: formData.ocultarEstatistica || false,
+      corTema: formData.corTema || '',
     };
-
     let currentId = editingReportId;
-    
     // Remove o rascunho assim que salvar
     localStorage.removeItem('imac_draft_form');
-
     if (editingReportId) {
-      const updatedAt = new Date().toISOString();
-      const payloadEdicao = { ...registroData, dataModificacao: updatedAt };
+      const updatedAt = new Date()
+        .toISOString();
+      const payloadEdicao = {
+        ...registroData,
+        dataModificacao: updatedAt
+      };
       const existingReport = registros.find(r => r.id === editingReportId);
       if (existingReport && typeof existingReport.enviado !== 'undefined') {
-         payloadEdicao.enviado = existingReport.enviado;
+        payloadEdicao.enviado = existingReport.enviado;
       }
       if (existingReport && typeof existingReport.arquivado !== 'undefined') {
-         payloadEdicao.arquivado = existingReport.arquivado;
+        payloadEdicao.arquivado = existingReport.arquivado;
       }
-      
       setRegistros(prev => {
-        const updatedList = (prev || []).map(r => r && r.id === editingReportId ? { ...r, ...payloadEdicao } : r);
+        const updatedList = (prev || [])
+          .map(r => r && r.id === editingReportId ? {
+            ...r,
+            ...payloadEdicao
+          } : r);
         saveToLocalStorage('imac_registros', updatedList);
         return updatedList;
       });
-
       if (db && isConfigured) {
         const safePayload = JSON.parse(JSON.stringify(payloadEdicao));
-        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)), safePayload)
+        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(editingReportId)),
+            safePayload)
           .then(() => setAppMessage("✅ Relatório atualizado na nuvem!"))
           .catch(() => setAppMessage("💾 Atualização salva localmente"));
-      } else { setAppMessage("💾 Edição salva localmente"); }
-      
+      } else {
+        setAppMessage("💾 Edição salva localmente");
+      }
     } else {
-      const tempId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString();
-      const novoRegistro = { ...registroData, id: tempId, dataCriacao: new Date().toISOString(), _isUnsynced: true };
+      const tempId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now()
+        .toString();
+      const novoRegistro = {
+        ...registroData,
+        id: tempId,
+        dataCriacao: new Date()
+          .toISOString(),
+        _isUnsynced: true
+      };
       currentId = tempId;
-
-      setRegistros(prev => { const newList = [novoRegistro, ...(prev || [])]; saveToLocalStorage('imac_registros', newList); return newList; });
-      
+      setRegistros(prev => {
+        const newList = [novoRegistro, ...(prev || [])];
+        saveToLocalStorage('imac_registros', newList);
+        return newList;
+      });
       if (db && isConfigured) {
-        const { id, _isUnsynced, ...registroParaNuvem } = novoRegistro;
+        const {
+          id,
+          _isUnsynced,
+          ...registroParaNuvem
+        } = novoRegistro;
         const safePayload = JSON.parse(JSON.stringify(registroParaNuvem));
         setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', tempId), safePayload)
           .then(() => setAppMessage("✅ Relatório salvo na nuvem!"))
           .catch(() => setAppMessage("💾 Salvo localmente (offline)"));
-      } else { setAppMessage("💾 Relatório salvo localmente"); }
+      } else {
+        setAppMessage("💾 Relatório salvo localmente");
+      }
     }
-    
     if (action === 'save_and_preview') {
       setEditingReportId(currentId);
       setView('preview');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     } else {
       setFormData(getEmptyForm());
       setEditingReportId(null);
       setView('dashboard');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
     setTimeout(() => setAppMessage(null), 3000);
   };
-
   const handlePrintAndSave = () => window.print();
-
   const confirmDeleteRegistro = (id) => {
-    setRegistros(prev => { 
-      const newList = (prev || []).filter(r => r && r.id !== id); 
-      saveToLocalStorage('imac_registros', newList); 
-      return newList; 
+    setRegistros(prev => {
+      const newList = (prev || [])
+        .filter(r => r && r.id !== id);
+      saveToLocalStorage('imac_registros', newList);
+      return newList;
     });
     if (db && isConfigured) {
-      deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id))).catch(()=>{});
+      deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registros', String(id)))
+        .catch(() => {});
     }
     setRegistroToDelete(null);
   };
-
-const getFilteredRecords = () => {
-    return (registros || []).filter(r => {
-      if(!r || !r.dataCriacao) return false;
-      const d = new Date(r.dataCriacao); 
-      if (isNaN(d.getTime())) return false;
-
-      const now = new Date();
-      if (dashboardFilters.periodo === 'mes_atual') { if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false; } 
-      else if (dashboardFilters.periodo === 'mes_anterior') { const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false; } 
-      else if (dashboardFilters.periodo === 'trimestre') { const t = new Date(); t.setMonth(t.getMonth() - 3); if (d < t) return false; } 
-      else if (dashboardFilters.periodo === 'ano') { if (d.getFullYear() !== now.getFullYear()) return false; }
-      if (dashboardFilters.fornecedor && r.fornecedor !== dashboardFilters.fornecedor) return false;
-      if (dashboardFilters.tipo && r.tipoRelatorio !== dashboardFilters.tipo) return false;
-      
-      const recordStatus = r.status || 'Pendente';
-      if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters.status === 'Pendente' && !r.status)) return false;
-
-      if (globalSearch.trim() !== '') {
-        const term = globalSearch.toLowerCase();
-        const id = String(r.id || '').toLowerCase();
-        const prod = String(r.produto || '').toLowerCase();
-        const ocor = String(r.ocorrencia || '').toLowerCase();
-        const forn = String(r.fornecedor || '').toLowerCase();
-        const lote = String(r.lote || '').toLowerCase();
-        const loja = String(r.lojaLocal || '').toLowerCase();
-        const lojas = Array.isArray(r.lojasLocais) ? r.lojasLocais.join(' ').toLowerCase() : '';
-        const autor = String(r.autorNome || '').toLowerCase();
-
-        if (!id.includes(term) && !prod.includes(term) && !ocor.includes(term) && !forn.includes(term) && !lote.includes(term) && !loja.includes(term) && !lojas.includes(term) && !autor.includes(term)) {
-          return false;
+  const getFilteredRecords = () => {
+    return (registros || [])
+      .filter(r => {
+        if (!r || !r.dataCriacao) return false;
+        const d = new Date(r.dataCriacao);
+        if (isNaN(d.getTime())) return false;
+        const now = new Date();
+        if (dashboardFilters.periodo === 'mes_atual') {
+          if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+        } else if (dashboardFilters.periodo === 'mes_anterior') {
+          const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          if (d.getMonth() !== lm.getMonth() || d.getFullYear() !== lm.getFullYear()) return false;
+        } else if (dashboardFilters.periodo === 'trimestre') {
+          const t = new Date();
+          t.setMonth(t.getMonth() - 3);
+          if (d < t) return false;
+        } else if (dashboardFilters.periodo === 'ano') {
+          if (d.getFullYear() !== now.getFullYear()) return false;
         }
-      }
-
-      return true;
-    });
+        if (dashboardFilters.fornecedor && r.fornecedor !== dashboardFilters.fornecedor) return false;
+        if (dashboardFilters.tipo && r.tipoRelatorio !== dashboardFilters.tipo) return false;
+        const recordStatus = r.status || 'Pendente';
+        if (dashboardFilters.status && recordStatus !== dashboardFilters.status && !(dashboardFilters
+            .status === 'Pendente' && !r.status)) return false;
+        if (globalSearch.trim() !== '') {
+          const term = globalSearch.toLowerCase();
+          const id = String(r.id || '')
+            .toLowerCase();
+          const prod = String(r.produto || '')
+            .toLowerCase();
+          const ocor = String(r.ocorrencia || '')
+            .toLowerCase();
+          const forn = String(r.fornecedor || '')
+            .toLowerCase();
+          const lote = String(r.lote || '')
+            .toLowerCase();
+          const loja = String(r.lojaLocal || '')
+            .toLowerCase();
+          const lojas = Array.isArray(r.lojasLocais) ? r.lojasLocais.join(' ')
+            .toLowerCase() : '';
+          const autor = String(r.autorNome || '')
+            .toLowerCase();
+          if (!id.includes(term) && !prod.includes(term) && !ocor.includes(term) && !forn.includes(
+            term) && !lote.includes(term) && !loja.includes(term) && !lojas.includes(term) && !autor
+            .includes(term)) {
+            return false;
+          }
+        }
+        return true;
+      });
   };
-
   const exportToCSV = () => {
     const records = getFilteredRecords();
-    const rows = records.map(r => [safeDate(r.dataCriacao), r.tipoRelatorio || '', r.produto || '', r.fornecedor || '', r.ocorrencia || '', r.lote || '', r.quantidade || '', r.autorNome || '']);
-    const csv = [['Data', 'Tipo', 'Produto', 'Fornecedor', 'Ocorrência', 'Lote', 'Quantidade', 'Autor'].join(';'), ...rows.map(row => row.join(';'))].join('\n');
-    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `relatorios_rnc.csv`; link.click();
+    const rows = records.map(r => [safeDate(r.dataCriacao), r.tipoRelatorio || '', r.produto || '', r
+      .fornecedor || '', r.ocorrencia || '', r.lote || '', r.quantidade || '', r.autorNome || '']);
+    const csv = [['Data', 'Tipo', 'Produto', 'Fornecedor', 'Ocorrência', 'Lote', 'Quantidade', 'Autor']
+      .join(';'), ...rows.map(row => row.join(';'))].join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], {
+      type: 'text/csv;charset=utf-8;'
+    }));
+    link.download = `relatorios_rnc.csv`;
+    link.click();
   };
-
   const tipoRelAtual = String(formData.tipoRelatorio || 'Problema com Fornecedor');
   const isFornecedor = tipoRelAtual === 'Problema com Fornecedor' || tipoRelAtual === 'Insumo ou Embalagem';
   const isCliente = tipoRelAtual === 'Relatório de Não Conformidade - Cliente';
   const isLivre = tipoRelAtual === 'Comunicado / Parecer Livre';
   const requiresHorario = tipoRelAtual.includes('Teste') || tipoRelAtual === 'Ocorrência Interna';
   const showValidade = !tipoRelAtual.includes('Insumo') && !tipoRelAtual.includes('Equipamento');
-
   const getPlaceholders = () => {
     const p = {
-      'Problema com Fornecedor': { produto: "Ex: Salsicha Hot Dog - Aurora", ocorrencia: "Ex: Desvio de padrão físico", lote: "Ex: 0426011411", quantidade: "Ex: 12 kg", descricao: "Durante o processo de abertura da embalagem, foi identificada uma não conformidade...", consideracoes: "A presença dessas avarias compromete a integridade do insumo..." },
-      'Insumo ou Embalagem': { produto: "Ex: Embalagens plásticas", ocorrencia: "Ex: Fragilidade", lote: "Ex: LOTE 4.1", quantidade: "Ex: 1.562 unidades", descricao: "Durante a rotina de operação...", consideracoes: "O rompimento inviabiliza o acondicionamento..." },
-      'Ocorrência Interna': { produto: "Ex: Pão Hot Dog", ocorrencia: "Ex: Presença de corpo estranho", lote: "Ex: A 0103", quantidade: "Ex: 1 pacote (5kg)", descricao: "Durante a rotina de operação...", consideracoes: "Solicitamos que a equipe reforce a atenção..." },
-      'Relatório de Não Conformidade - Cliente': { produto: "Ex: Pão de Queijo 400g", ocorrencia: "A loja relatou que...", lote: "Ex: 213094", quantidade: "Ex: 2 pacotes", lojaLocal: "Ex: São Luiz - Cambeba", descricao: "Cliente reportou que...", consideracoes: "Após o recebimento da reclamação..." },
-      'Teste de Produto': { produto: "Ex: Pão de Queijo", ocorrencia: "Ex: Teste de formulação", lote: "Ex: Lote Teste 01", quantidade: "Ex: Escala reduzida", descricao: "A avaliação foi realizada após...", consideracoes: "Os resultados obtidos..." },
-      'Teste de Equipamento': { produto: "Ex: Seladora Automática", ocorrencia: "Ex: Oscilação na temperatura", lote: "Ex: N/A", quantidade: "Ex: N/A", descricao: "Durante o processamento...", consideracoes: "Como medida de contingência..." },
-'Comunicado / Parecer Livre': { descricao: "Redija aqui livremente o conteúdo do seu documento..." }
+      'Problema com Fornecedor': {
+        produto: "Ex: Salsicha Hot Dog - Aurora",
+        ocorrencia: "Ex: Desvio de padrão físico",
+        lote: "Ex: 0426011411",
+        quantidade: "Ex: 12 kg",
+        descricao: "Durante o processo de abertura da embalagem, foi identificada uma não conformidade...",
+        consideracoes: "A presença dessas avarias compromete a integridade do insumo..."
+      },
+      'Insumo ou Embalagem': {
+        produto: "Ex: Embalagens plásticas",
+        ocorrencia: "Ex: Fragilidade",
+        lote: "Ex: LOTE 4.1",
+        quantidade: "Ex: 1.562 unidades",
+        descricao: "Durante a rotina de operação...",
+        consideracoes: "O rompimento inviabiliza o acondicionamento..."
+      },
+      'Ocorrência Interna': {
+        produto: "Ex: Pão Hot Dog",
+        ocorrencia: "Ex: Presença de corpo estranho",
+        lote: "Ex: A 0103",
+        quantidade: "Ex: 1 pacote (5kg)",
+        descricao: "Durante a rotina de operação...",
+        consideracoes: "Solicitamos que a equipe reforce a atenção..."
+      },
+      'Relatório de Não Conformidade - Cliente': {
+        produto: "Ex: Pão de Queijo 400g",
+        ocorrencia: "A loja relatou que...",
+        lote: "Ex: 213094",
+        quantidade: "Ex: 2 pacotes",
+        lojaLocal: "Ex: São Luiz - Cambeba",
+        descricao: "Cliente reportou que...",
+        consideracoes: "Após o recebimento da reclamação..."
+      },
+      'Teste de Produto': {
+        produto: "Ex: Pão de Queijo",
+        ocorrencia: "Ex: Teste de formulação",
+        lote: "Ex: Lote Teste 01",
+        quantidade: "Ex: Escala reduzida",
+        descricao: "A avaliação foi realizada após...",
+        consideracoes: "Os resultados obtidos..."
+      },
+      'Teste de Equipamento': {
+        produto: "Ex: Seladora Automática",
+        ocorrencia: "Ex: Oscilação na temperatura",
+        lote: "Ex: N/A",
+        quantidade: "Ex: N/A",
+        descricao: "Durante o processamento...",
+        consideracoes: "Como medida de contingência..."
+      },
+      'Comunicado / Parecer Livre': {
+        descricao: "Redija aqui livremente o conteúdo do seu documento..."
+      }
     };
     return p[tipoRelAtual] || p['Problema com Fornecedor'];
   };
   const placeholders = getPlaceholders();
-  
-  const editingReport = editingReportId ? (registros || []).find(r => r && r.id === editingReportId) : null;
-
+  const editingReport = editingReportId ? (registros || [])
+    .find(r => r && r.id === editingReportId) : null;
   if (authLoading || view === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -3399,11 +4008,9 @@ const getFilteredRecords = () => {
       </div>
     );
   }
-
   if (view === 'welcome') {
     const isFirstSetup = usersDirectory.length === 0 && isDbConfirmedEmpty;
     const isOfflineEmpty = usersDirectory.length === 0 && dbSyncError;
-
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
         {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
@@ -3626,83 +4233,137 @@ const getFilteredRecords = () => {
       </div>
     );
   }
-
   if (view === 'dashboard') {
     const filteredRecords = getFilteredRecords();
-    
     // NOVO: Remove os registros documentais de todos os gráficos e cálculos matemáticos
     const registrosEstatisticas = filteredRecords.filter(r => !r.ocultarEstatistica);
-
-   const countsPorTipo = { 'Problema com Fornecedor': 0, 'Insumo ou Embalagem': 0, 'Ocorrência Interna': 0, 'Relatório de Não Conformidade - Cliente': 0, 'Teste de Produto': 0, 'Teste de Equipamento': 0, 'Comunicado / Parecer Livre': 0 };
+    const countsPorTipo = {
+      'Problema com Fornecedor': 0,
+      'Insumo ou Embalagem': 0,
+      'Ocorrência Interna': 0,
+      'Relatório de Não Conformidade - Cliente': 0,
+      'Teste de Produto': 0,
+      'Teste de Equipamento': 0,
+      'Comunicado / Parecer Livre': 0
+    };
     const fornecedorCounts = {};
     const clienteCounts = {};
     const produtoCounts = {};
-    const statusCounts = { 'Pendente': 0, 'Liberado': 0, 'Não Liberado': 0 };
-    
+    const statusCounts = {
+      'Pendente': 0,
+      'Liberado': 0,
+      'Não Liberado': 0
+    };
     registrosEstatisticas.forEach(r => {
       const tipo = r.tipoRelatorio || 'Problema com Fornecedor';
       if (countsPorTipo[tipo] !== undefined) countsPorTipo[tipo]++;
       if (r.fornecedor) fornecedorCounts[r.fornecedor] = (fornecedorCounts[r.fornecedor] || 0) + 1;
-      
       const st = r.status || 'Pendente';
       if (statusCounts[st] !== undefined) statusCounts[st]++;
-
       if (r.tipoRelatorio === 'Relatório de Não Conformidade - Cliente') {
-          if(r.lojasLocais && r.lojasLocais.length > 0) {
-              r.lojasLocais.forEach(l => clienteCounts[l] = (clienteCounts[l] || 0) + 1);
-          } else if (r.lojaLocal) {
-              clienteCounts[r.lojaLocal] = (clienteCounts[r.lojaLocal] || 0) + 1;
-          }
+        if (r.lojasLocais && r.lojasLocais.length > 0) {
+          r.lojasLocais.forEach(l => clienteCounts[l] = (clienteCounts[l] || 0) + 1);
+        } else if (r.lojaLocal) {
+          clienteCounts[r.lojaLocal] = (clienteCounts[r.lojaLocal] || 0) + 1;
+        }
       }
-
       if (r.produto && r.produto !== 'Não especificado') {
-         produtoCounts[r.produto] = (produtoCounts[r.produto] || 0) + 1;
+        produtoCounts[r.produto] = (produtoCounts[r.produto] || 0) + 1;
       }
     });
-
-    const pieData = Object.entries(countsPorTipo).filter(([_, v]) => v > 0).map(([label, value]) => ({ label, value }));
-    const barData = Object.entries(fornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
+    const pieData = Object.entries(countsPorTipo)
+      .filter(([_, v]) => v > 0)
+      .map(([label, value]) => ({
+        label,
+        value
+      }));
+    const barData = Object.entries(fornecedorCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
     const tipoBarras = [
-      { label: 'Problema com Fornecedor', value: countsPorTipo['Problema com Fornecedor'] || 0, color: '#EF4444' },
-      { label: 'Insumo ou Embalagem', value: countsPorTipo['Insumo ou Embalagem'] || 0, color: '#F59E0B' },
-      { label: 'Reclamação de Cliente', value: countsPorTipo['Relatório de Não Conformidade - Cliente'] || 0, color: '#8B5CF6' },
-      { label: 'Ocorrência Interna', value: countsPorTipo['Ocorrência Interna'] || 0, color: '#3B82F6' },
-      { label: 'Teste de Produto', value: countsPorTipo['Teste de Produto'] || 0, color: '#10B981' },
-      { label: 'Teste de Equipamento', value: countsPorTipo['Teste de Equipamento'] || 0, color: '#EC4899' },
-{ label: 'Comunicado / Livre', value: countsPorTipo['Comunicado / Parecer Livre'] || 0, color: '#64748B' }
+      {
+        label: 'Problema com Fornecedor',
+        value: countsPorTipo['Problema com Fornecedor'] || 0,
+        color: '#EF4444'
+      },
+      {
+        label: 'Insumo ou Embalagem',
+        value: countsPorTipo['Insumo ou Embalagem'] || 0,
+        color: '#F59E0B'
+      },
+      {
+        label: 'Reclamação de Cliente',
+        value: countsPorTipo['Relatório de Não Conformidade - Cliente'] || 0,
+        color: '#8B5CF6'
+      },
+      {
+        label: 'Ocorrência Interna',
+        value: countsPorTipo['Ocorrência Interna'] || 0,
+        color: '#3B82F6'
+      },
+      {
+        label: 'Teste de Produto',
+        value: countsPorTipo['Teste de Produto'] || 0,
+        color: '#10B981'
+      },
+      {
+        label: 'Teste de Equipamento',
+        value: countsPorTipo['Teste de Equipamento'] || 0,
+        color: '#EC4899'
+      },
+      {
+        label: 'Comunicado / Livre',
+        value: countsPorTipo['Comunicado / Parecer Livre'] || 0,
+        color: '#64748B'
+      }
     ];
-
-    const pieStatusData = Object.entries(statusCounts).filter(([_, v]) => v > 0).map(([label, value]) => ({ 
-      label, value, color: label === 'Liberado' ? '#22C55E' : label === 'Não Liberado' ? '#EF4444' : '#F59E0B' 
-    }));
-    const clienteBarData = Object.entries(clienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
-    const produtoBarData = Object.entries(produtoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
-
-    const pendingRecords = filteredRecords.filter(r => (r.status === 'Pendente' || !r.status) && !r.ocultarEstatistica);
-// NOVO: Matemática do Painel Interativo (Drill-down Corrigido)
+    const pieStatusData = Object.entries(statusCounts)
+      .filter(([_, v]) => v > 0)
+      .map(([label, value]) => ({
+        label,
+        value,
+        color: label === 'Liberado' ? '#22C55E' : label === 'Não Liberado' ? '#EF4444' : '#F59E0B'
+      }));
+    const clienteBarData = Object.entries(clienteCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+    const produtoBarData = Object.entries(produtoCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    const pendingRecords = filteredRecords.filter(r => (r.status === 'Pendente' || !r.status) && !r
+      .ocultarEstatistica);
+    // NOVO: Matemática do Painel Interativo (Drill-down Corrigido)
     const maxValueTipos = Math.max(...tipoBarras.map(t => t.value), 1);
-    
-    const dbTypeToFilter = 
+    const dbTypeToFilter =
       selectedAnalysisType === 'Reclamação de Cliente' ? 'Relatório de Não Conformidade - Cliente' :
       selectedAnalysisType === 'Comunicado / Livre' ? 'Comunicado / Parecer Livre' :
       selectedAnalysisType;
-    const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio || 'Problema com Fornecedor') === dbTypeToFilter);
-
+    const filteredByType = registrosEstatisticas.filter(r => (r.tipoRelatorio ||
+      'Problema com Fornecedor') === dbTypeToFilter);
     const typeProdutoCounts = {};
     const typeFornecedorCounts = {};
     const typeClienteCounts = {};
-
     filteredByType.forEach(r => {
       // Busca produto (se existir)
       if (r.produto && r.produto !== 'Não especificado') {
         typeProdutoCounts[r.produto] = (typeProdutoCounts[r.produto] || 0) + 1;
       }
-      
       // Busca fornecedor
       if (r.fornecedor) {
         typeFornecedorCounts[r.fornecedor] = (typeFornecedorCounts[r.fornecedor] || 0) + 1;
       }
-      
       // Busca loja específica (para o caso de Clientes)
       if (r.lojaLocal) {
         typeClienteCounts[r.lojaLocal] = (typeClienteCounts[r.lojaLocal] || 0) + 1;
@@ -3710,45 +4371,79 @@ const getFilteredRecords = () => {
         r.lojasLocais.forEach(l => typeClienteCounts[l] = (typeClienteCounts[l] || 0) + 1);
       }
     });
-
-    const topProdutosType = Object.entries(typeProdutoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
-    const topFornecedoresType = Object.entries(typeFornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
-    const topClientesType = Object.entries(typeClienteCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+    const topProdutosType = Object.entries(typeProdutoCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    const topFornecedoresType = Object.entries(typeFornecedorCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    const topClientesType = Object.entries(typeClienteCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
     const timelineMap = {};
     registrosEstatisticas.forEach(r => {
       if (r.dataCriacao) {
         const d = new Date(r.dataCriacao);
         if (!isNaN(d.getTime())) {
           // Usa o formato YYYY-MM-DD para conseguir ordenar cronologicamente depois
-          const key = d.toISOString().split('T')[0];
+          const key = d.toISOString()
+            .split('T')[0];
           timelineMap[key] = (timelineMap[key] || 0) + 1;
         }
       }
     });
-
     const timelineData = Object.entries(timelineMap)
       .sort((a, b) => a[0].localeCompare(b[0])) // Ordena do mais antigo para o mais novo
       .slice(-10) // Mostra no máximo os últimos 10 dias de movimento
       .map(([dateStr, value]) => {
         const [y, m, d] = dateStr.split('-');
-        return { label: `${d}/${m}`, value, fullDate: dateStr }; // NOVO: Adicionado fullDate aqui
+        return {
+          label: `${d}/${m}`,
+          value,
+          fullDate: dateStr
+        }; // NOVO: Adicionado fullDate aqui
       });
-
     // NOVO: Matemática para o Zoom do Dia Clicado
     const filteredByDate = selectedDate ? registrosEstatisticas.filter(r => {
-       if(!r.dataCriacao) return false;
-       return new Date(r.dataCriacao).toISOString().split('T')[0] === selectedDate;
+      if (!r.dataCriacao) return false;
+      return new Date(r.dataCriacao)
+        .toISOString()
+        .split('T')[0] === selectedDate;
     }) : [];
-
     const dateProdutoCounts = {};
     const dateFornecedorCounts = {};
     filteredByDate.forEach(r => {
-        if (r.produto && r.produto !== 'Não especificado') dateProdutoCounts[r.produto] = (dateProdutoCounts[r.produto] || 0) + 1;
-        if (r.fornecedor) dateFornecedorCounts[r.fornecedor] = (dateFornecedorCounts[r.fornecedor] || 0) + 1;
+      if (r.produto && r.produto !== 'Não especificado') dateProdutoCounts[r.produto] = (
+        dateProdutoCounts[r.produto] || 0) + 1;
+      if (r.fornecedor) dateFornecedorCounts[r.fornecedor] = (dateFornecedorCounts[r.fornecedor] || 0) +
+      1;
     });
-    const topProdutosDate = Object.entries(dateProdutoCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
-    const topFornecedoresDate = Object.entries(dateFornecedorCounts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
-
+    const topProdutosDate = Object.entries(dateProdutoCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    const topFornecedoresDate = Object.entries(dateFornecedorCounts)
+      .map(([label, value]) => ({
+        label,
+        value
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 print:bg-white print:py-0 print:px-0">
         {registroToView && <RelatorioViewModal 
@@ -4234,7 +4929,7 @@ const getFilteredRecords = () => {
       </div>
     );
   }
-if (view === 'form') {
+  if (view === 'form') {
     return (
       <div className="min-h-screen bg-[#f8f9fa] py-8 px-4 font-sans text-gray-800 relative">
         {appMessage && <div className="fixed top-4 right-4 z-[100] animate-fade-in-up"><div className="bg-white rounded-xl shadow-lg p-4 border-t-4 border-[#F4B41A] max-w-sm"><p className="text-sm font-medium text-gray-800">{appMessage}</p></div></div>}
@@ -4644,33 +5339,32 @@ if (view === 'form') {
   }
   if (view === 'preview') {
     let tituloRelatorio = formData.customTituloRelatorio || "RELATÓRIO DE OCORRência PRODUTO";
-    let tituloSecao1 = formData.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE"; 
-    let tituloSecao2 = formData.customTitulo2 || "2. DESCRIÇÃO DA OCORRÊNCIA"; 
+    let tituloSecao1 = formData.customTitulo1 || "1. INFORMAÇÕES GERAIS E RASTREABILIDADE";
+    let tituloSecao2 = formData.customTitulo2 || "2. DESCRIÇÃO DA OCORRÊNCIA";
     let tituloSecao3 = formData.customTitulo3 || "3. PARECER TÉCNICO";
-    
     const tipoStr = String(formData.tipoRelatorio || '');
-    
-    if (tipoStr === 'Relatório de Não Conformidade - Cliente') { 
-      if (!formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO"; 
-      if (!formData.customTitulo1) tituloSecao1 = "DADOS DA OCORRÊNCIA"; 
+    if (tipoStr === 'Relatório de Não Conformidade - Cliente') {
+      if (!formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE DESVIO PADRÃO";
+      if (!formData.customTitulo1) tituloSecao1 = "DADOS DA OCORRÊNCIA";
     }
-    if (tipoStr === 'Insumo ou Embalagem' && !formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE OCORRÊNCIA INSUMO";
-    if (tipoStr === 'Ocorrência Interna' && !formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO INTERNO DE OCORRÊNCIA";
-    if (tipoStr.includes('Teste')) { 
-      if (!formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE TESTES"; 
-      if (!formData.customTitulo1) tituloSecao1 = "1. DADOS DO ESTUDO"; 
-      if (!formData.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS"; 
-      if (!formData.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES"; 
+    if (tipoStr === 'Insumo ou Embalagem' && !formData.customTituloRelatorio) tituloRelatorio =
+      "RELATÓRIO DE OCORRÊNCIA INSUMO";
+    if (tipoStr === 'Ocorrência Interna' && !formData.customTituloRelatorio) tituloRelatorio =
+      "RELATÓRIO INTERNO DE OCORRÊNCIA";
+    if (tipoStr.includes('Teste')) {
+      if (!formData.customTituloRelatorio) tituloRelatorio = "RELATÓRIO DE TESTES";
+      if (!formData.customTitulo1) tituloSecao1 = "1. DADOS DO ESTUDO";
+      if (!formData.customTitulo2) tituloSecao2 = "2. METODOLOGIA E RESULTADOS";
+      if (!formData.customTitulo3) tituloSecao3 = "3. CONCLUSÃO E RECOMENDAÇÕES";
     }
-
     const isLivre = tipoStr === 'Comunicado / Parecer Livre';
     if (isLivre && !formData.customTituloRelatorio) {
-        tituloRelatorio = "COMUNICADO OFICIAL";
+      tituloRelatorio = "COMUNICADO OFICIAL";
     }
     const isFornecedor = tipoStr === 'Problema com Fornecedor' || tipoStr === 'Insumo ou Embalagem';
     const requiresHorario = tipoStr.includes('Teste') || tipoStr === 'Ocorrência Interna';
     const showValidade = !tipoStr.includes('Insumo') && !tipoStr.includes('Equipamento');
-const theme = getReportTheme(tipoStr, formData.corTema);
+    const theme = getReportTheme(tipoStr, formData.corTema);
     return (
       <div className="min-h-screen bg-gray-200 p-4 md:p-8 font-sans print:bg-white print:p-0">
         <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-3 no-print">
@@ -5014,14 +5708,19 @@ const theme = getReportTheme(tipoStr, formData.corTema);
   }
   return null;
 }
-
 export default class AppWithBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = {
+      hasError: false,
+      error: null
+    };
   }
   static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+    return {
+      hasError: true,
+      error
+    };
   }
   componentDidCatch(error, errorInfo) {
     console.error("App Error:", error, errorInfo);
