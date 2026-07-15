@@ -2783,20 +2783,27 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
     
     const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'solicitacoes'), (snapshot) => {
         const cloudData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        setSolicitacoes(cloudData.sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao)));
-        saveToLocalStorage('imac_solicitacoes', cloudData);
+        setSolicitacoes(prev => {
+          const existingIds = new Set(cloudData.map(s => String(s.id)));
+          const localOnly = (prev || []).filter(s => s && s.id && !existingIds.has(String(s.id)) && s._isUnsynced);
+          const merged = [...cloudData, ...localOnly];
+          merged.sort((a,b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0));
+          saveToLocalStorage('imac_solicitacoes', merged);
+          return merged;
+        });
     }, (error) => {});
     return () => unsub();
   }, [db, isConfigured, user]);
 
-  const submitSolicitacao = async (e) => {
+ const submitSolicitacao = async (e) => {
     e.preventDefault();
     try {
       const newSol = { 
         ...solicitacaoForm, 
         id: 'sol_' + Date.now(), 
         dataCriacao: new Date().toISOString(),
-        status: 'Pendente' 
+        status: 'Pendente',
+        _isUnsynced: true
       };
       
       setSolicitacoes(prev => {
@@ -2806,14 +2813,23 @@ const handleUpdatePermissions = async (uid, newIsAdmin, newCanApprove, newIsMana
       });
 
       if (db && isConfigured) {
-        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', newSol.id), newSol).catch(()=>{});
+        const { _isUnsynced, ...solToSync } = newSol;
+        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', newSol.id), solToSync)
+          .then(() => {
+            setAppMessage("✅ Solicitação enviada com sucesso para a fila!");
+          })
+          .catch((err) => {
+            console.error(err);
+            setAppMessage("💾 Salvo temporariamente. Sincronizando com a nuvem...");
+          });
+      } else {
+        setAppMessage("✅ Solicitação salva localmente!");
       }
       
-      setAppMessage("✅ Solicitação enviada com sucesso!");
       setSolicitacaoForm(getEmptySolicitacaoForm());
-      setTimeout(() => setAppMessage(null), 3000);
+      setTimeout(() => setAppMessage(null), 3500);
     } catch(e) {
-      setAppMessage("❌ Erro ao enviar solicitação.");
+      setAppMessage("❌ Falha ao tentar processar a solicitação.");
     }
   };
 
