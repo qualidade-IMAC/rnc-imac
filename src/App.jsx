@@ -3888,16 +3888,23 @@ const getFilteredRecords = () => {
   </div>
 
   <p className="text-xs text-gray-600 line-clamp-2 pl-2 border-t border-gray-100 pt-1 mt-1">{sol.descricao}</p>
-                    <button onClick={() => {
-                       const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [] }));
-                       setFormData({ ...getEmptyForm(), ...sol, imagens: formImages });
-                       setEditingReportId(null);
-                       setView('form');
-                       window.scrollTo(0, 0);
-                       if(db && isConfigured) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', sol.id), { status: 'Atendido' }).catch(()=>{});
-                       setSolicitacoes(prev => { const n = (Array.isArray(prev) ? prev : []).map(s => s.id === sol.id ? {...s, status: 'Atendido'} : s); saveToLocalStorage('imac_solicitacoes', n); return n;});
-                    }} className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1"><Plus size={14}/> Criar Relatório</button>
-                  </div>
+                    <div className="flex gap-2 mt-2">
+  <button onClick={() => {
+    if(window.confirm("Tem certeza que deseja excluir esta solicitação?")) {
+      if(db && isConfigured) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', sol.id)).catch(()=>{});
+      setSolicitacoes(prev => { const n = (Array.isArray(prev) ? prev : []).filter(s => s.id !== sol.id); saveToLocalStorage('imac_solicitacoes', n); return n; });
+    }
+  }} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1"><Trash2 size={14}/> Descartar</button>
+  <button onClick={() => {
+    const formImages = (sol.imagens || []).map(b64 => ({ isObject: true, id: Date.now() + Math.random(), baseSrc: b64, displaySrc: b64, shapes: [] }));
+    setFormData({ ...getEmptyForm(), ...sol, imagens: formImages });
+    setEditingReportId(null);
+    setView('form');
+    window.scrollTo(0, 0);
+    if(db && isConfigured) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'solicitacoes', sol.id), { status: 'Atendido' }).catch(()=>{});
+    setSolicitacoes(prev => { const n = (Array.isArray(prev) ? prev : []).map(s => s.id === sol.id ? {...s, status: 'Atendido'} : s); saveToLocalStorage('imac_solicitacoes', n); return n;});
+  }} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-bold transition flex items-center justify-center gap-1"><Plus size={14}/> Criar</button>
+</div>
                 ))}
               </div>
             </div>
