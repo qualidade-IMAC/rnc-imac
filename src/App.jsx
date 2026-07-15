@@ -4760,7 +4760,7 @@ const theme = getReportTheme(tipoStr, formData.corTema);
              <div>
                 {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 pl-2 mb-3 print:mb-2" style={{ borderLeftColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 pl-2 mb-3 print:mb-2 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p className="text-[14px]"><strong>CLIENTE(S):</strong> {(formData.lojasLocais && formData.lojasLocais.length > 0) ? formData.lojasLocais.join(', ') : (formData.lojaLocal || 'Não informado')}</p>
                     <p className="text-[14px]"><strong>SUPERVISOR:</strong> {formData.supervisor}</p>
@@ -4885,7 +4885,7 @@ const theme = getReportTheme(tipoStr, formData.corTema);
               <>
                 {!isLivre && (
                 <div className="mb-5 print:mb-3 break-inside-avoid">
-                  <div className="border-l-4 pl-2 mb-3 print:mb-2" style={{ borderLeftColor: theme.main, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
+                  <div className="border-l-4 pl-2 mb-3 print:mb-2 py-1" style={{ borderLeftColor: theme.main, backgroundColor: theme.light, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}><p className="font-bold uppercase text-[#5C3A21] text-[16px]">{tituloSecao1}</p></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-3 print:gap-x-12 print:gap-y-2 ml-1">
                     <p><strong>{formData.labelProduto || 'Produto / Material'}:</strong> {formData.produto}</p>
                     <p><strong>{formData.labelOcorrencia || 'Resumo do Problema'}:</strong> {formData.ocorrencia}</p>
