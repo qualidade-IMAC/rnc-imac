@@ -361,7 +361,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!isConfigured) {
       setCheckingDirectory(false);
       return;
@@ -372,7 +372,7 @@ function App() {
       setDbSyncError(true);
     }, 12000); 
 
-    if (!db || !user) return;
+    if (!db) return; // <-- Removemos a trava do usuário aqui
     
     const unsubscribeUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users_directory'), 
       (snapshot) => {
