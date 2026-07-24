@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
 import { SvgIcon, Printer, Edit3, Copy, ImagePlus, Trash2, FileText, Users, ClipboardList, Upload, Plus, Minus, UserX, ArrowUpRight, Circle, Undo, Send, Archive, Check, X, PenTool, Move, TypeIcon, BarChart2, BoldIcon, ItalicIcon, UnderlineIcon, Truck, ShoppingBag, Store, Eye, Moon, Sun, Download, Filter, RefreshCw, Scissors, AlertCircle, CheckCircle, Palette, LogOut, ChevronLeft, ChevronRight, MessageCircle, Mail, Clock, Lock, User, Key, Settings } from './components/Icons';
 import { BarChart, TimelineChart, PieChartComponent } from './components/Charts';
@@ -432,14 +432,23 @@ function App() {
     setView('dashboard');
   };
 
-  const handleEmailLogin = async (e) => {
+const handleEmailLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
-    const foundUser = usersDirectory.find(u => u.email === loginEmail && u.password === loginPassword);
-    
-    if (foundUser) {
-      loginUser(foundUser);
-    } else {
+    try {
+      // 1. Faz o login seguro com o Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const uid = userCredential.user.uid;
+
+      // 2. Puxa as permissões do usuário que estão no nosso diretório
+      const foundUser = usersDirectory.find(u => u.id === uid || u.email === loginEmail);
+      
+      if (foundUser) {
+        loginUser({ ...foundUser, id: uid });
+      } else {
+        setAuthError("Autenticado com sucesso, mas o perfil não foi encontrado no diretório.");
+      }
+    } catch (error) {
       setAuthError("E-mail ou senha incorretos. Verifique suas credenciais.");
     }
   };
@@ -452,13 +461,15 @@ function App() {
       return;
     }
     try {
-      const newId = "admin_" + Date.now();
+      // Cria a conta mestre no Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
+      const newId = userCredential.user.uid; // Usa o ID seguro gerado pelo Firebase
+
       const newUser = {
         id: newId,
         nome: loginNome.trim(),
         cargo: loginCargo.trim(),
         email: loginEmail.trim(),
-        password: loginPassword,
         isAdmin: true,
         canApprove: true,
         isManager: true,
@@ -484,17 +495,27 @@ function App() {
     try {
       const existingUser = usersDirectory.find(u => u.email === newEmail);
       if (existingUser) {
-        setAppMessage("❌ E-mail já está em uso.");
+        setAppMessage("❌ E-mail já está em uso no diretório.");
         return false;
       }
       
-      const newId = "user_" + Date.now();
+      // TRUQUE: Usa um app secundário para não deslogar o Admin
+      const { initializeApp } = await import('firebase/app');
+      const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser2 } = await import('firebase/auth');
+      const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+      const secondaryAuth = getAuth2(secondaryApp);
+      
+      const userCredential = await createUser2(secondaryAuth, newEmail, newPassword);
+      const newId = userCredential.user.uid;
+      
+      // Limpa o app secundário
+      import('firebase/app').then(m => m.deleteApp(secondaryApp)).catch(()=>{});
+
       const newUser = {
         id: newId,
         nome: newNome,
         cargo: newCargo,
         email: newEmail,
-        password: newPassword,
         isAdmin: newIsAdmin,
         canApprove: newCanApprove,
         isManager: newIsManager || false,
@@ -515,7 +536,7 @@ function App() {
       setAppMessage("✅ Usuário criado com sucesso!");
       return true;
     } catch (error) {
-      setAppMessage("❌ Erro ao criar usuário: " + error.message);
+      setAppMessage("❌ Erro ao criar usuário (Pode já existir no Firebase): " + error.message);
       return false;
     }
   };
