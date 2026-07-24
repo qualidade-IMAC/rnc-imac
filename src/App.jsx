@@ -1607,31 +1607,28 @@ const BarChart = ({ data, title, isTypes = false }) => {
   const maxValue = Math.max(...(data || []).map(d => d.value || 0), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 h-full">
-      <h3 className="text-sm font-bold text-gray-700 mb-4">{title}</h3>
-      <div className="space-y-3.5">
+    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-full">
+      <h3 className="text-sm font-black text-[#5C3A21] mb-5 border-b border-gray-100 pb-2">{title}</h3>
+      <div className="space-y-3">
         {(data || []).map((item, index) => {
           const widthPercentage = ((item.value || 0) / maxValue) * 100;
           
-          // Lógica Minimalista: 
-          // Se for o gráfico de Tipos, usa as cores originais. 
-          // Se for o Top 5, pinta SÓ o 1º lugar de Vermelho, o resto de cinza suave.
-          let barColor = item.color || '#E5E7EB'; 
+          let barColor = item.color || '#9CA3AF'; 
           if (!isTypes) {
-             barColor = index === 0 ? '#EF4444' : '#D1D5DB'; // Vermelho pro 1º, Cinza pro resto
+             barColor = index === 0 ? '#EF4444' : (index === 1 ? '#F59E0B' : '#9CA3AF'); // Cores para 1º e 2º lugar
           }
 
           return (
-            <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
-              <div className="flex justify-between items-end text-xs mb-1.5">
-                <span className={`truncate pr-2 ${!isTypes && index === 0 ? 'font-bold text-gray-800' : 'font-medium text-gray-500'}`} title={item.label}>
-                  {!isTypes ? `${index + 1}. ` : ''}{item.label}
+            <div key={index} className="animate-fade-in-up bg-gray-50 p-3 rounded-lg border border-gray-100" style={{ animationDelay: `${index * 0.05}s` }}>
+              <div className="flex justify-between items-center text-xs mb-2">
+                <span className={`truncate pr-2 font-bold ${!isTypes && index === 0 ? 'text-gray-900' : 'text-gray-600'}`} title={item.label}>
+                  {!isTypes ? <span className="text-gray-400 mr-1">{index + 1}.</span> : ''}{item.label}
                 </span>
-                <span className={`font-black ${!isTypes && index === 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                <span className={`font-black text-sm px-2 py-0.5 rounded bg-white border shadow-sm ${!isTypes && index === 0 ? 'text-red-600 border-red-100' : 'text-gray-700 border-gray-200'}`}>
                   {item.value || 0}
                 </span>
               </div>
-              <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
                 <div 
                   className="h-full rounded-full transition-all duration-1000 ease-out" 
                   style={{ width: `${Math.max(widthPercentage, 1)}%`, backgroundColor: barColor }}
@@ -1650,17 +1647,17 @@ const TimelineChart = ({ data, title, color = '#F4B41A', onSelectDate, selectedD
   const midValue = Math.ceil(maxValue / 2);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full min-h-[320px]">
-      <h3 className="text-sm font-bold text-gray-700 mb-6 flex justify-between">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col h-full min-h-[320px]">
+      <h3 className="text-sm font-black text-[#5C3A21] mb-6 flex justify-between border-b border-gray-100 pb-2">
         <span>{title}</span>
-        {selectedDate && <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-1 rounded-full animate-pulse">Mostrando dia {selectedDate.split('-').reverse().join('/')}</span>}
+        {selectedDate && <span className="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full animate-pulse shadow-sm">Dia Selecionado: {selectedDate.split('-').reverse().join('/')}</span>}
       </h3>
       
       <div className="flex-1 flex mt-2">
         <div className="w-8 relative border-r-2 border-gray-200 pb-8 shrink-0">
-          <span className="absolute top-0 -translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">{maxValue}</span>
-          <span className="absolute top-1/2 -translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">{midValue}</span>
-          <span className="absolute bottom-8 translate-y-1/2 right-2 text-[10px] font-bold text-gray-400">0</span>
+          <span className="absolute top-0 -translate-y-1/2 right-2 text-[11px] font-bold text-gray-500">{maxValue}</span>
+          <span className="absolute top-1/2 -translate-y-1/2 right-2 text-[11px] font-bold text-gray-500">{midValue}</span>
+          <span className="absolute bottom-8 translate-y-1/2 right-2 text-[11px] font-bold text-gray-500">0</span>
         </div>
 
         <div className="flex-1 relative">
@@ -1670,25 +1667,27 @@ const TimelineChart = ({ data, title, color = '#F4B41A', onSelectDate, selectedD
             <div className="w-full border-t-2 border-gray-300"></div> 
           </div>
 
-          <div className="absolute inset-0 pb-8 flex items-end justify-between px-2">
+          <div className="absolute inset-0 pb-8 flex items-end justify-around px-4">
             {data.map((item, index) => {
               const hPercent = `${((item.value / maxValue) * 100)}%`;
               const isSelected = selectedDate === item.fullDate;
               return (
-                <div key={index} className="flex flex-col items-center flex-1 group z-10 h-full justify-end relative">
-                  <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[11px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-sm font-bold">
-                    {item.value} Ocorrências (Clique para ver)
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                <div key={index} className="flex flex-col items-center group z-10 h-full justify-end relative">
+                  <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-lg transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-md font-bold">
+                    {item.value} Registros
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                   </div>
                   
-                  {/* Transformamos a div em botão clicável */}
                   <button 
                     onClick={() => onSelectDate && onSelectDate(item.fullDate)}
-                    className={`w-full max-w-[16px] rounded-t-sm transition-all duration-300 hover:opacity-80 cursor-pointer ${isSelected ? 'ring-4 ring-blue-200 scale-110' : ''}`}
+                    className={`w-full min-w-[24px] max-w-[32px] rounded-t-md transition-all duration-300 hover:opacity-90 cursor-pointer shadow-sm relative ${isSelected ? 'ring-4 ring-blue-300 scale-105' : ''}`}
                     style={{ height: hPercent === '0%' ? '0px' : hPercent, backgroundColor: isSelected ? '#3B82F6' : color }}
-                  ></button>
+                  >
+                    {/* Número fixo dentro da barra se ela for altinha o suficiente */}
+                    {item.value > 0 && <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] font-black text-white/90">{item.value}</span>}
+                  </button>
 
-                  <span className={`absolute top-full mt-2 text-[10px] font-bold truncate max-w-full text-center ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
+                  <span className={`absolute top-full mt-3 text-[11px] font-bold text-center ${isSelected ? 'text-blue-700 bg-blue-50 px-2 py-0.5 rounded' : 'text-gray-600'}`}>
                     {item.label}
                   </span>
                 </div>
